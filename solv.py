@@ -13,7 +13,7 @@
 # 
 # This will do something
 #
-# Richard West 2009
+# Richard West 2009 edited by Amrit
 
 import math, pylab
 import quantities as pq
