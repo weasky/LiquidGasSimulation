@@ -15,8 +15,14 @@
 #
 # Richard West 2009 edited by Amrit
 
-import math, pylab
+import math
+import pylab
+from scipy.integrate import odeint
+
 import quantities as pq
+pq.UnitQuantity('kilocalories', pq.cal*1e3, symbol='kcal')
+pq.UnitQuantity('kilojoules', pq.J*1e3, symbol='kJ')
+pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
 
 
 # import all the classes which write XML
@@ -24,10 +30,22 @@ import quantities as pq
 #reload(ctml_writer)
 from ctml_writer import *
 import ctml_writer
-# now modify the ones we want to do more
+# then we can modify the ones we want to do more
 
-class outsideValidRange(Exception):
+
+
+
+
+_uConc=pq.Quantity(1,ctml_writer._umol) / pq.Quantity(1,ctml_writer._ulen)**3
+_uTime=pq.Quantity(1,ctml_writer._utime)
+
+_species=ctml_writer._species
+_reactions=ctml_writer._reactions
+_speciesnames=ctml_writer._speciesnames
+
+class outsideValidRangeError(Exception):
 	"""was not within valid range for expression"""
+	pass
 	
 class species(ctml_writer.species):
 	"""a species"""
@@ -53,8 +71,8 @@ class NASA(ctml_writer.NASA):
 
 	def getThermo(self,T):
 		""" getThermo(T) returns (HeatCapacityOverR, EnthalpyOverRT, EntropyOverR) for a given temperature T
-		    Raises outsideValidRange exception if T is not within range of polynomial"""
-		if not self.ValidTemperature(T): raise outsideValidRange
+		    Raises outsideValidRangeError exception if T is not within range of polynomial"""
+		if not self.ValidTemperature(T): raise outsideValidRangeError
 		if self._pref > 0.0: raise Exception("not sure what to do with customised standard state pressure")
 		# http://www.me.berkeley.edu/gri-mech/data/nasa_plnm.html
 		# Cp/R = a1 + a2 T + a3 T^2 + a4 T^3 + a5 T^4
@@ -78,16 +96,12 @@ class NASA(ctml_writer.NASA):
 		return FreeEnergyOverRT*T
 		
 
-pq.UnitQuantity('kilocalories', pq.cal*1e3, symbol='kcal')
-pq.UnitQuantity('kilojoules', pq.J*1e3, symbol='kJ')
-pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
-_uConc=pq.Quantity(1,ctml_writer._umol)/ pq.Quantity(1,ctml_writer._ulen)**3
-_uTime=pq.Quantity(1,ctml_writer._utime)
 
 
 
+# Classes should be named with CamelCase but need to stick with Cantera .ctml convention, hence lowercase:
 class reaction(ctml_writer.reaction):
-	"""a chemical reaction"""
+	"""A chemical reaction."""
 	
 	def getForwardRateCoefficient(self,T):
 		"""returns the forward rate coefficient at a given temperature assuming 
@@ -146,8 +160,7 @@ class reaction(ctml_writer.reaction):
 		return deltaGOverR
 		
 	def getEquilibriumConstant(self,T):
-		"""returns the equilibrium constant at a given temperature
-		    Keq = exp(-DeltaG/RT) """
+		"""returns the equilibrium constant at a given temperature:  Keq = exp(-DeltaG/RT) """
 		
 		#if not sum(self._p.values())==sum(self._rxnorder.values()): print "equilibrium constant calculation currently assumes forward and reverse reactions have same reaction order"
 		
@@ -160,11 +173,11 @@ class reaction(ctml_writer.reaction):
 		
 		return Kc
 		
-		
 	
 	def getReactantNu(self):
-		"""returns the stoichiometry in the forwards direction
-		i.e. the number of reactant molecules
+		"""Returns the stoichiometry in the forwards direction.
+		
+		i.e. the number of reactant molecules.
 		uses self._reactantNu to cache the answer"""
 		if hasattr(self,'_reactantNu'): return self._reactantNu
 		reactantNu=0
@@ -173,8 +186,9 @@ class reaction(ctml_writer.reaction):
 		self._reactantNu=reactantNu
 		return reactantNu
 	def getProductNu(self):
-		"""returns the stoichiometry in the reverse direction. 
-		i.e. the number of product molecules
+		"""Returns the stoichiometry in the reverse direction. 
+		
+		i.e. the number of product molecules.
 		uses self._productNu to cache the answer"""
 		if hasattr(self,'_productNu'): return self._productNu
 		productNu=0
@@ -182,27 +196,26 @@ class reaction(ctml_writer.reaction):
 			productNu += order
 		self._productNu=productNu
 		return productNu
-		
 	def getDeltaNu(self):
-		"""returns the change in stoichiometry of the reaction, delta Nu.
-		   deltaNu= productNu - reactantNu
-		   uses self._deltaNu to cache the answer"""
+		"""Returns the change in stoichiometry of the reaction, delta Nu.
+		
+		deltaNu= productNu - reactantNu
+		uses self._deltaNu to cache the answer"""
 		if hasattr(self,'_deltaNu'): return self._deltaNu
 		self._deltaNu=self.getProductNu()-self.getReactantNu()
 		return self._deltaNu
 
-
-_species=ctml_writer._species
-_reactions=ctml_writer._reactions
-_speciesnames=ctml_writer._speciesnames
-
 def getSpeciesByName(name):
-	for s in ctml_writer._species:
+	"""Select a species by its name."""
+	for s in _species:
 		if s._name==name:
 			return s
 	return None
 
 def getNetRatesOfCreation(T,concs):
+	"""Get the net rate of creation of all the species at a given T and concentration.
+	
+	Returns a dictionary. Expects a dictionary."""
 	nrocs=dict.fromkeys(_speciesnames)
 	for speciesName in _speciesnames:
 		nrocs[speciesName]=pq.Quantity(0.0,'mol/m**3/s')
@@ -214,10 +227,21 @@ def getNetRatesOfCreation(T,concs):
 		for speciesName,order in r._r.items(): # consume reactants
 			nrocs[speciesName]-=rate.simplified*order
 			print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
-	return nrocs
+	return nrocs # nrocs is a dictionary
+
+def RightSideOfODE(concsArray, T):
+	"""Basically the same as getNetRatesOfCreation() but takes an array and returns an array"""
+	concsDict = dict.fromkeys(_speciesnames)
+	for i in range(len(_speciesnames)):
+		speciesName = _speciesnames[i]
+		concDict[speciesName] = concsArray[i]
+	nrocsDict = getNetRatesOfCreation(T,concsDict)
+	nrocsArray = pylab.array([nrocsDict[s] for s in _speciesnames]) # return an array
+	return nrocsArray
+		
 
 class FuelComponent():
-	""" shouldn't really be part of the solv package. specific to the fuel model."""
+	"""Shouldn't really be part of the solv package. specific to the fuel model."""
 	def __str__(self):
 		return "<Species %s>"%(self.name)
 	def __init__(self,name="",initialVolFraction=0,composition=dict(C=0,H=0,O=0),Antoine=dict(A=0,B=0,C=0),liquidMolarDensity=3500 ):
@@ -244,13 +268,13 @@ if __name__ == "__main__":
 		execfile(file)
 	
 	fuel=[
-	FuelComponent('n-undecane(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
-	FuelComponent('n-tridecane(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
-	FuelComponent('SPC(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3),
-	FuelComponent('n-hexadecane(5)',0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51,C=154.45),3415.0),
-	FuelComponent('SPC(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148,B=2396.8,C=199.5736),2.6e3),
-	FuelComponent('n-nonadecane(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
-	FuelComponent('n-heneicosane(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
+		FuelComponent('n-undecane(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
+		FuelComponent('n-tridecane(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
+		FuelComponent('SPC(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3),
+		FuelComponent('n-hexadecane(5)',0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51,C=154.45),3415.0),
+		FuelComponent('SPC(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148,B=2396.8,C=199.5736),2.6e3),
+		FuelComponent('n-nonadecane(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
+		FuelComponent('n-heneicosane(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
 	]
 
 	concs=dict.fromkeys(_speciesnames)
