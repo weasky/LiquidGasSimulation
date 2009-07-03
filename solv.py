@@ -13,7 +13,7 @@
 # 
 # This will do something
 #
-# Richard West 2009 edited by Amrit
+# Richard West 2009 edited by Amrit (not really)
 
 import math
 import pylab
@@ -211,7 +211,20 @@ def getSpeciesByName(name):
 		if s._name==name:
 			return s
 	return None
-
+def ArrayFromDict(inDict):
+	"""Turn a dictionary  (of concentrations, rates, etc.) into an array.
+	Gets names (in order) from _speciesnames"""
+	outArray = pylab.array([inDict[s] for s in _speciesnames])
+	sum(inDict.s)
+	return outArray, units
+def DictFromArray(inArray):
+	"""Turns an array (of concentrations, rates, etc.) into a dictionary.
+	Gets names (in order) from _speciesnames"""
+	outDict = dict.fromkeys(_speciesnames)
+	for i,speciesName in enumerate(_speciesnames):
+		outDict[speciesName] = inArray[i]
+	return outDict
+	
 def getNetRatesOfCreation(T,concs):
 	"""Get the net rate of creation of all the species at a given T and concentration.
 	
@@ -229,17 +242,16 @@ def getNetRatesOfCreation(T,concs):
 			print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
 	return nrocs # nrocs is a dictionary
 
-def RightSideOfODE(concsArray, T):
-	"""Basically the same as getNetRatesOfCreation() but takes an array and returns an array"""
-	concsDict = dict.fromkeys(_speciesnames)
-	for i in range(len(_speciesnames)):
-		speciesName = _speciesnames[i]
-		concDict[speciesName] = concsArray[i]
+def RightSideOfODE(concsArray, time, T):
+	"""Get the net rate of creation of all the species at a concentration and T.
+	
+	Basically the same as getNetRatesOfCreation() but takes an array and returns an array"""
+	concsDict = DictFromArray(concsArray)
 	nrocsDict = getNetRatesOfCreation(T,concsDict)
-	nrocsArray = pylab.array([nrocsDict[s] for s in _speciesnames]) # return an array
+	nrocsArray = ArrayFromDict(nrocsDict) # return an array
 	return nrocsArray
-		
 
+		
 class FuelComponent():
 	"""Shouldn't really be part of the solv package. specific to the fuel model."""
 	def __str__(self):
@@ -288,23 +300,26 @@ if __name__ == "__main__":
 	
 	T=430 # kelvin
 	
-	timestep=1e-6 * pq.s #seconds
+	start=0
+	stop=10
+	steps=1000
 	
-	concsHistory=[[concs[spn].copy() for spn in _speciesnames]]
+	timesteps=pylab.linspace(start,stop,steps)
 	
+	concsArray=ArrayFromDict(concs)
+	charray = odeint(RightSideOfODE,concsArray,timesteps,args=(T,))
+
+#	timestep=1e-6 * pq.s #seconds
+#	concsHistory=[[concs[spn].copy() for spn in _speciesnames]]
+#	for t in range(5):
+#		nrocs=getNetRatesOfCreation(T,concs)
+#		for speciesName,nroc in nrocs.items(): 
+#			concs[speciesName]+=nroc*timestep  # Simple Euler
+#		concsHistory.append([concs[spn].copy() for spn in _speciesnames])
+#		
+#	charray=pylab.array(concsHistory)
 	
-	for t in range(5):
-		nrocs=getNetRatesOfCreation(T,concs)
-		for speciesName,nroc in nrocs.items(): 
-			concs[speciesName]+=nroc*timestep  # Simple Euler
-			
-		concsHistory.append([concs[spn].copy() for spn in _speciesnames])
-		
-	charray=pylab.array(concsHistory)
 	pylab.semilogy(charray)
 	pylab.show()
 	
-		
-			
-
 
