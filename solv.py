@@ -215,7 +215,7 @@ def ArrayFromDict(inDict):
 	"""Turn a dictionary  (of concentrations, rates, etc.) into an array.
 	Gets names (in order) from _speciesnames"""
 	outArray = pylab.array([inDict[s] for s in _speciesnames])
-	sum(inDict.s)
+	# not sure what this was about to do: sum(inDict)
 	return outArray, units
 def DictFromArray(inArray):
 	"""Turns an array (of concentrations, rates, etc.) into a dictionary.
