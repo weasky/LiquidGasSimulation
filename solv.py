@@ -1,5 +1,5 @@
 ##
-# BASED ON: ctml_writer.py
+# BASED ON: ctml.py
 #
 # Cantera .cti input file processor
 #
@@ -27,28 +27,37 @@ pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
 
 # import all the classes which write XML
 # and all the constant, functions, etc.
-#reload(ctml_writer)
-from ctml_writer import *
-import ctml_writer
+#reload(ctml)
+#from ctml_writer import *
+#import ctml_writer
 # then we can modify the ones we want to do more
 
+import ctml_writer as ctml
 
 
 
 
-_uConc=pq.Quantity(1,ctml_writer._umol) / pq.Quantity(1,ctml_writer._ulen)**3
-_uTime=pq.Quantity(1,ctml_writer._utime)
+_uConc=pq.Quantity(1,ctml._umol) / pq.Quantity(1,ctml._ulen)**3
+_uTime=pq.Quantity(1,ctml._utime)
 
-_species=ctml_writer._species
-_reactions=ctml_writer._reactions
-_speciesnames=ctml_writer._speciesnames
+_species=ctml._species
+_reactions=ctml._reactions
+_speciesnames=ctml._speciesnames
 
 class outsideValidRangeError(Exception):
 	"""was not within valid range for expression"""
 	pass
 	
-class species(ctml_writer.species):
-	"""a species"""
+class ideal_gas(ctml.ideal_gas):
+    pass
+
+class state(ctml.state):
+    pass
+	
+class species(ctml.species):
+    """ species derived from ctml_writer.species.
+    species(name,atoms,note,thermo,transport,charge)
+    """
 	def getCorrectNasaPoly(self,T):
 		for nasapoly in self._thermo:
 			if nasapoly.ValidTemperature(T): return nasapoly
@@ -62,7 +71,7 @@ class species(ctml_writer.species):
 		thermo=self.getCorrectNasaPoly(T).getThermo(T)
 		return thermo
 
-class NASA(ctml_writer.NASA):
+class NASA(ctml.NASA):
 	"""NASA polynomial representation of thermo"""
 	def ValidTemperature(self,temperature):
 		if temperature<self._t[0]: return False
@@ -70,10 +79,14 @@ class NASA(ctml_writer.NASA):
 		return True
 
 	def getThermo(self,T):
-		""" getThermo(T) returns (HeatCapacityOverR, EnthalpyOverRT, EntropyOverR) for a given temperature T
-		    Raises outsideValidRangeError exception if T is not within range of polynomial"""
+		""" getThermo(T) returns 
+		    (HeatCapacityOverR, EnthalpyOverRT, EntropyOverR) 
+		for a given temperature T
+		Raises outsideValidRangeError exception if T is not within 
+		range of polynomial"""
 		if not self.ValidTemperature(T): raise outsideValidRangeError
-		if self._pref > 0.0: raise Exception("not sure what to do with customised standard state pressure")
+		if self._pref > 0.0: raise Exception("not sure what to do \
+			with customised standard state pressure")
 		# http://www.me.berkeley.edu/gri-mech/data/nasa_plnm.html
 		# Cp/R = a1 + a2 T + a3 T^2 + a4 T^3 + a5 T^4
 		# H/RT = a1 + a2 T /2 + a3 T^2 /3 + a4 T^3 /4 + a5 T^4 /5 + a6/T
@@ -86,7 +99,8 @@ class NASA(ctml_writer.NASA):
 			HeatCapacityOverR+= c[i] * T**i
 			EnthalpyOverRT+= c[i] * T**i / (i+1)
 		EnthalpyOverRT+=c[5]/T
-		EntropyOverR = c[0]*math.log(T) + c[1]*T + c[2]*T*T/2 + c[3]*T*T*T/3 + c[4]*T*T*T*T/4 + c[6]
+		EntropyOverR = ( c[0]*math.log(T) + c[1]*T + c[2]*T*T/2 +
+							c[3]*T*T*T/3 + c[4]*T*T*T*T/4 + c[6] )
 		return(HeatCapacityOverR,EnthalpyOverRT,EntropyOverR)
 		
 	def getGibbsFreeEnergy(self,T):
@@ -100,18 +114,18 @@ class NASA(ctml_writer.NASA):
 
 
 # Classes should be named with CamelCase but need to stick with Cantera .ctml convention, hence lowercase:
-class reaction(ctml_writer.reaction):
+class reaction(ctml.reaction):
 	"""A chemical reaction."""
 	
 	def getForwardRateCoefficient(self,T):
 		"""returns the forward rate coefficient at a given temperature assuming 
-		   kf = [A, n, E] and kf=A (T/1K)^n exp(-E/RT)"""
+		kf = [A, n, E] and kf=A (T/1K)^n exp(-E/RT)"""
 		kf=self._kf
 		
 		forwardRateCoefficient=kf[0] / _uConc**(self.getReactantNu()-1) / _uTime
 		if kf[1]:
 			forwardRateCoefficient *= T**kf[1]
-		assert ctml_writer._ue=='kcal/mol', 'unit convrsion not yet implemented'
+		assert ctml._ue=='kcal/mol', 'unit conversion not implemented'
 		R=0.0019872065 # kcal/mol/K
 		R=pq.constants.R 
 		forwardRateCoefficient*=math.exp(-kf[2]/(R*T))
@@ -128,7 +142,8 @@ class reaction(ctml_writer.reaction):
 		return reverseRateCoefficient
 		
 	def getForwardRate(self,T,concentrations):
-		"""returns the forward rate of progress, given a temperature and a dictionary of species concentrations"""
+		"""returns the forward rate of progress, 
+		given a temperature and a dictionary of species concentrations"""
 		forwardRate=self.getForwardRateCoefficient(T)
 		for speciesName,order in self._rxnorder.items():
 		#	print "forwardRate*=concentrations[%s]**order = %s**%g"%(speciesName,concentrations[speciesName],order)
@@ -151,7 +166,8 @@ class reaction(ctml_writer.reaction):
 		return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
 
 	def getDeltaG(self,T):
-		"""returns the change in gibbs free energy *over R* for the rxn at a given T"""
+		"""returns the change in gibbs free energy *over R* 
+		for the rxn at a given T"""
 		deltaGOverR=0
 		for speciesName,order in self._p.items(): # add products
 			deltaGOverR += order* getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
@@ -160,7 +176,8 @@ class reaction(ctml_writer.reaction):
 		return deltaGOverR
 		
 	def getEquilibriumConstant(self,T):
-		"""returns the equilibrium constant at a given temperature:  Keq = exp(-DeltaG/RT) """
+		"""returns the equilibrium constant at a given temperature:  
+		Keq = exp(-DeltaG/RT) """
 		
 		#if not sum(self._p.values())==sum(self._rxnorder.values()): print "equilibrium constant calculation currently assumes forward and reverse reactions have same reaction order"
 		
@@ -172,7 +189,6 @@ class reaction(ctml_writer.reaction):
 		# the units are right, but it's not _uConc that you should be multiplying by
 		
 		return Kc
-		
 	
 	def getReactantNu(self):
 		"""Returns the stoichiometry in the forwards direction.
@@ -266,7 +282,7 @@ class FuelComponent():
 		
 		
 if __name__ == "__main__":
-	#reload(ctml_writer)
+	#reload(ctml)
 	import sys, os
 	if len(sys.argv)>1:
 		file = sys.argv[1]
