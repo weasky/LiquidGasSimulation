@@ -81,7 +81,6 @@ class NASA(ctml.NASA):
         return FreeEnergyOverRT*T
 
 
-
 class reaction(ctml.reaction):
     """A chemical reaction."""
 
@@ -116,16 +115,18 @@ class reaction(ctml.reaction):
         return reverseRateCoefficient
         
     def getForwardRate(self,T,concentrations):
-        """returns the forward rate of progress, given a temperature and a dictionary of species concentrations"""
+        """returns the forward rate of progress, 
+        given a temperature and a dictionary of species concentrations"""
         forwardRate=self.getForwardRateCoefficient(T)
         for speciesName,order in self._rxnorder.items():
         #   print "forwardRate*=concentrations[%s]**order = %s**%g"%(speciesName,concentrations[speciesName],order)
             forwardRate=forwardRate*concentrations[speciesName]**order
-        print "%s forward rate = %s"%(self._e,forwardRate.simplified)
+        print "%s forward rate = %s"%(self._e, forwardRate.simplified)
         return forwardRate
     
     def getReverseRate(self,T,concentrations):
-        """returns the reverse rate of progress, given a temperature and a dictionary of species concentrations"""
+        """returns the reverse rate of progress, 
+        given a temperature and a dictionary of species concentrations"""
         if not self.rev: return 0. # reaction not reversible
         reverseRate=self.getReverseRateCoefficient(T)
         for speciesName,order in self._p.items():
@@ -135,8 +136,10 @@ class reaction(ctml.reaction):
         return reverseRate
     
     def getNetRate(self,T,concentrations):
-        """returns the net rate of progress, given a temperature and a dictionary of species concentrations"""
-        return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
+        """returns the net rate of progress, 
+        given a temperature and a dictionary of species concentrations"""
+        return (self.getForwardRate(T,concentrations).simplified -
+                self.getReverseRate(T,concentrations).simplified)
 
     def getDeltaG(self,T):
         """
@@ -144,11 +147,11 @@ class reaction(ctml.reaction):
         """
         deltaGOverR=0
         for speciesName,order in self._p.items(): # add products
-            deltaGOverR += order* \
-            getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
+            deltaGOverR += (order * 
+                getSpeciesByName(speciesName).getGibbsFreeEnergy(T) )
         for speciesName,order in self._r.items(): # subtract reactants
-            deltaGOverR -= order* \
-            getSpeciesByName(speciesName).getGibbsFreeEnergy(T)     
+            deltaGOverR -= (order * 
+                getSpeciesByName(speciesName).getGibbsFreeEnergy(T) )
         return deltaGOverR
         
     def getEquilibriumConstant(self,T):
@@ -167,7 +170,6 @@ class reaction(ctml.reaction):
         # the units are right, but it's not _uConc that you should be multiplying by
         
         return Kc
-        
     
     def getReactantNu(self):
         """Returns the stoichiometry in the forwards direction.
@@ -196,7 +198,8 @@ class reaction(ctml.reaction):
         
         deltaNu= productNu - reactantNu
         uses self._deltaNu to cache the answer"""
-        if hasattr(self,'_deltaNu'): return self._deltaNu
+        if hasattr(self,'_deltaNu'): 
+            return self._deltaNu
         self._deltaNu=self.getProductNu()-self.getReactantNu()
         return self._deltaNu
 
@@ -221,10 +224,12 @@ def getNetRatesOfCreation(T,concs):
         rate=r.getNetRate(T,concs)
         for speciesName,order in r._p.items(): # create products
             nrocs[speciesName]+=rate
-            print "rate of creation of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
+            print "rate of creation of %s += %s. Now nroc=%s"%(speciesName,
+                rate.simplified*order,nrocs[speciesName])
         for speciesName,order in r._r.items(): # consume reactants
             nrocs[speciesName]-=rate
-            print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
+            print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,
+                rate.simplified*order,nrocs[speciesName])
     return nrocs # nrocs is a dictionary
 
     
