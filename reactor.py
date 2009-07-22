@@ -296,11 +296,13 @@ class Reactor:
         """Basically the same as getNetRatesOfCreation() but takes 
         an array and returns an array
         since the order should be the same, we don't check the
-        species' order in the dict  
+        species' order in the dict.
+        NOT TRUE! there's no ordering of a dictionaries values()
+        This is very unsafe.
         """
         concsDict = dict(zip(self.speciesIndex, self.concs))
         nrocsDict = getNetRatesOfCreation(self.T,concsDict)
-        nrocsArray = array(nrocsDict.values())
+        nrocsArray = array(nrocsDict.values()) # not safe. order can change
         return nrocsArray
 
     def advance(self, time):
