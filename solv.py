@@ -13,12 +13,14 @@
 # 
 # This will do something
 #
-# Richard West 2009 edited by Amrit (not really)
+# Richard West 2009 
 
 import math
 import pylab
 from scipy.integrate import odeint
 
+# get quantities package from http://pypi.python.org/pypi/quantities
+# read about it at http://packages.python.org/quantities/index.html
 import quantities as pq
 pq.UnitQuantity('kilocalories', pq.cal*1e3, symbol='kcal')
 pq.UnitQuantity('kilojoules', pq.J*1e3, symbol='kJ')
@@ -31,11 +33,8 @@ pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
 #from ctml_writer import *
 #import ctml_writer
 # then we can modify the ones we want to do more
-
 import ctml_writer as ctml
-
-
-
+from ctml_writer import units, OneAtm
 
 _uConc=pq.Quantity(1,ctml._umol) / pq.Quantity(1,ctml._ulen)**3
 _uTime=pq.Quantity(1,ctml._utime)
@@ -53,6 +52,7 @@ class ideal_gas(ctml.ideal_gas):
 
 class state(ctml.state):
     pass
+    
     
 class species(ctml.species):
     """ species derived from ctml_writer.species.
@@ -96,21 +96,19 @@ class NASA(ctml.NASA):
         EnthalpyOverRT=0.0
         EntropyOverR=0.0
         for i in range(5):
-            HeatCapacityOverR+= c[i] * T**i
-            EnthalpyOverRT+= c[i] * T**i / (i+1)
-        EnthalpyOverRT+=c[5]/T
+            HeatCapacityOverR += c[i] * T**i
+            EnthalpyOverRT += c[i] * T**i / (i+1)
+        EnthalpyOverRT += c[5] / T
         EntropyOverR = ( c[0]*math.log(T) + c[1]*T + c[2]*T*T/2 +
                             c[3]*T*T*T/3 + c[4]*T*T*T*T/4 + c[6] )
         return(HeatCapacityOverR,EnthalpyOverRT,EntropyOverR)
         
     def getGibbsFreeEnergy(self,T):
         """getGibbsFreeEnergy(T) returns  FreeEnergyOverR at temperature T"""
-        (HeatCapacityOverR,EnthalpyOverRT,EntropyOverR)=self.getThermo(T)
-        FreeEnergyOverRT=EnthalpyOverRT-EntropyOverR
+        (HeatCapacityOverR,EnthalpyOverRT,EntropyOverR) = self.getThermo(T)
+        FreeEnergyOverRT = EnthalpyOverRT - EntropyOverR
         return FreeEnergyOverRT*T
         
-
-
 
 
 # Classes should be named with CamelCase but need to stick with Cantera .ctml convention, hence lowercase:
@@ -227,12 +225,16 @@ def getSpeciesByName(name):
         if s._name==name:
             return s
     return None
+
 def ArrayFromDict(inDict):
-    """Turn a dictionary  (of concentrations, rates, etc.) into an array.
+    """Turn a dictionary  (of concentrations, rates, etc.) into an array AND UNITS.
+
     Gets names (in order) from _speciesnames"""
     outArray = pylab.array([inDict[s] for s in _speciesnames])
-    # not sure what this was about to do: sum(inDict)
+    # possibly not the fastest way to do it..self.
+    units = sum(outArray) / sum(inDict.values()) 
     return outArray, units
+    
 def DictFromArray(inArray):
     """Turns an array (of concentrations, rates, etc.) into a dictionary.
     Gets names (in order) from _speciesnames"""
@@ -259,27 +261,32 @@ def getNetRatesOfCreation(T,concs):
     return nrocs # nrocs is a dictionary
 
 def RightSideOfODE(concsArray, time, T):
-    """Get the net rate of creation of all the species at a concentration and T.
+    """Get the net rate of creation of all species at a concentration and T.
     
-    Basically the same as getNetRatesOfCreation() but takes an array and returns an array"""
+    Basically the same as getNetRatesOfCreation() 
+    but takes an array and returns an array"""
     concsDict = DictFromArray(concsArray)
     nrocsDict = getNetRatesOfCreation(T,concsDict)
-    nrocsArray = ArrayFromDict(nrocsDict) # return an array
+    nrocsArray, units = ArrayFromDict(nrocsDict) # return an array
     return nrocsArray
 
         
 class FuelComponent():
-    """Shouldn't really be part of the solv package. specific to the fuel model."""
+    """Shouldn't really be part of the solv package. 
+    specific to the fuel model."""
     def __str__(self):
         return "<Species %s>"%(self.name)
-    def __init__(self,name="",initialVolFraction=0,composition=dict(C=0,H=0,O=0),Antoine=dict(A=0,B=0,C=0),liquidMolarDensity=3500 ):
+    def __init__(self, name="",
+            initialVolFraction=0,
+            composition=dict(C=0,H=0,O=0), 
+            Antoine=dict(A=0,B=0,C=0),
+            liquidMolarDensity=3500 ):
         self.name=name
         self.initialVolFraction=initialVolFraction
         self.composition=composition
         self.Antoine=Antoine
         self.liquidMolarDensity=liquidMolarDensity * pq.mol / pq.m**3  # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
-        
         
 if __name__ == "__main__":
     #reload(ctml)
@@ -291,7 +298,7 @@ if __name__ == "__main__":
         file = 'chem.cti' # default input file
     base = os.path.basename(file)
     root, ext = os.path.splitext(base)
-    dataset(root)
+    ctml.dataset(root)
     if not _species:
         execfile(file)
     
@@ -322,7 +329,7 @@ if __name__ == "__main__":
     
     timesteps=pylab.linspace(start,stop,steps)
     
-    concsArray=ArrayFromDict(concs)
+    concsArray,units = ArrayFromDict(concs)
     charray = odeint(RightSideOfODE,concsArray,timesteps,args=(T,))
 
 #   timestep=1e-6 * pq.s #seconds
