@@ -140,29 +140,29 @@ class reaction(ctml.reaction):
         print "%s reverse k = %s"%(self._e,reverseRateCoefficient)
         return reverseRateCoefficient
         
-    def getForwardRate(self,T,concentrations):
-        """returns the forward rate of progress, 
-        given a temperature and a dictionary of species concentrations"""
-        forwardRate=self.getForwardRateCoefficient(T)
-        for speciesName,order in self._rxnorder.items():
-        #   print "forwardRate*=concentrations[%s]**order = %s**%g"%(speciesName,concentrations[speciesName],order)
-            forwardRate=forwardRate*concentrations[speciesName]**order
-        print "%s forward rate = %s"%(self._e,forwardRate.simplified)
-        return forwardRate
-    
-    def getReverseRate(self,T,concentrations):
-        """returns the reverse rate of progress, given a temperature and a dictionary of species concentrations"""
-        if not self.rev: return 0*_uConc/pq.s # reaction not reversible
-        reverseRate=self.getReverseRateCoefficient(T)
-        for speciesName,order in self._p.items():
-            #print "[%s]**%d=%s**%d"%(speciesName,order,concentrations[speciesName],order)
-            reverseRate=reverseRate*concentrations[speciesName]**order
-        print "%s reverse rate = %s"%(self._e,reverseRate.simplified)
-        return reverseRate
-    
-    def getNetRate(self,T,concentrations):
-        """returns the net rate of progress, given a temperature and a dictionary of species concentrations"""
-        return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
+#    def getForwardRate(self,T,concentrations):
+#        """returns the forward rate of progress, 
+#        given a temperature and a dictionary of species concentrations"""
+#        forwardRate=self.getForwardRateCoefficient(T)
+#        for speciesName,order in self._rxnorder.items():
+#        #   print "forwardRate*=concentrations[%s]**order = %s**%g"%(speciesName,concentrations[speciesName],order)
+#            forwardRate=forwardRate*concentrations[speciesName]**order
+#        print "%s forward rate = %s"%(self._e,forwardRate.simplified)
+#        return forwardRate
+#    
+#    def getReverseRate(self,T,concentrations):
+#        """returns the reverse rate of progress, given a temperature and a dictionary of species concentrations"""
+#        if not self.rev: return 0*_uConc/pq.s # reaction not reversible
+#        reverseRate=self.getReverseRateCoefficient(T)
+#        for speciesName,order in self._p.items():
+#            #print "[%s]**%d=%s**%d"%(speciesName,order,concentrations[speciesName],order)
+#            reverseRate=reverseRate*concentrations[speciesName]**order
+#        print "%s reverse rate = %s"%(self._e,reverseRate.simplified)
+#        return reverseRate
+#    
+#    def getNetRate(self,T,concentrations):
+#        """returns the net rate of progress, given a temperature and a dictionary of species concentrations"""
+#        return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
 
     def getDeltaG(self,T):
         """returns the change in gibbs free energy *over R* 
