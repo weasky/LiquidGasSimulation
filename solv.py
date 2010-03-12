@@ -117,10 +117,11 @@ class reaction(ctml.reaction):
     """A chemical reaction."""
     
     def getForwardRateCoefficient(self,T):
-        """returns the forward rate coefficient at a given temperature assuming 
-        kf = [A, n, E] and kf=A (T/1K)^n exp(-E/RT)"""
-        kf=self._kf
+        """Get the forward rate coefficient at a given temperature 
         
+        assuming kf = [A, n, E] and kf=A (T/1K)^n exp(-E/RT)"""
+        
+        kf=self._kf
         forwardRateCoefficient=kf[0] / _uConc**(self.getReactantNu()-1) / _uTime
         if kf[1]:
             forwardRateCoefficient *= T**kf[1]
@@ -132,9 +133,10 @@ class reaction(ctml.reaction):
         return forwardRateCoefficient
         
     def getReverseRateCoefficient(self,T):
-        """returns the reverse rate coefficient at a given temperature"""
-        if not self.rev: return 0
- # reaction not reversible
+        """Get the reverse rate coefficient at a given temperature"""
+        if not self.rev: 
+            print "%s is irreversible"%(self._e)
+            return 0
         forwardRateCoefficient=self.getForwardRateCoefficient(T)
         reverseRateCoefficient=forwardRateCoefficient/self.getEquilibriumConstant(T)
         print "%s reverse k = %s"%(self._e,reverseRateCoefficient)
@@ -164,9 +166,8 @@ class reaction(ctml.reaction):
 #        """returns the net rate of progress, given a temperature and a dictionary of species concentrations"""
 #        return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
 
-    def getDeltaG(self,T):
-        """returns the change in gibbs free energy *over R* 
-        for the rxn at a given T"""
+    def getDeltaGoverR(self,T):
+        """Get the change in Gibbs free energy *over R* at a given T"""
         deltaGOverR=0
         for speciesName,order in self._p.items(): # add products
             deltaGOverR += order* getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
@@ -180,7 +181,7 @@ class reaction(ctml.reaction):
         
         #if not sum(self._p.values())==sum(self._rxnorder.values()): print "equilibrium constant calculation currently assumes forward and reverse reactions have same reaction order"
         
-        dGoverR=self.getDeltaG(T) # returns delta G over R
+        dGoverR=self.getDeltaGoverR(T) # returns delta G over R
         Keq= math.exp(-dGoverR/T) 
         
         Kc=Keq * _uConc ** self.getDeltaNu()
