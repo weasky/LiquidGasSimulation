@@ -144,30 +144,6 @@ class reaction(ctml.reaction):
         print "%s reverse k = %s"%(self._e,reverseRateCoefficient)
         return reverseRateCoefficient
         
-#    def getForwardRate(self,T,concentrations):
-#        """returns the forward rate of progress, 
-#        given a temperature and a dictionary of species concentrations"""
-#        forwardRate=self.getForwardRateCoefficient(T)
-#        for speciesName,order in self._rxnorder.items():
-#        #   print "forwardRate*=concentrations[%s]**order = %s**%g"%(speciesName,concentrations[speciesName],order)
-#            forwardRate=forwardRate*concentrations[speciesName]**order
-#        print "%s forward rate = %s"%(self._e,forwardRate.simplified)
-#        return forwardRate
-#    
-#    def getReverseRate(self,T,concentrations):
-#        """returns the reverse rate of progress, given a temperature and a dictionary of species concentrations"""
-#        if not self.rev: return 0*_uConc/pq.s # reaction not reversible
-#        reverseRate=self.getReverseRateCoefficient(T)
-#        for speciesName,order in self._p.items():
-#            #print "[%s]**%d=%s**%d"%(speciesName,order,concentrations[speciesName],order)
-#            reverseRate=reverseRate*concentrations[speciesName]**order
-#        print "%s reverse rate = %s"%(self._e,reverseRate.simplified)
-#        return reverseRate
-#    
-#    def getNetRate(self,T,concentrations):
-#        """returns the net rate of progress, given a temperature and a dictionary of species concentrations"""
-#        return self.getForwardRate(T,concentrations).simplified - self.getReverseRate(T,concentrations).simplified
-
     def getDeltaGoverR(self,T):
         """Get the change in Gibbs free energy *over R* at a given T"""
         deltaGOverR=0
@@ -304,35 +280,7 @@ def DictFromArray(inArray, units=None):
             value = pq.Quantity(value,units)
         outDict[speciesName] = value
     return outDict
-    
-def getNetRatesOfCreation(T,concs):
-    """Get the net rate of creation of all the species at a given T and concentration.
-    
-    Returns a dictionary. Expects a dictionary."""
-    nrocs=dict.fromkeys(_speciesnames)
-    for speciesName in _speciesnames:
-        nrocs[speciesName]=pq.Quantity(0.0,'mol/m**3/s')
-    for r in _reactions:
-        rate=r.getNetRate(T,concs)
-        for speciesName,order in r._p.items(): # create products
-            nrocs[speciesName]+=rate.simplified*order
-            print "rate of creation of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
-        for speciesName,order in r._r.items(): # consume reactants
-            nrocs[speciesName]-=rate.simplified*order
-            print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
-    return nrocs # nrocs is a dictionary
-    
 
-#
-#def RightSideOfODE(concsArray, time, T):
-#    """Get the net rate of creation of all species at a concentration and T.
-#     
-#    Basically the same as getNetRatesOfCreation() 
-#    but takes an array and returns an array"""
-#    concsDict = DictFromArray(concsArray)
-#    nrocsDict = getNetRatesOfCreation(T,concsDict)
-#    nrocsArray, units = ArrayFromDict(nrocsDict) # return an array
-#    return nrocsArray
 
         
 class FuelComponent():
@@ -414,16 +362,6 @@ if __name__ == "__main__":
         return net_rates_of_creation
     
     concentration_history_array = odeint(RightSideOfODE,concentrations,timesteps)
-
-#   timestep=1e-6 * pq.s #seconds
-#   concsHistory=[[concs[spn].copy() for spn in _speciesnames]]
-#   for t in range(5):
-#       nrocs=getNetRatesOfCreation(T,concs)
-#       for speciesName,nroc in nrocs.items(): 
-#           concs[speciesName]+=nroc*timestep  # Simple Euler
-#       concsHistory.append([concs[spn].copy() for spn in _speciesnames])
-#       
-#   charray=pylab.array(concsHistory)
     
     pylab.semilogy(timesteps,concentration_history_array)
     pylab.show()
