@@ -16,7 +16,7 @@
 # Richard West 2009 
 
 import math
-import pylab
+import pylab, numpy
 from scipy.integrate import odeint
 
 # get quantities package from http://pypi.python.org/pypi/quantities
@@ -42,6 +42,7 @@ _uTime=pq.Quantity(1,ctml._utime)
 _species=ctml._species
 _reactions=ctml._reactions
 _speciesnames=ctml._speciesnames
+
 
 class outsideValidRangeError(Exception):
     """was not within valid range for expression"""
@@ -189,7 +190,7 @@ class reaction(ctml.reaction):
         return Kc
     
     def getReactantNu(self):
-        """Returns the stoichiometry in the forwards direction.
+        """Get the stoichiometry in the forwards direction.
         
         i.e. the number of reactant molecules.
         uses self._reactantNu to cache the answer"""
@@ -200,7 +201,7 @@ class reaction(ctml.reaction):
         self._reactantNu=reactantNu
         return reactantNu
     def getProductNu(self):
-        """Returns the stoichiometry in the reverse direction. 
+        """Get the stoichiometry in the reverse direction. 
         
         i.e. the number of product molecules.
         uses self._productNu to cache the answer"""
@@ -211,14 +212,48 @@ class reaction(ctml.reaction):
         self._productNu=productNu
         return productNu
     def getDeltaNu(self):
-        """Returns the change in stoichiometry of the reaction, delta Nu.
+        """Get the change in stoichiometry of the reaction, delta Nu.
         
         deltaNu= productNu - reactantNu
         uses self._deltaNu to cache the answer"""
         if hasattr(self,'_deltaNu'): return self._deltaNu
         self._deltaNu=self.getProductNu()-self.getReactantNu()
         return self._deltaNu
-
+        
+    def getStoichiometryReactantsRow(self):
+        """Get the stoichiometry of each species as a reactant"""
+        row = numpy.zeros(len(_species))
+        for species_name,order in self._r.items(): 
+            row[_speciesnames.index(species_name)] = order
+        return row
+    def getStoichiometryProductsRow(self):
+        """Get the stoichiometry of each species as a product"""
+        row = numpy.zeros(len(_species))
+        for species_name,order in self._p.items(): 
+            row[_speciesnames.index(species_name)] = order
+        return row
+    def getStoichiometryNetRow(self):
+        """Get the net stoichiometry of each species (products - reactants)"""
+        row = self.getStoichiometryProductsRow() - self.getStoichiometryReactantsRow()
+        return row
+        
+def getStoichiometryArrays():
+    stoich_reactants = numpy.zeros((len(_reactions),len(_species)))
+    stoich_products = numpy.zeros_like(stoich_reactants)
+    stoich_net = numpy.zeros_like(stoich_reactants)
+    
+    for rn, r in enumerate(_reactions):
+        stoich_reactants[rn] = r.getStoichiometryReactantsRow()
+        stoich_products[rn] = r.getStoichiometryProductsRow()
+        stoich_net[rn] = r.getStoichiometryNetRow()
+    return stoich_reactants,stoich_products,stoich_net
+    
+def getForwardRateCoefficientsVector(T):
+    forward_rate_coefficients = numpy.zeros(len(_reactions))
+    for rn, r in enumerate(_reactions):
+        forward_rate_coefficients[rn] = r.getForwardRateCoefficient(T).simplified
+    return forward_rate_coefficients
+        
 def getSpeciesByName(name):
     """Select a species by its name."""
     for s in _species:
@@ -237,6 +272,7 @@ def ArrayFromDict(inDict):
     
 def DictFromArray(inArray):
     """Turns an array (of concentrations, rates, etc.) into a dictionary.
+    
     Gets names (in order) from _speciesnames"""
     outDict = dict.fromkeys(_speciesnames)
     for i,speciesName in enumerate(_speciesnames):
@@ -259,10 +295,12 @@ def getNetRatesOfCreation(T,concs):
             nrocs[speciesName]-=rate.simplified*order
             print "rate of consumption of %s += %s. Now nroc=%s"%(speciesName,rate.simplified*order,nrocs[speciesName])
     return nrocs # nrocs is a dictionary
+    
+
 
 def RightSideOfODE(concsArray, time, T):
     """Get the net rate of creation of all species at a concentration and T.
-    
+     
     Basically the same as getNetRatesOfCreation() 
     but takes an array and returns an array"""
     concsDict = DictFromArray(concsArray)
@@ -330,6 +368,17 @@ if __name__ == "__main__":
     timesteps=pylab.linspace(start,stop,steps)
     
     concsArray,units = ArrayFromDict(concs)
+    
+    (stoich_reactants,stoich_products,stoich_net) = getStoichiometryArrays()
+    print stoich_reactants
+    print stoich_products
+    print stoich_net
+    
+    forward_rate_coefficients  = getForwardRateCoefficientsVector(T)
+    print forward_rate_coefficients
+    
+    
+    
     charray = odeint(RightSideOfODE,concsArray,timesteps,args=(T,))
 
 #   timestep=1e-6 * pq.s #seconds
