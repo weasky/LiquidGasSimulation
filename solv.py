@@ -217,6 +217,23 @@ class reaction(ctml.reaction):
         row = self.getStoichiometryProductsRow() - self.getStoichiometryReactantsRow()
         return row
         
+class FuelComponent():
+    """Shouldn't really be part of the solv package. 
+    specific to the fuel model."""
+    def __str__(self):
+        return "<Species %s>"%(self.name)
+    def __init__(self, name="",
+            initialVolFraction=0,
+            composition=dict(C=0,H=0,O=0), 
+            Antoine=dict(A=0,B=0,C=0),
+            liquidMolarDensity=3500 ):
+        self.name=name
+        self.initialVolFraction=initialVolFraction
+        self.composition=composition
+        self.Antoine=Antoine
+        self.liquidMolarDensity=liquidMolarDensity * pq.mol / pq.m**3  # mol/m3
+        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
+        
         
 ## Functions with a global scope:
 # TODO: put these in a class?
@@ -282,23 +299,6 @@ def DictFromArray(inArray, units=None):
     return outDict
 
 
-        
-class FuelComponent():
-    """Shouldn't really be part of the solv package. 
-    specific to the fuel model."""
-    def __str__(self):
-        return "<Species %s>"%(self.name)
-    def __init__(self, name="",
-            initialVolFraction=0,
-            composition=dict(C=0,H=0,O=0), 
-            Antoine=dict(A=0,B=0,C=0),
-            liquidMolarDensity=3500 ):
-        self.name=name
-        self.initialVolFraction=initialVolFraction
-        self.composition=composition
-        self.Antoine=Antoine
-        self.liquidMolarDensity=liquidMolarDensity * pq.mol / pq.m**3  # mol/m3
-        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
         
 if __name__ == "__main__":
     #reload(ctml)
