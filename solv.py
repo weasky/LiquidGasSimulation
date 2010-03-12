@@ -111,7 +111,6 @@ class NASA(ctml.NASA):
         return FreeEnergyOverRT*T
         
 
-
 # Classes should be named with CamelCase but need to stick with Cantera .ctml convention, hence lowercase:
 class reaction(ctml.reaction):
     """A chemical reaction."""
@@ -131,6 +130,7 @@ class reaction(ctml.reaction):
         Ea = pq.Quantity(kf[2],ctml._ue)
         Temp = pq.Quantity(T,'K')
         forwardRateCoefficient*=math.exp(-Ea/(R*Temp))
+        # TODO: this is where we should correct for diffusion limit (though it may depend on reverse also!)
         print "%s forward k = %s"%(self._e,forwardRateCoefficient)
         return forwardRateCoefficient
         
@@ -138,7 +138,7 @@ class reaction(ctml.reaction):
         """Get the reverse rate coefficient at a given temperature"""
         if not self.rev: 
             print "%s is irreversible"%(self._e)
-            return 0
+            return pq.Quantity(0,"")
         forwardRateCoefficient=self.getForwardRateCoefficient(T)
         reverseRateCoefficient=forwardRateCoefficient/self.getEquilibriumConstant(T)
         print "%s reverse k = %s"%(self._e,reverseRateCoefficient)
@@ -181,14 +181,15 @@ class reaction(ctml.reaction):
         """returns the equilibrium constant at a given temperature:  
         Keq = exp(-DeltaG/RT) """
         
-        #if not sum(self._p.values())==sum(self._rxnorder.values()): print "equilibrium constant calculation currently assumes forward and reverse reactions have same reaction order"
+        #if not sum(self._p.values())==sum(self._rxnorder.values()):
+        #    print "getEquilibriumConstant currently assumes forward and reverse reactions have same reaction order"
         
-        dGoverR=self.getDeltaGoverR(T) # returns delta G over R
+        dGoverR=self.getDeltaGoverR(T)
         Keq= math.exp(-dGoverR/T) 
         
         Kc=Keq * _uConc ** self.getDeltaNu()
-        if self.getDeltaNu(): print "this is wrong. Kc should not equal %s"%Kc
-        # the units are right, but it's not _uConc that you should be multiplying by
+        if self.getDeltaNu(): print "Warning: assuming standard state and real concentrations equal" # or something like that!
+        # TODO: the units are right, but it's not _uConc that you should be multiplying by
         
         return Kc
     
@@ -199,18 +200,18 @@ class reaction(ctml.reaction):
         uses self._reactantNu to cache the answer"""
         if hasattr(self,'_reactantNu'): return self._reactantNu
         reactantNu=0
-        for speciesName,order in self._r.items(): # add reactants
+        for speciesName,order in self._r.items(): 
             reactantNu += order
         self._reactantNu=reactantNu
         return reactantNu
     def getProductNu(self):
-        """Get the stoichiometry in the reverse direction. 
+        """Get the stoichiometry in the reverse direction.
         
         i.e. the number of product molecules.
         uses self._productNu to cache the answer"""
         if hasattr(self,'_productNu'): return self._productNu
         productNu=0
-        for speciesName,order in self._p.items(): # add products
+        for speciesName,order in self._p.items():
             productNu += order
         self._productNu=productNu
         return productNu
@@ -240,7 +241,16 @@ class reaction(ctml.reaction):
         row = self.getStoichiometryProductsRow() - self.getStoichiometryReactantsRow()
         return row
         
+        
+## Functions with a global scope:
+# TODO: put these in a class?
 def getStoichiometryArrays():
+    """
+    Get arrays of stoichiometric coefficients for reactants, products, and net change.
+    
+    Returns three arrays: stoich_reactants, stoich_products, stoich_net
+    These each have the size (Nreactions x Nspecies)
+    """
     stoich_reactants = numpy.zeros((len(_reactions),len(_species)))
     stoich_products = numpy.zeros_like(stoich_reactants)
     stoich_net = numpy.zeros_like(stoich_reactants)
@@ -252,11 +262,19 @@ def getStoichiometryArrays():
     return stoich_reactants,stoich_products,stoich_net
     
 def getForwardRateCoefficientsVector(T):
+    """Get the vector of forward rate coefficients."""
     forward_rate_coefficients = numpy.zeros(len(_reactions))
     for rn, r in enumerate(_reactions):
         forward_rate_coefficients[rn] = r.getForwardRateCoefficient(T).simplified
     return forward_rate_coefficients
         
+def getReverseRateCoefficientsVector(T):
+    """Get the vector of reverse rate coefficients."""
+    reverse_rate_coefficients = numpy.zeros(len(_reactions))
+    for rn, r in enumerate(_reactions):
+        reverse_rate_coefficients[rn] = r.getReverseRateCoefficient(T).simplified
+    return reverse_rate_coefficients
+    
 def getSpeciesByName(name):
     """Select a species by its name."""
     for s in _species:
@@ -348,6 +366,7 @@ if __name__ == "__main__":
     if not _species:
         execfile(file)
     
+    # set up the concentrations
     fuel=[
         FuelComponent('n-undecane(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
         FuelComponent('n-tridecane(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
@@ -357,34 +376,34 @@ if __name__ == "__main__":
         FuelComponent('n-nonadecane(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
         FuelComponent('n-heneicosane(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
     ]
-
     concs=dict.fromkeys(_speciesnames)
     for speciesName in _speciesnames:
         concs[speciesName]=pq.Quantity(0.0,'mol/m**3')
-        
     for component in fuel:
         concs[component.name]=component.initialConcentration # mol/m3
-    
     concs['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
+    
+    concentrations,units = ArrayFromDict(concs)
+    print "concentrations:", concentrations, units
+    
+    # set up timesteps
+    start=0
+    stop=100
+    steps=1000
+    timesteps=pylab.linspace(start,stop,steps)
     
     T=430 # kelvin
     
-    start=0
-    stop=10
-    steps=1000
-    
-    timesteps=pylab.linspace(start,stop,steps)
-    
-    concsArray,units = ArrayFromDict(concs)
-    
     (stoich_reactants,stoich_products,stoich_net) = getStoichiometryArrays()
-    print stoich_reactants
-    print stoich_products
-    print stoich_net
+    print "stoich_reactants", stoich_reactants
+    print "stoich_products", stoich_products
+    print "stoich_net", stoich_net
     
     forward_rate_coefficients  = getForwardRateCoefficientsVector(T)
-    print forward_rate_coefficients
-    
+    print "forward_rate_coefficients", forward_rate_coefficients
+    reverse_rate_coefficients  = getReverseRateCoefficientsVector(T)
+    print "reverse_rate_coefficients", reverse_rate_coefficients
+   # log_concentrations = numpy.log10([c for c in concentrations])
     
     def RightSideOfODE(concentrations, time):
         """Get the net rate of creation of all species at a concentration and T."""
