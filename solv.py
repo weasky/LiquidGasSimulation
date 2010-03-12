@@ -266,20 +266,25 @@ def getSpeciesByName(name):
 
 def ArrayFromDict(inDict):
     """Turn a dictionary  (of concentrations, rates, etc.) into an array AND UNITS.
-
-    Gets names (in order) from _speciesnames"""
-    outArray = pylab.array([inDict[s] for s in _speciesnames])
+    
+    Gets names (in order) from _speciesnames.
+    Returns an array, and a quantities object with the units."""
+    outArray = pylab.array([inDict[s].simplified for s in _speciesnames])
     # possibly not the fastest way to do it..self.
-    units = sum(outArray) / sum(inDict.values()) 
+    units = sum(inDict.values()) / sum(outArray)
     return outArray, units
     
-def DictFromArray(inArray):
+def DictFromArray(inArray, units=None):
     """Turns an array (of concentrations, rates, etc.) into a dictionary.
     
     Gets names (in order) from _speciesnames"""
+
     outDict = dict.fromkeys(_speciesnames)
     for i,speciesName in enumerate(_speciesnames):
-        outDict[speciesName] = inArray[i]
+        value = inArray[i]
+        if units:
+            value = pq.Quantity(value,units)
+        outDict[speciesName] = value
     return outDict
     
 def getNetRatesOfCreation(T,concs):
