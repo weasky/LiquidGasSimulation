@@ -125,10 +125,12 @@ class reaction(ctml.reaction):
         forwardRateCoefficient=kf[0] / _uConc**(self.getReactantNu()-1) / _uTime
         if kf[1]:
             forwardRateCoefficient *= T**kf[1]
-        assert ctml._ue=='kcal/mol', 'unit conversion not implemented'
-        R=0.0019872065 # kcal/mol/K
+        #assert ctml._ue=='kcal/mol', 'unit conversion not implemented'
+        #R=0.0019872065 # kcal/mol/K
         R=pq.constants.R 
-        forwardRateCoefficient*=math.exp(-kf[2]/(R*T))
+        Ea = pq.Quantity(kf[2],ctml._ue)
+        Temp = pq.Quantity(T,'K')
+        forwardRateCoefficient*=math.exp(-Ea/(R*Temp))
         print "%s forward k = %s"%(self._e,forwardRateCoefficient)
         return forwardRateCoefficient
         
