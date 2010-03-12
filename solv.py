@@ -305,16 +305,16 @@ def getNetRatesOfCreation(T,concs):
     return nrocs # nrocs is a dictionary
     
 
-
-def RightSideOfODE(concsArray, time, T):
-    """Get the net rate of creation of all species at a concentration and T.
-     
-    Basically the same as getNetRatesOfCreation() 
-    but takes an array and returns an array"""
-    concsDict = DictFromArray(concsArray)
-    nrocsDict = getNetRatesOfCreation(T,concsDict)
-    nrocsArray, units = ArrayFromDict(nrocsDict) # return an array
-    return nrocsArray
+#
+#def RightSideOfODE(concsArray, time, T):
+#    """Get the net rate of creation of all species at a concentration and T.
+#     
+#    Basically the same as getNetRatesOfCreation() 
+#    but takes an array and returns an array"""
+#    concsDict = DictFromArray(concsArray)
+#    nrocsDict = getNetRatesOfCreation(T,concsDict)
+#    nrocsArray, units = ArrayFromDict(nrocsDict) # return an array
+#    return nrocsArray
 
         
 class FuelComponent():
@@ -386,8 +386,15 @@ if __name__ == "__main__":
     print forward_rate_coefficients
     
     
+    def RightSideOfODE(concentrations, time):
+        """Get the net rate of creation of all species at a concentration and T."""
+        forward_rates = forward_rate_coefficients*(concentrations**stoich_reactants).prod(1)
+        reverse_rates = reverse_rate_coefficients*(concentrations**stoich_products).prod(1)
+        net_rates = forward_rates - reverse_rates
+        net_rates_of_creation = numpy.dot(net_rates.T, stoich_net)
+        return net_rates_of_creation
     
-    charray = odeint(RightSideOfODE,concsArray,timesteps,args=(T,))
+    concentration_history_array = odeint(RightSideOfODE,concentrations,timesteps)
 
 #   timestep=1e-6 * pq.s #seconds
 #   concsHistory=[[concs[spn].copy() for spn in _speciesnames]]
@@ -399,7 +406,8 @@ if __name__ == "__main__":
 #       
 #   charray=pylab.array(concsHistory)
     
-    pylab.semilogy(charray)
+    pylab.semilogy(timesteps,concentration_history_array)
     pylab.show()
+    pylab.legend(_speciesnames)
     
 
