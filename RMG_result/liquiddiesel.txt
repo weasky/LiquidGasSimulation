@@ -1,0 +1,194 @@
+// Liquid diesel autoxidation
+
+Database: RMG_database
+
+//MaxCarbonNumberPerSpecies: 10
+//MaxOxygenNumberPerSpecies: 4
+MaxRadicalNumberPerSpecies: 3
+
+PrimaryThermoLibrary:
+Name: Default_H_H2
+Location: primaryThermoLibrary
+END
+
+ReadRestart: no 
+WriteRestart: yes 
+
+TemperatureModel: Constant (K) 423
+
+// is really a liquid at about 1 atm
+PressureModel: Constant (atm) 135
+
+// Setting this to Liquid prevents it correcting the initial concentrations to match ideal gas law
+// EquationOfState: Liquid
+
+InChIGeneration: off
+
+Solvation: on
+
+// species option: ConstantConcentration -- will hold concentration fixed throughout the simulation
+
+InitialStatus:
+(1) O2 1E-5 (mol/cm3) ConstantConcentration
+1 O 0 {2,D}
+2 O 0 {1,D}
+
+(2) n-C11 1e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S} {3,S}
+3  C 0 {2,S} {4,S}
+4  C 0 {3,S} {5,S}
+5  C 0 {4,S} {6,S}
+6  C 0 {5,S} {7,S}
+7  C 0 {6,S} {8,S}
+8  C 0 {7,S} {9,S}
+9  C 0 {8,S} {10,S}
+10 C 0 {9,S} {11,S}
+11 C 0 {10,S}
+
+(3) n-C13 4e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S}
+
+(4) M-naphthalene 2e-3 (mol/cm3)
+1  C 0 {2,B}  {10,B} {11,S}
+2  C 0 {1,B}  {3,B} 
+3  C 0 {2,B}  {4,B}
+4  C 0 {3,B}  {5,B}
+5  C 0 {4,B}  {6,B}  {10,B}
+6  C 0 {5,B}  {7,B}
+7  C 0 {6,B}  {8,B}
+8  C 0 {7,B}  {9,B}
+9  C 0 {8,B}  {10,B}
+10 C 0 {9,B}  {5,B}  {1,B}
+11 C 0 {1,S}
+
+(5) n-C16 5e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S}
+
+(6) C10benzene 5e-3 (mol/cm3)
+1  C 0 {2,B}  {6,B}  {7,S}
+2  C 0 {1,B}  {3,B}
+3  C 0 {2,B}  {4,B}
+4  C 0 {3,B}  {5,B}
+5  C 0 {4,B}  {6,B}
+6  C 0 {5,B}  {1,B}
+7  C 0 {1,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S}
+
+(7) n-C19 4e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S} {17,S}
+17 C 0 {16,S} {18,S}
+18 C 0 {17,S} {19,S}
+19 C 0 {18,S}
+
+(8) n-C21 2e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S} {17,S}
+17 C 0 {16,S} {18,S}
+18 C 0 {17,S} {19,S}
+19 C 0 {18,S} {20,S}
+20 C 0 {19,S} {21,S}
+21 C 0 {20,S}
+
+END
+
+InertGas:
+N2 0.0 (mol/cm3)
+Ar 0.0 (mol/cm3)
+END
+
+SpectroscopicDataEstimator: off
+PressureDependence: off
+//PDepKineticsModel: rate
+
+FinishController:
+(1) Goal ReactionTime 4.0 (hour)
+(2) Error Tolerance: 0.0001
+
+DynamicSimulator: DASSL
+//Conversions: AUTO
+// The units for TimeStep are hard-coded into RMG as seconds
+TimeStep: 1 5 10 60 300 600 900 1200 2400 3600 7200 10800 
+Atol: 1e-20
+Rtol: 1e-8
+
+PrimaryReactionLibrary:
+//Name: Glarborg_C3
+//Location: RMG_database/SeedMechanisms/Glarborg/C3
+END
+
+SeedMechanism:
+//Name: Glarborg_C1_light
+//Location: RMG_database/SeedMechanisms/Glarborg/C1_light
+//GenerateReactions: yes
+END
+
+ChemkinUnits:
+Verbose: on
+//SMILES: on/off
+A: moles
+Ea: kcal/mol
