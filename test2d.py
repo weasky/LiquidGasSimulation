@@ -113,7 +113,6 @@ for ii in xrange(ny):
             C=[187.7,174.22,195.002,154.45,199.5736,137.6,120.1])
     dieselSet[ii].update()
 
-
 #
 timeStepDuration = 0.9*dx**2/(2*average(Dvi))*10
 steps=20000
@@ -121,6 +120,7 @@ dryPosition = ny
 for ii in range(diesel.nSpecies):
     evapDensity[ii] = rhovi[ii]*ones(ny)
 #write vapor grid file, plot3D
+os.path.isdir('data') or os.makedirs('data') # create the data directory if it doesn't exist
 f = open('./data/grid.dat','w')
 #number of grid
 f.write("2\n")
@@ -210,9 +210,11 @@ for step in range(steps):
         f4.close()
 
     if(dryPosition == 0):
+        # all faces are dry
         facesDry = facesBotRight
     elif (dryPosition > 0):
         if (h[dryPosition-1]/t<=0.01):
+            # one more cell has dried up
             dryPosition -=1
     else:
         raise("error")
