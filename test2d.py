@@ -180,10 +180,10 @@ for step in range(steps):
     liquidConc= zeros([ny,diesel.nSpecies])
     liquidMolFrac = zeros([ny,diesel.nSpecies+2])
     for cell in range(dryPosition):
-        dieselSet[cell].evapFlux = evapFlux[:,cell]
+        dieselSet[cell].setEvapFlux(evapFlux[:,cell])
         dieselSet[cell].advance(dtEvap)
         h[cell]= dieselSet[cell].h
-        evapDensity[:,cell] = dieselSet[cell].vaporDens()
+        evapDensity[:,cell] = dieselSet[cell].getVaporDens()
         liquidConc[cell,:]=dieselSet[cell].concs
         liquidMolFrac[cell,0:diesel.nSpecies]=dieselSet[cell].molFrac
         liquidMolFrac[cell,diesel.nSpecies:]=dieselSet[cell].airMolFrac

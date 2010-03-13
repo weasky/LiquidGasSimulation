@@ -50,6 +50,11 @@ class LiquidFilmCell:
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
 
+    def setEvapFlux(self, evapFlux):
+        """Set the flux of species evaporating."""
+        assert evapFlux.size==self.nSpecies, "Expected an array of size self.nSpecies=%d"%self.nSpecies
+        self.evapFlux = evapFlux
+        
     def setCHO(self, nC, nH, nO):
         """ set the number of atoms for each species"""
         if(len(nC) != (self.nSpecies)):
@@ -123,7 +128,7 @@ class LiquidFilmCell:
         self.update()
 
 
-    def vaporDens(self):
+    def getVaporDens(self):
         Pi = self.Psat * self.molFrac
         Ri = R / self.molWeight
         rhovi = Pi / Ri / self.T #kg/m3
@@ -136,7 +141,7 @@ class LiquidFilmCell:
         Q_i = Dv_i rhov_i/Lv
         return an array
         """
-        rhovi = self.vaporDens()
+        rhovi = self.getVaporDens()
         if (sum(self.evapFlux) == 0):
             Qi = self.Dvi * rhovi / Lv
             Qi = Qi * self.dia / 4. / self.len
@@ -213,14 +218,14 @@ if __name__ == "__main__":
 	print 'the mol fraction is ', diesel.molFrac
 	print 'the mass fraction is ', diesel.massFrac
 	print 'the concentrations are ', diesel.concs
-	print 'the vapor densities are ', diesel.vaporDens()
+	print 'the vapor densities are ', diesel.getVaporDens()
 	qi = diesel.vaporDiff(Lv=dia)
 	#print 'the mass flux out of the interface ',qi
 	print 'the initial h is', diesel.h
 	print 'start evaporating'
 	diesel.advance(arange(0, 0.309, 0.001),True)
 	print 'the concentrations are ', diesel.concs
-	print 'the vapor densities are ', diesel.vaporDens()
+	print 'the vapor densities are ', diesel.getVaporDens()
 	print 'the new h is', diesel.h
 	print '%f percent film left', diesel.h / t
 
