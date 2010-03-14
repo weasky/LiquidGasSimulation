@@ -134,7 +134,6 @@ class LiquidFilmCell:
         rhovi = Pi / Ri / self.T #kg/m3
         return rhovi
 
-
     def vaporDiff(self, Lv=1):
         """
         The surface flux at the interface. A simple approximation is
@@ -151,8 +150,6 @@ class LiquidFilmCell:
             #print 'evaporation flux <0 ,something wrong'
             Qi = self.Dvi * self.evapFlux
         return Qi
-
-
 
     def rightSideofODE(self, Y, t):
         """
@@ -192,9 +189,9 @@ class LiquidFilmCell:
         self.massFrac = ytt / sum(ytt)
 
 if __name__ == "__main__":
-	dia = 0.14 * 10 ** -3
-	L = 0.5 * 10 ** -3
-	t = 3 * 10 ** -6
+	dia = 0.14E-3
+	L = 0.5E-3
+	t = 3E-6
 
 	diesel = LiquidFilmCell(nSpecies=7, T=473, diameter=dia, length=L, thickness=t)
 	diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],

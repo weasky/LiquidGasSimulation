@@ -6,9 +6,9 @@ sys.setrecursionlimit(4000)
 """ The geometry is a column, diameter 140 um, length 500 um
 the thickness is 1~50 um 
 """
-dia = 0.14 * 10**-3
-L = 0.5 * 10**-3 
-t = 3 * 10**-6
+dia = 0.14E-3
+L = 0.5E-3 
+t = 3E-6
 T = 473
 
 """ define liquid system and species"""
