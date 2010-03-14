@@ -76,14 +76,14 @@ class species(ctml.species):
 class NASA(ctml.NASA):
     """NASA polynomial representation of thermo"""
     def ValidTemperature(self,temperature):
+        """True if the polynomial is valid at the given temperature, else False"""
         if temperature<self._t[0]: return False
         if temperature>self._t[1]: return False
         return True
 
     def getThermo(self,T):
-        """ getThermo(T) returns 
-            (HeatCapacityOverR, EnthalpyOverRT, EntropyOverR) 
-        for a given temperature T
+        """Get (HeatCapacityOverR, EnthalpyOverRT, EntropyOverR) for a given temperature T
+        
         Raises outsideValidRangeError exception if T is not within 
         range of polynomial"""
         if not self.ValidTemperature(T): raise outsideValidRangeError
@@ -106,7 +106,7 @@ class NASA(ctml.NASA):
         return(HeatCapacityOverR,EnthalpyOverRT,EntropyOverR)
         
     def getGibbsFreeEnergy(self,T):
-        """getGibbsFreeEnergy(T) returns  FreeEnergyOverR at temperature T"""
+        """Return the Gibbs Free Energy divided by R (molar gas constant) at temperature T"""
         (HeatCapacityOverR,EnthalpyOverRT,EntropyOverR) = self.getThermo(T)
         FreeEnergyOverRT = EnthalpyOverRT - EntropyOverR
         return FreeEnergyOverRT*T
@@ -303,7 +303,7 @@ def DictFromArray(inArray, units=None):
 
 
 class ChemistrySolver():
-    """A chemistry solver"""
+    """A chemistry solver."""
     
     def __init__(self, resultsDir='RMG_results'):
         print "Loading chemistry from",resultsDir
@@ -327,6 +327,9 @@ class ChemistrySolver():
         
     def setConcentrations(self, concentrations):
         self.concentrations = concentrations
+        
+    def getConcentrations(self):
+        return self.concentrations
     
     def calculateStoichiometries(self):
         (stoich_reactants,stoich_products,stoich_net) = getStoichiometryArrays()
@@ -354,6 +357,7 @@ class ChemistrySolver():
         
     def getRightSideOfODE(self):
         """Get the function which will be the right side of the ODE"""
+        # This is probably the function to speed up, when the time comes for optimization:
         def RightSideOfODE(concentrations, time):
             """Get the net rate of creation of all species at a concentration and T."""
             forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
@@ -363,14 +367,33 @@ class ChemistrySolver():
             return net_rates_of_creation
         return RightSideOfODE
         
+    def solveConcentrationsAfterTime(self, starting_concentrations, reaction_time, temperature=None ):
+        """Solve the simulation for a given time starting from a given concentration.
+        
+        Set the global temperature, if provided (else leave it alone)
+        Set the concentrations to starting_concentration.
+        Set the time to 0.
+        Run the simulation until reaction_time.
+        
+        Returns the concentrations at the end time."""
+        
+        if temperature:
+            self.setTemperature(T)
+        self.setConcentrations(starting_concentrations)
+        timesteps = (0, reaction_time)
+        concentration_history_array = odeint(self.getRightSideOfODE(),starting_concentrations,timesteps)
+        return concentration_history_array[-1] # the last row is the final timepoint
+        
+        
 if __name__ == "__main__":
     import sys, os
+    # use different chemistry mechanism if specified on the command line
     if len(sys.argv)>1:
         solver = ChemistrySolver(resultsDir = sys.argv[1])
     else:
         solver = ChemistrySolver()
 
-    # set up the concentrations
+    # calculate the initial concentrations
     fuel=[
         FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
         FuelComponent('n-C13(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0),
@@ -386,26 +409,39 @@ if __name__ == "__main__":
     for component in fuel:
         concs_dict[component.name]=component.initialConcentration # mol/m3
     concs_dict['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
-    
     concentrations,units = ArrayFromDict(concs_dict)
     print "Initial concentrations:", concentrations, units
     
+    
+    # Set up solver
+    T=430 # kelvin
+    solver.setTemperature(T)
     solver.setConcentrations(concentrations)
     
     # set up timesteps
     start=0
     stop=10
-    steps=1000
+    steps=1001
     timesteps=pylab.linspace(start,stop,steps)
     
-    T=430 # kelvin
-    
-    solver.setTemperature(T)
-    
+    # solve it here using odeint
+    print "Starting to solve it in one go"
     concentration_history_array = odeint(solver.getRightSideOfODE(),concentrations,timesteps)
+    print "Solved"
     
+    # plot the graph
     pylab.semilogy(timesteps,concentration_history_array)
-    pylab.show()
     pylab.legend(_speciesnames)
+    pylab.show()
     
-
+    # solve it in the solver, to show the API
+    print "Starting to solve it step by step (in 10 times fewer steps)"
+    time_now = timesteps[0]
+    concentrations_now = concentrations
+    for step in xrange(1,len(timesteps),10):
+        time = timesteps[step]
+        concentrations_now = solver.solveConcentrationsAfterTime(concentrations_now, time-time_now )
+        time_now = time
+        pylab.semilogy((time_now),concentrations_now.reshape((1,24)), '.')
+    print "Solved"
+    
