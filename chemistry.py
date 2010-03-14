@@ -299,9 +299,27 @@ class ChemistrySolver():
         
     def getSpeciesNames(self):
         return _speciesnames
+    
+    def setConcentrations(self, concentrations, zero_others=False):
+        """
+        Set the concentrations (in mol/m3). Accepts either an array or dictionary.
         
-    def setConcentrations(self, concentrations):
-        self.concentrations = concentrations
+        If passing a dictionary, the keys must be species names, the values their concentrations.
+        If zero_others==True then species not in the dictionary will have concentrations set to 0,
+        otherwise they will be left alone.
+        """
+        if type(concentrations)==numpy.ndarray:
+            assert concentrations.size==self.Nspecies, "Concentrations array should be Nspecies=%d elements long"%self.Nspecies
+            self.concentrations = concentrations
+        elif type(concentrations)==dict:
+            if zero_others: self.concentrations = numpy.zeros(self.Nspecies)
+            assert self.concentrations.size == self.Nspecies, "Concentrations array hasn't been initialised." # try calling with zero_others=True
+            for key,value in concentrations.iteritems():
+                i = _speciesnames.index(key)
+                self.concentrations[i] = value
+        else: 
+            raise Exception("Expected ethier an array or a dictionary, not a %s"%type(concentrations).__name__)
+        print "concentrations", self.concentrations
         
     def getConcentrations(self):
         return self.concentrations
