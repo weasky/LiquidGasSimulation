@@ -15,6 +15,7 @@
 #
 # Richard West 2009 
 
+import sys, os
 import math
 import pylab, numpy
 from scipy.integrate import odeint
@@ -231,12 +232,14 @@ class FuelComponent():
         self.initialVolFraction=initialVolFraction
         self.composition=composition
         self.Antoine=Antoine
-        self.liquidMolarDensity=liquidMolarDensity * pq.mol / pq.m**3  # mol/m3
+        self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
         
         
 ## Functions with a global scope:
 # TODO: put these in a class?
+
+
 def getStoichiometryArrays():
     """
     Get arrays of stoichiometric coefficients for reactants, products, and net change.
@@ -299,40 +302,95 @@ def DictFromArray(inArray, units=None):
     return outDict
 
 
+class ChemistrySolver():
+    """A chemistry solver"""
+    
+    def __init__(self, resultsDir='RMG_results'):
+        print "Loading chemistry from",resultsDir
+        ctifile = os.path.join(resultsDir,'chemkin','chem.cti')
+        base = os.path.basename(ctifile)
+        root, ext = os.path.splitext(base)
+        ctml.dataset(root)
+        if not _species:
+            execfile(ctifile)
+        else:
+            print "Already had chemistry loaded! If you want different chemistry please restart your python shell"
+            
+        self.calculateStoichiometries()
+        self.T = 0
+            
+    def getNumberOfSpecies(self):
+        return len(_species)
+        
+    def getSpeciesNames(self):
+        return _speciesnames
+        
+    def setConcentrations(self, concentrations):
+        self.concentrations = concentrations
+    
+    def calculateStoichiometries(self):
+        (stoich_reactants,stoich_products,stoich_net) = getStoichiometryArrays()
+        self.stoich_reactants = stoich_reactants
+        self.stoich_products = stoich_products
+        self.stoich_net = stoich_net
+        print "stoich_reactants", stoich_reactants
+        print "stoich_products", stoich_products
+        print "stoich_net", stoich_net
+        
+    def setTemperature(self, T):
+        """Set the temperature of the solver, in Kelvin.
+        
+        If T has changed, recalculates the Rate Coefficients"""
+        
+        if T != self.T:
+            self.calculateRateCoefficients(T)
+            self.T = T
+    
+    def calculateRateCoefficients(self, T):
+        self.forward_rate_coefficients  = getForwardRateCoefficientsVector(T)
+        self.reverse_rate_coefficients  = getReverseRateCoefficientsVector(T)
+        print "forward_rate_coefficients", self.forward_rate_coefficients
+        print "reverse_rate_coefficients", self.reverse_rate_coefficients
+        
+    def getRightSideOfODE(self):
+        """Get the function which will be the right side of the ODE"""
+        def RightSideOfODE(concentrations, time):
+            """Get the net rate of creation of all species at a concentration and T."""
+            forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
+            reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
+            net_rates = forward_rates - reverse_rates
+            net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+            return net_rates_of_creation
+        return RightSideOfODE
         
 if __name__ == "__main__":
-    #reload(ctml)
     import sys, os
     if len(sys.argv)>1:
-        file = sys.argv[1]
+        solver = ChemistrySolver(resultsDir = sys.argv[1])
     else:
-        file = 'RMG_results/chemkin/chem.cti' # default input file
-    print "using file",file
-    base = os.path.basename(file)
-    root, ext = os.path.splitext(base)
-    ctml.dataset(root)
-    if not _species:
-        execfile(file)
-    
+        solver = ChemistrySolver()
+
     # set up the concentrations
     fuel=[
-        FuelComponent('n-C11(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
-        FuelComponent('n-C13(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
-        FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3),
-        FuelComponent('n-C16(5)',0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51,C=154.45),3415.0),
-        FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148,B=2396.8,C=199.5736),2.6e3),
-        FuelComponent('n-C19(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
-        FuelComponent('n-C21(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
+        FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
+        FuelComponent('n-C13(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0),
+        FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3 ),
+        FuelComponent('n-C16(5)',  0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51, C=154.45 ),3415.0),
+        FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148, B=2396.8,  C=199.5736),2.6e3),
+        FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
+        FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
     ]
-    concs=dict.fromkeys(_speciesnames)
-    for speciesName in _speciesnames:
-        concs[speciesName]=pq.Quantity(0.0,'mol/m**3')
+    concs_dict=dict.fromkeys( solver.getSpeciesNames() )
+    for speciesName in solver.getSpeciesNames():
+        concs_dict[speciesName]=pq.Quantity(0.0,'mol/m**3')
     for component in fuel:
-        concs[component.name]=component.initialConcentration # mol/m3
-    concs['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
+        concs_dict[component.name]=component.initialConcentration # mol/m3
+    concs_dict['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
     
-    concentrations,units = ArrayFromDict(concs)
-    print "concentrations:", concentrations, units
+    concentrations,units = ArrayFromDict(concs_dict)
+    print "Initial concentrations:", concentrations, units
+    
+    solver.setConcentrations(concentrations)
     
     # set up timesteps
     start=0
@@ -342,26 +400,9 @@ if __name__ == "__main__":
     
     T=430 # kelvin
     
-    (stoich_reactants,stoich_products,stoich_net) = getStoichiometryArrays()
-    print "stoich_reactants", stoich_reactants
-    print "stoich_products", stoich_products
-    print "stoich_net", stoich_net
+    solver.setTemperature(T)
     
-    forward_rate_coefficients  = getForwardRateCoefficientsVector(T)
-    print "forward_rate_coefficients", forward_rate_coefficients
-    reverse_rate_coefficients  = getReverseRateCoefficientsVector(T)
-    print "reverse_rate_coefficients", reverse_rate_coefficients
-   # log_concentrations = numpy.log10([c for c in concentrations])
-    
-    def RightSideOfODE(concentrations, time):
-        """Get the net rate of creation of all species at a concentration and T."""
-        forward_rates = forward_rate_coefficients*(concentrations**stoich_reactants).prod(1)
-        reverse_rates = reverse_rate_coefficients*(concentrations**stoich_products).prod(1)
-        net_rates = forward_rates - reverse_rates
-        net_rates_of_creation = numpy.dot(net_rates.T, stoich_net)
-        return net_rates_of_creation
-    
-    concentration_history_array = odeint(RightSideOfODE,concentrations,timesteps)
+    concentration_history_array = odeint(solver.getRightSideOfODE(),concentrations,timesteps)
     
     pylab.semilogy(timesteps,concentration_history_array)
     pylab.show()
