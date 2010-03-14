@@ -1,7 +1,5 @@
-##
-# BASED ON: ctml.py
 #
-# Cantera .cti input file processor
+# Cantera .cti input file processor and chemistry solver
 #
 # The functions and classes in this module process Cantera .cti input
 # files and run a simulation. It can be imported as a module, or used
@@ -9,11 +7,9 @@
 #
 # script usage:
 # 
-# python solv.py infile.cti
+# python chemistry.py infile.cti
 # 
-# This will do something
-#
-# Richard West 2009 
+# Richard West 2010
 
 import sys, os
 import math
@@ -22,11 +18,11 @@ from scipy.integrate import odeint
 
 # get quantities package from http://pypi.python.org/pypi/quantities
 # read about it at http://packages.python.org/quantities/index.html
+# I think this may only work with an old version - try "easy_install quantities==0.5b5"
 import quantities as pq
 pq.UnitQuantity('kilocalories', pq.cal*1e3, symbol='kcal')
 pq.UnitQuantity('kilojoules', pq.J*1e3, symbol='kJ')
 pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
-
 
 # import all the classes which write XML
 # and all the constant, functions, etc.
@@ -218,28 +214,6 @@ class reaction(ctml.reaction):
         row = self.getStoichiometryProductsRow() - self.getStoichiometryReactantsRow()
         return row
         
-class FuelComponent():
-    """Shouldn't really be part of the solv package. 
-    specific to the fuel model."""
-    def __str__(self):
-        return "<Species %s>"%(self.name)
-    def __init__(self, name="",
-            initialVolFraction=0,
-            composition=dict(C=0,H=0,O=0), 
-            Antoine=dict(A=0,B=0,C=0),
-            liquidMolarDensity=3500 ):
-        self.name=name
-        self.initialVolFraction=initialVolFraction
-        self.composition=composition
-        self.Antoine=Antoine
-        self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
-        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
-        
-        
-## Functions with a global scope:
-# TODO: put these in a class?
-
-
 def getStoichiometryArrays():
     """
     Get arrays of stoichiometric coefficients for reactants, products, and net change.
@@ -318,9 +292,10 @@ class ChemistrySolver():
             
         self.calculateStoichiometries()
         self.T = 0
-            
-    def getNumberOfSpecies(self):
-        return len(_species)
+        
+        """Number of species"""
+        self.Nspecies = len(_species)
+        
         
     def getSpeciesNames(self):
         return _speciesnames
@@ -341,15 +316,25 @@ class ChemistrySolver():
         print "stoich_net", stoich_net
         
     def setTemperature(self, T):
-        """Set the temperature of the solver, in Kelvin.
+        """
+        Set the temperature of the solver, in Kelvin.
         
-        If T has changed, recalculates the Rate Coefficients"""
+        If T has changed, recalculates the Rate Coefficients
+        """
         
         if T != self.T:
             self.calculateRateCoefficients(T)
             self.T = T
+            print "Temperature is now %f K"%T
+        else:
+            print "Temperature is still %f K"%T
     
     def calculateRateCoefficients(self, T):
+        """
+        Update the stored forward and reverse rate coefficients.
+        
+        Call this whenever T changes.
+        """
         self.forward_rate_coefficients  = getForwardRateCoefficientsVector(T)
         self.reverse_rate_coefficients  = getReverseRateCoefficientsVector(T)
         print "forward_rate_coefficients", self.forward_rate_coefficients
@@ -384,7 +369,23 @@ class ChemistrySolver():
         concentration_history_array = odeint(self.getRightSideOfODE(),starting_concentrations,timesteps)
         return concentration_history_array[-1] # the last row is the final timepoint
         
-        
+class FuelComponent():
+    """Shouldn't really be part of the solv package. 
+    specific to the fuel model."""
+    def __str__(self):
+        return "<Species %s>"%(self.name)
+    def __init__(self, name="",
+            initialVolFraction=0,
+            composition=dict(C=0,H=0,O=0), 
+            Antoine=dict(A=0,B=0,C=0),
+            liquidMolarDensity=3500 ):
+        self.name=name
+        self.initialVolFraction=initialVolFraction
+        self.composition=composition
+        self.Antoine=Antoine
+        self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
+        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
+
 if __name__ == "__main__":
     import sys, os
     # use different chemistry mechanism if specified on the command line
@@ -411,7 +412,6 @@ if __name__ == "__main__":
     concs_dict['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
     concentrations,units = ArrayFromDict(concs_dict)
     print "Initial concentrations:", concentrations, units
-    
     
     # Set up solver
     T=430 # kelvin
