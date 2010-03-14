@@ -182,7 +182,7 @@ for step in range(steps):
     for cell in range(dryPosition):
         dieselSet[cell].setEvapFlux(evapFlux[:,cell])
         dieselSet[cell].advance(dtEvap)
-        h[cell]= dieselSet[cell].h
+        h[cell]= dieselSet[cell].thickness
         evapDensity[:,cell] = dieselSet[cell].getVaporDens()
         liquidConc[cell,:]=dieselSet[cell].concs
         liquidMolFrac[cell,0:diesel.nSpecies]=dieselSet[cell].molFrac
@@ -280,10 +280,10 @@ if __name__ == '__main__':
     raw_input('finished')
 ##qi = diesel.vaporDiff(Lv=dia)
 #print 'the mass flux out of the interface ',qi
-#print 'the initial h is',diesel.h
+#print 'the initial h is',diesel.thickness
 #print 'start evaporating'
 #diesel.advance(arange(0,12.191,0.001))
 #print 'the concentrations are ',diesel.concs
-#print 'the new h is',diesel.h
-#print '%f percent film left', diesel.h/t
+#print 'the new h is',diesel.thickness
+#print '%f percent film left', diesel.thickness/t
 #

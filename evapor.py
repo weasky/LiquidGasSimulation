@@ -7,6 +7,7 @@ from numpy import array
 from numpy import zeros
 from scipy.integrate import odeint
 from tools import diffusivity_hco_in_air
+import copy
 
 units = ctml.units
 OneAtm = ctml.OneAtm
@@ -29,10 +30,11 @@ class LiquidFilmCell:
         self.evapFlux = zeros(self.nSpecies)
         # area and vol
         self.dia = diameter
-        self.h = thickness
+        self.thickness = thickness
+        self.initial_thickness = copy.deepcopy(thickness) # in case it's not just a float!
         self.len = length
-        self.vol = pi * self.dia * self.len * self.h
-        self.area = pi * (self.dia - 2 * self.h) * self.len
+        self.vol = pi * self.dia * self.len * self.thickness
+        self.area = pi * (self.dia - 2 * self.thickness) * self.len
 
         self.T = T
         self.P = P
@@ -91,8 +93,8 @@ class LiquidFilmCell:
         self.massFrac = massFrac / a
 
     def update(self):
-        self.vol = pi * self.dia * self.len * self.h
-        self.area = pi * (self.dia - 2 * self.h) * self.len
+        self.vol = pi * self.dia * self.len * self.thickness
+        self.area = pi * (self.dia - 2 * self.thickness) * self.len
         # air partial pressure
         tmp = self.P-sum(self.Psat * self.molFrac)
         # O2 vol frac 20.9% of air
@@ -172,13 +174,13 @@ class LiquidFilmCell:
 
     def advance(self, t, plotresult=False):
         y0 = self.concs * self.molWeight
-        y0 = append(y0, self.h)
+        y0 = append(y0, self.thickness)
         yt = odeint(self.rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
             plt.plot(t, yt)
             plt.show()
-        self.h = yt[-1][-1]
+        self.thickness = yt[-1][-1]
         ytt = yt[-1][:-1]
         #        for iii in range(len(ytt)):
         #            if ytt[iii]<0:
@@ -218,19 +220,11 @@ if __name__ == "__main__":
 	print 'the vapor densities are ', diesel.getVaporDens()
 	qi = diesel.vaporDiff(Lv=dia)
 	#print 'the mass flux out of the interface ',qi
-	print 'the initial h is', diesel.h
+	print 'the initial h is', diesel.thickness
 	print 'start evaporating'
 	diesel.advance(arange(0, 0.309, 0.001),True)
 	print 'the concentrations are ', diesel.concs
 	print 'the vapor densities are ', diesel.getVaporDens()
-	print 'the new h is', diesel.h
-	print '%f percent film left', diesel.h / t
-
-
-
-
-
-
-
-
+	print 'the new h is', diesel.thickness
+	print '%f percent film left', diesel.thickness / t
 
