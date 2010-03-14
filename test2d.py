@@ -103,20 +103,20 @@ diesel.update()
 
 import copy
 dieselSet = [copy.deepcopy(diesel) for i in xrange(ny)]
-for ii in xrange(ny):
-    dieselSet[ii].T = T
-    dieselSet[ii].setAntoine(
+for cell_index in xrange(ny):
+    dieselSet[cell_index].T = T
+    dieselSet[cell_index].setAntoine(
             A=[6.9722,7.00756,7.03592,7.02867,7.8148,7.0153,7.0842],
             B=[1569.57,1690.67,1826.948,1830.51,2396.8,1932.8,2054],
             C=[187.7,174.22,195.002,154.45,199.5736,137.6,120.1])
-    dieselSet[ii].update()
+    dieselSet[cell_index].update()
 
-#
+
 timeStepDuration = 0.9*dx**2/(2*average(Dvi))*10
 steps=20000
 dryPosition = ny
-for ii in range(diesel.nSpecies):
-    evapDensity[ii] = rhovi[ii]*ones(ny)
+for species_index in range(diesel.nSpecies):
+    evapDensity[species_index] = rhovi[species_index]*ones(ny)
 #write vapor grid file, plot3D
 os.path.isdir('data') or os.makedirs('data') # create the data directory if it doesn't exist
 f = open('./data/grid.dat','w')
@@ -151,24 +151,24 @@ totaltime = 0.
 for step in range(steps):
     tmpphi = CellVariable(name="tmp",mesh=mesh,value=0.)  
     facesDry= (mesh.getExteriorFaces() & (y<=L) &(x==dia/2) & (y>(dryPosition)*dy))
-    for ii in range(diesel.nSpecies):
-        valueEvap = evapDensity[ii,:]
+    for species_index in range(diesel.nSpecies):
+        valueEvap = evapDensity[species_index,:]
         boundaryConditions = (FixedValue(faces=mesh.getFacesTop(),value=0),
                 FixedValue(faces=mesh.getFacesRight(),value=0.),
                 FixedValue(faces=facesBotRight,value=valueEvap),
                 FixedFlux(faces=facesDry,value=0.),
                 FixedValue(faces=mesh.getFacesBottom(),
-                    value=valueRight[ii]))
-        eq = TransientTerm() == ImplicitDiffusionTerm(coeff=Dvi[ii])
-        eq.solve(var=phi[ii],
+                    value=valueRight[species_index]))
+        eq = TransientTerm() == ImplicitDiffusionTerm(coeff=Dvi[species_index])
+        eq.solve(var=phi[species_index],
                 boundaryConditions = boundaryConditions,
                 dt=timeStepDuration)
         # get flux as BC to liquid layer
-        evapFlux[ii] = phi[ii].getLeastSquaresGrad()[0].getValue()[cellIDsEvap]
-        outFlux[ii] = average(phi[ii].getLeastSquaresGrad()[1].getValue()[cellIDsOutlet])
+        evapFlux[species_index] = phi[species_index].getLeastSquaresGrad()[0].getValue()[cellIDsEvap]
+        outFlux[species_index] = average(phi[species_index].getLeastSquaresGrad()[1].getValue()[cellIDsOutlet])
     #calculate air
-    for ii in range(diesel.nSpecies):
-        tmpphi=tmpphi+phi[ii]/diesel.molWeight[ii]
+    for species_index in range(diesel.nSpecies):
+        tmpphi=tmpphi+phi[species_index]/diesel.molWeight[species_index]
     phi[-1] = (1.0e5/R/T-tmpphi)*0.209*32/1000.
     phi[-2] = (1.0e5/R/T-tmpphi)*0.791*28.0134/1000.
     #iteration in each cellEvap
