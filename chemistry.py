@@ -42,15 +42,16 @@ _speciesnames=ctml._speciesnames
 
 
 class outsideValidRangeError(Exception):
-    """was not within valid range for expression"""
+    """Was not within valid range for expression"""
     pass
     
 class ideal_gas(ctml.ideal_gas):
+    """An ideal gas mixture."""
     pass
 
 class state(ctml.state):
+    """A state."""
     pass
-    
     
 class species(ctml.species):
     """ species derived from ctml_writer.species.
@@ -253,20 +254,23 @@ def getSpeciesByName(name):
     return None
 
 def ArrayFromDict(inDict):
-    """Turn a dictionary  (of concentrations, rates, etc.) into an array AND UNITS.
+    """
+    Turn a dictionary  (of concentrations, rates, etc.) into an array AND UNITS.
     
     Gets names (in order) from _speciesnames.
-    Returns an array, and a quantities object with the units."""
+    Returns an array, and a quantities object with the units.
+    """
     outArray = pylab.array([inDict[s].simplified for s in _speciesnames])
     # possibly not the fastest way to do it..self.
     units = sum(inDict.values()) / sum(outArray)
     return outArray, units
     
 def DictFromArray(inArray, units=None):
-    """Turns an array (of concentrations, rates, etc.) into a dictionary.
+    """
+    Turn an array (of concentrations, rates, etc.) into a dictionary.
     
-    Gets names (in order) from _speciesnames"""
-
+    Gets names (in order) from _speciesnames.
+    """
     outDict = dict.fromkeys(_speciesnames)
     for i,speciesName in enumerate(_speciesnames):
         value = inArray[i]
@@ -289,14 +293,15 @@ class ChemistrySolver():
             execfile(ctifile)
         else:
             print "Already had chemistry loaded! If you want different chemistry please restart your python shell"
-            
+        
         self.calculateStoichiometries()
         self.T = 0
+        self.concentrations = numpy.array([])
         
         """Number of species"""
         self.Nspecies = len(_species)
-        
-        
+    
+    
     def getSpeciesNames(self):
         return _speciesnames
     
