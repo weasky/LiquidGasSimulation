@@ -61,7 +61,7 @@ InitialStatus:
 12 C 0 {11,S} {13,S}
 13 C 0 {12,S}
 
-(4) M-naphthalene 2e-3 (mol/cm3)
+(4) Mnphtln 2e-3 (mol/cm3)
 1  C 0 {2,B}  {10,B} {11,S}
 2  C 0 {1,B}  {3,B} 
 3  C 0 {2,B}  {4,B}
@@ -92,7 +92,7 @@ InitialStatus:
 15 C 0 {14,S} {16,S}
 16 C 0 {15,S}
 
-(6) C10benzene 5e-3 (mol/cm3)
+(6) C10bnzn 5e-3 (mol/cm3)
 1  C 0 {2,B}  {6,B}  {7,S}
 2  C 0 {1,B}  {3,B}
 3  C 0 {2,B}  {4,B}

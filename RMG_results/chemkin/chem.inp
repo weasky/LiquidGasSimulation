@@ -18,9 +18,9 @@ SPECIES
 	O2(1)
 	n-C11(2)
 	n-C13(3)
-	SPC(4)
+	Mnphtln(4)
 	n-C16(5)
-	SPC(6)
+	C10bnzn(6)
 	n-C19(7)
 	n-C21(8)
 	HO2J(9)
@@ -78,7 +78,7 @@ n-C13(3)                C  13H  28          G   300.000  5000.000   995.043    1
 -6.66490692E+04-1.63438637E+02 2.58151103E+00 1.08998739E-01 4.09515605E-05    3
 -1.20908911E-07 5.12624648E-11-5.71399763E+04-8.23864239E+00                   4
 
-SPC(4)                  C  11H  10          G   300.000  5000.000   995.043    1
+Mnphtln(4)              C  11H  10          G   300.000  5000.000   995.043    1
  1.99543052E+01 3.65535524E-02-1.29116584E-05 2.06136391E-09-1.22616726E-13    2
 -7.29573120E+03-1.16746917E+02 2.91765803E+00 3.26525402E-02 1.02090605E-04    3
 -1.48098918E-07 5.59730704E-11-3.21732507E+02-1.66325411E+01                   4
@@ -88,7 +88,7 @@ n-C16(5)                C  16H  34          G   300.000  5000.000   995.043    1
 -7.94848493E+04-2.00697713E+02 2.24387421E+00 1.39986184E-01 3.63370692E-05    3
 -1.36360995E-07 5.92224316E-11-6.77471382E+04-6.08696364E+00                   4
 
-SPC(6)                  C  16H  26          G   300.000  5000.000   995.043    1
+C10bnzn(6)              C  16H  26          G   300.000  5000.000   995.043    1
  3.57646840E+01 7.38090261E-02-2.64824772E-05 4.28846807E-09-2.57946794E-13    2
 -4.92761573E+04-1.96199519E+02 2.20795129E+00 1.03781096E-01 8.65048752E-05    3
 -1.77383310E-07 7.20111554E-11-3.74037859E+04-8.37358301E+00                   4
@@ -176,43 +176,43 @@ SPC(265)                C  16H  24O   2     G   300.000  5000.000   995.043    1
 END
 
 REACTIONS	KCAL/MOL	MOLES
-HO2J(9)+SPC(42)=O2(1)+SPC(6) 3.0000000e+11 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H/OneDeC     
+HO2J(9)+SPC(42)=O2(1)+C10bnzn(6) 3.0000000e+11 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H/OneDeC     
 O2(1)+SPC(42)=SPC(116) 7.5400000e+12 	 0.00000 	 0.00000 	 !R_Addition_MultipleBond estimate: (Average of: (O2d C_sec_rad))  O2d     C_rad/H/OneDeC     
 SPC(42)+HO2J(9)=SPC(119) 1.6424769e+13 	 -0.15000 	 0.31000 	 !R_Recombination estimate: (Average of: (Average of: (H_rad H_rad && Average of: (C_methyl C_methyl && Average of: (C_rad/H2/Cs C_rad/H2/Cs) && Average of: (C_rad/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C_rad/Cs3 C_rad/Cs3))) && Average of: (Cd_pri_rad Cd_pri_rad) && Cb_rad Cb_rad && Average of: (CO_pri_rad CO_pri_rad && Average of: (CO_rad/NonDe CO_rad/NonDe)) && Average of: (O_pri_rad O_pri_rad && Average of: (O_rad/NonDe O_rad/NonDe)))))  C_rad/H/OneDeC     O_rad/NonDe     
-SPC(6)+SPC(116)=SPC(42)+SPC(119) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
+C10bnzn(6)+SPC(116)=SPC(42)+SPC(119) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 SPC(116)+HO2J(9)=SPC(119)+O2(1) 1.7500000e+10 	 0.00000 	 -3.27500 	 !Disproportionation estimate: (Average of: (O_sec_rad O_Orad))  O_rad/NonDeO     O_Orad     
-SPC(42)+SPC(42)=SPC(6)+SPC(118) 1.0260000e+14 	 -0.35000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (C_rad/H/NonDeC C/H2/Nd_Csrad)))  C_rad/H/OneDeC     C/H2/Nd_Csrad     
+SPC(42)+SPC(42)=C10bnzn(6)+SPC(118) 1.0260000e+14 	 -0.35000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (C_rad/H/NonDeC C/H2/Nd_Csrad)))  C_rad/H/OneDeC     C/H2/Nd_Csrad     
 O2(1)+SPC(42)=HO2J(9)+SPC(118) 3.6160000e+11 	 0.00000 	 0.00000 	 !Disproportionation_O2d exact:   O2d     C/H2/Nd_Csrad     
 SPC(116)+SPC(42)=SPC(119)+SPC(118) 4.8200000e+13 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad     
 SPC(116)=>HO2J(9)+SPC(118) 8.0040557e+10 	 0.56333 	 29.80000 	 !HO2_Elimination_from_PeroxyRadical estimate: (Average of: (Average of: (R2OO_HNd_2H && R2OO_HNd_HNd && R2OO_HNd_NdNd)))  R2OO_HNd_HDe     
-SPC(42)+H2O2(101)=SPC(6)+HO2J(9) 2.9734435e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H/OneDeC     O/H/NonDeO     
+SPC(42)+H2O2(101)=C10bnzn(6)+HO2J(9) 2.9734435e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H/OneDeC     O/H/NonDeO     
 HO2J(9)+HO2J(9)=H2O2(101)+O2(1) 1.7500000e+10 	 0.00000 	 -3.27500 	 !Disproportionation estimate: (Average of: (O_sec_rad O_Orad))  O_rad/NonDeO     O_Orad     
 HO2J(9)+SPC(42)=H2O2(101)+SPC(118) 4.8200000e+13 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad     
 SPC(116)+H2O2(101)=SPC(119)+HO2J(9) 3.4600000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O_rad/NonDeO     O/H/NonDeO     
-HO2J(9)+C11H9J(30)=O2(1)+SPC(4) 3.0000000e+11 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H2/Cb     
-C11H9J(30)+H2O2(101)=SPC(4)+HO2J(9) 2.9734435e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
-C11H9J(30)+SPC(6)=SPC(4)+SPC(42) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C_rad/H2/Cb     C/H2/OneDeC     
-C11H9J(30)+SPC(119)=SPC(4)+SPC(116) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
-SPC(42)+C11H9J(30)=SPC(118)+SPC(4) 2.0088970e+12 	 0.00000 	 -0.04333 	 !Disproportionation estimate: (Average of: (Average of: (C_rad/H2/Cs C/H2/Nd_Csrad && C_rad/H2/Cd C/H2/Nd_Csrad && C_rad/H2/O C/H2/Nd_Csrad)))  C/H2/Nd_Csrad     C_rad/H2/Cb     
+HO2J(9)+C11H9J(30)=O2(1)+Mnphtln(4) 3.0000000e+11 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H2/Cb     
+C11H9J(30)+H2O2(101)=Mnphtln(4)+HO2J(9) 2.9734435e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
+C11H9J(30)+C10bnzn(6)=Mnphtln(4)+SPC(42) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C_rad/H2/Cb     C/H2/OneDeC     
+C11H9J(30)+SPC(119)=Mnphtln(4)+SPC(116) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
+SPC(42)+C11H9J(30)=SPC(118)+Mnphtln(4) 2.0088970e+12 	 0.00000 	 -0.04333 	 !Disproportionation estimate: (Average of: (Average of: (C_rad/H2/Cs C/H2/Nd_Csrad && C_rad/H2/Cd C/H2/Nd_Csrad && C_rad/H2/O C/H2/Nd_Csrad)))  C/H2/Nd_Csrad     C_rad/H2/Cb     
 O2(1)+C11H9J(30)=SPC(205) 4.5200000e+12 	 0.00000 	 0.00000 	 !R_Addition_MultipleBond estimate: (Average of: (O2d C_pri_rad))  O2d     C_rad/H2/Cb     
 C11H9J(30)+HO2J(9)=SPC(208) 1.6424769e+13 	 -0.15000 	 0.31000 	 !R_Recombination estimate: (Average of: (Average of: (H_rad H_rad && Average of: (C_methyl C_methyl && Average of: (C_rad/H2/Cs C_rad/H2/Cs) && Average of: (C_rad/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C_rad/Cs3 C_rad/Cs3))) && Average of: (Cd_pri_rad Cd_pri_rad) && Cb_rad Cb_rad && Average of: (CO_pri_rad CO_pri_rad && Average of: (CO_rad/NonDe CO_rad/NonDe)) && Average of: (O_pri_rad O_pri_rad && Average of: (O_rad/NonDe O_rad/NonDe)))))  C_rad/H2/Cb     O_rad/NonDe     
-C11H9J(30)+SPC(208)=SPC(4)+SPC(205) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
-SPC(6)+SPC(205)=SPC(42)+SPC(208) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
+C11H9J(30)+SPC(208)=Mnphtln(4)+SPC(205) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
+C10bnzn(6)+SPC(205)=SPC(42)+SPC(208) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 SPC(119)+SPC(205)=SPC(116)+SPC(208) 1.7300000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     
 H2O2(101)+SPC(205)=HO2J(9)+SPC(208) 3.4600000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     
 SPC(205)+HO2J(9)=SPC(208)+O2(1) 1.7500000e+10 	 0.00000 	 -3.27500 	 !Disproportionation estimate: (Average of: (O_sec_rad O_Orad))  O_rad/NonDeO     O_Orad     
 SPC(205)+SPC(42)=SPC(208)+SPC(118) 4.8200000e+13 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad     
 SPC(180)+H2O2(101)=SPC(118)+HO2J(9) 2.9734435e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H/OneDeC     O/H/NonDeO     
-SPC(118)+SPC(42)=SPC(180)+SPC(6) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C/H2/OneDeC     C_rad/H/OneDeC     
+SPC(118)+SPC(42)=SPC(180)+C10bnzn(6) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C/H2/OneDeC     C_rad/H/OneDeC     
 SPC(118)+SPC(116)=SPC(180)+SPC(119) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 HO2J(9)+SPC(180)=O2(1)+SPC(118) 3.0000000e+11 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Disproportionation exact: ))  O_Orad     C_rad/H/OneDeC     
 SPC(42)+SPC(180)=SPC(118)+SPC(118) 1.0260000e+14 	 -0.35000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (C_rad/H/NonDeC C/H2/Nd_Csrad)))  C/H2/Nd_Csrad     C_rad/H/OneDeC     
-SPC(118)+C11H9J(30)=SPC(180)+SPC(4) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C/H2/OneDeC     C_rad/H2/Cb     
+SPC(118)+C11H9J(30)=SPC(180)+Mnphtln(4) 3.0397882e+06 	 1.88583 	 9.44833 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C/H2/OneDeC     C_rad/H2/Cb     
 SPC(118)+SPC(205)=SPC(180)+SPC(208) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 O2(1)+SPC(180)=SPC(248) 7.5400000e+12 	 0.00000 	 0.00000 	 !R_Addition_MultipleBond estimate: (Average of: (O2d C_sec_rad))  O2d     C_rad/H/OneDeC     
 SPC(180)+HO2J(9)=SPC(262) 1.6424769e+13 	 -0.15000 	 0.31000 	 !R_Recombination estimate: (Average of: (Average of: (H_rad H_rad && Average of: (C_methyl C_methyl && Average of: (C_rad/H2/Cs C_rad/H2/Cs) && Average of: (C_rad/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C_rad/Cs3 C_rad/Cs3))) && Average of: (Cd_pri_rad Cd_pri_rad) && Cb_rad Cb_rad && Average of: (CO_pri_rad CO_pri_rad && Average of: (CO_rad/NonDe CO_rad/NonDe)) && Average of: (O_pri_rad O_pri_rad && Average of: (O_rad/NonDe O_rad/NonDe)))))  C_rad/H/OneDeC     O_rad/NonDe     
-C11H9J(30)+SPC(262)=SPC(4)+SPC(248) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
-SPC(6)+SPC(248)=SPC(42)+SPC(262) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
+C11H9J(30)+SPC(262)=Mnphtln(4)+SPC(248) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
+C10bnzn(6)+SPC(248)=SPC(42)+SPC(262) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 SPC(119)+SPC(248)=SPC(116)+SPC(262) 1.7300000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     
 SPC(118)+SPC(248)=SPC(180)+SPC(262) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 H2O2(101)+SPC(248)=HO2J(9)+SPC(262) 3.4600000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     
@@ -221,8 +221,8 @@ SPC(248)+HO2J(9)=SPC(262)+O2(1) 1.7500000e+10 	 0.00000 	 -3.27500 	 !Disproport
 SPC(248)+SPC(42)=SPC(262)+SPC(118) 4.8200000e+13 	 0.00000 	 0.00000 	 !Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad     
 O2(1)+SPC(180)=SPC(255) 7.5400000e+12 	 0.00000 	 0.00000 	 !R_Addition_MultipleBond estimate: (Average of: (O2d C_sec_rad))  O2d     C_rad/H/TwoDe     
 SPC(180)+HO2J(9)=SPC(265) 1.6424769e+13 	 -0.15000 	 0.31000 	 !R_Recombination estimate: (Average of: (Average of: (H_rad H_rad && Average of: (C_methyl C_methyl && Average of: (C_rad/H2/Cs C_rad/H2/Cs) && Average of: (C_rad/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C_rad/Cs3 C_rad/Cs3))) && Average of: (Cd_pri_rad Cd_pri_rad) && Cb_rad Cb_rad && Average of: (CO_pri_rad CO_pri_rad && Average of: (CO_rad/NonDe CO_rad/NonDe)) && Average of: (O_pri_rad O_pri_rad && Average of: (O_rad/NonDe O_rad/NonDe)))))  C_rad/H/TwoDe     O_rad/NonDe     
-C11H9J(30)+SPC(265)=SPC(4)+SPC(255) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
-SPC(6)+SPC(255)=SPC(42)+SPC(265) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
+C11H9J(30)+SPC(265)=Mnphtln(4)+SPC(255) 1.4867217e+03 	 2.38600 	 9.69000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC C_methyl && Average of: (O/H/NonDeC C_rad/H2/Cs) && Average of: (O/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (O/H/NonDeC C_rad/Cs3)) && O/H/OneDe C_methyl)))  C_rad/H2/Cb     O/H/NonDeO     
+C10bnzn(6)+SPC(255)=SPC(42)+SPC(265) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 SPC(119)+SPC(255)=SPC(116)+SPC(265) 1.7300000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     
 SPC(118)+SPC(255)=SPC(180)+SPC(265) 3.1729268e+09 	 0.95000 	 5.64400 	 !H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO     
 H2O2(101)+SPC(255)=HO2J(9)+SPC(265) 3.4600000e+01 	 3.40000 	 -1.14000 	 !H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O/H/NonDeO     O_rad/NonDeO     

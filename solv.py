@@ -316,13 +316,13 @@ if __name__ == "__main__":
     
     # set up the concentrations
     fuel=[
-        FuelComponent('n-undecane(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
-        FuelComponent('n-tridecane(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
-        FuelComponent('SPC(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3),
-        FuelComponent('n-hexadecane(5)',0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51,C=154.45),3415.0),
-        FuelComponent('SPC(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148,B=2396.8,C=199.5736),2.6e3),
-        FuelComponent('n-nonadecane(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
-        FuelComponent('n-heneicosane(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
+        FuelComponent('n-C11(2)',0.05,dict(C=11,H=24,O=0),dict(A=6.9722,B=1569.57,C=187.7 ),4945.0),
+        FuelComponent('n-C13(3)',0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67,C=174.22),4182.0),
+        FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3),
+        FuelComponent('n-C16(5)',0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51,C=154.45),3415.0),
+        FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148,B=2396.8,C=199.5736),2.6e3),
+        FuelComponent('n-C19(7)',0.18,dict(C=19,H=40,O=0),dict(A=7.0153,B=1932.8,C=137.6 ),2889.0),
+        FuelComponent('n-C21(8)',0.10,dict(C=21,H=44,O=0),dict(A=7.0842,B=2054,C=120.1),2729.0)
     ]
     concs=dict.fromkeys(_speciesnames)
     for speciesName in _speciesnames:
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     
     # set up timesteps
     start=0
-    stop=100
+    stop=10
     steps=1000
     timesteps=pylab.linspace(start,stop,steps)
     
