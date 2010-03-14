@@ -306,8 +306,8 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         file = sys.argv[1]
     else:
-        print "using default file, chem.cti"
-        file = 'chem.cti' # default input file
+        file = 'RMG_results/chemkin/chem.cti' # default input file
+    print "using file",file
     base = os.path.basename(file)
     root, ext = os.path.splitext(base)
     ctml.dataset(root)
