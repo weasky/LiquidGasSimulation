@@ -193,9 +193,9 @@ class LiquidFilmCell:
 if __name__ == "__main__":
 	dia = 0.14E-3
 	L = 0.5E-3
-	t = 3E-6
+	initial_film_thickness = 3E-6
 
-	diesel = LiquidFilmCell(nSpecies=7, T=473, diameter=dia, length=L, thickness=t)
+	diesel = LiquidFilmCell(nSpecies=7, T=473, diameter=dia, length=L, thickness=initial_film_thickness)
 	diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
                   nH=[24, 28, 10, 34, 26, 40, 44],
                   nO=[0, 0, 0, 0, 0, 0, 0])
@@ -226,5 +226,4 @@ if __name__ == "__main__":
 	print 'the concentrations are ', diesel.concs
 	print 'the vapor densities are ', diesel.getVaporDens()
 	print 'the new h is', diesel.thickness
-	print '%f percent film left', diesel.thickness / t
-
+	print '%f percent film left', diesel.thickness / initial_film_thickness

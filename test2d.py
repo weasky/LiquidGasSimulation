@@ -8,13 +8,13 @@ the thickness is 1~50 um
 """
 dia = 0.14E-3
 L = 0.5E-3 
-t = 3E-6
+initial_film_thickness = 3E-6
 T = 473
 
 """ define liquid system and species"""
 
 """ set the diesel components and various physical properties""" 
-diesel = LiquidFilmCell(nSpecies=7,T=T,diameter = dia, length = L, thickness = t )
+diesel = LiquidFilmCell(nSpecies=7,T=T,diameter = dia, length = L, thickness = initial_film_thickness )
 diesel.setCHO(nC=[11,13,11,16,16,19,21],
         nH=[24,28,10,34,26,40,44],
         nO=[0,0,0,0,0,0,0])
@@ -68,7 +68,6 @@ mesh = Cylinderizer(mesh1+mesh2)
 x,y = mesh.getFaceCenters()
 X,Y = mesh.getCellCenters()
 
-
 phi = [
         CellVariable(name="C11H24",mesh=mesh,value=0.),
         CellVariable(name="C13H28",mesh=mesh,value=0.),
@@ -79,8 +78,7 @@ phi = [
         CellVariable(name="C10H44",mesh=mesh,value=0.),
         CellVariable(name="N2",mesh=mesh,value=0.),
         CellVariable(name="O2",mesh=mesh,value=0.)
-        ]
-
+    ]
 
 #initial conditions
 #uniform in r in nozzel, and asymptopic to zero outside
@@ -175,7 +173,7 @@ for step in range(steps):
     phi[-2] = (1.0e5/R/T-tmpphi)*0.791*28.0134/1000.
     #iteration in each cellEvap
     dtEvap = arange(0.,timeStepDuration+timeStepDuration,timeStepDuration)
-    h = t*0.01*ones(ny)
+    h = initial_film_thickness*0.01*ones(ny)
     evapDensity = zeros([diesel.nSpecies,ny])
     liquidConc= zeros([ny,diesel.nSpecies])
     liquidMolFrac = zeros([ny,diesel.nSpecies+2])
@@ -188,9 +186,9 @@ for step in range(steps):
         liquidMolFrac[cell,0:diesel.nSpecies]=dieselSet[cell].molFrac
         liquidMolFrac[cell,diesel.nSpecies:]=dieselSet[cell].airMolFrac
 
-    if h[-1]<t/3.:
+    if h[-1]<initial_film_thickness/3.:
         timeStepDuration = 0.9*dx**2/(2*average(Dvi))*2
-    if h[-1]<t/10.:
+    if h[-1]<initial_film_thickness/10.:
         timeStepDuration = 0.9*dx**2/(2*average(Dvi))/5.
 
     totaltime = totaltime + timeStepDuration
@@ -213,7 +211,7 @@ for step in range(steps):
         # all faces are dry
         facesDry = facesBotRight
     elif (dryPosition > 0):
-        if (h[dryPosition-1]/t<=0.01):
+        if (h[dryPosition-1]/initial_film_thickness<=0.01):
             # one more cell has dried up
             dryPosition -=1
     else:
@@ -267,7 +265,6 @@ for step in range(steps):
         print evapDensity
 
 
-
 #timeStepDuration = 10*0.9*dr**2/(2*D)
 #steps = 1000
 #for step in range(steps):
@@ -285,5 +282,5 @@ if __name__ == '__main__':
 #diesel.advance(arange(0,12.191,0.001))
 #print 'the concentrations are ',diesel.concs
 #print 'the new h is',diesel.thickness
-#print '%f percent film left', diesel.thickness/t
+#print '%f percent film left', diesel.thickness/initial_film_thickness
 #
