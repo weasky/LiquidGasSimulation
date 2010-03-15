@@ -675,3 +675,7 @@ if __name__ == "__main__":
         pylab.semilogy((time_now),concentrations_now.reshape((1,24)), '.')
     print "Solved"
     
+    mass_concentrations = concentrations * solver.properties.MolecularWeight
+    mass_fractions = mass_concentrations / mass_concentrations.sum()
+    
+    gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
