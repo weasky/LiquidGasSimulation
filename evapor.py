@@ -1,18 +1,32 @@
-from math import pi,exp
-
 import ctml_writer as ctml
-from numpy import append
-from numpy import arange
-from numpy import array
-from numpy import zeros
+from numpy import pi,exp, append, arange, array, zeros
 from scipy.integrate import odeint
 from tools import diffusivity_hco_in_air
+
+from chemistry import ChemistrySolver
 import copy
 
 units = ctml.units
 OneAtm = ctml.OneAtm
 R = 8.314472 # J/mol K
 
+class FuelComponent():
+    """copy from Richard's chem solver
+    specific to the fuel surrogate model.
+    don't get confused with the reaction products."""
+    def __str__(self):
+        return "<Species %s>"%(self.name)
+    def __init__(self, name="",
+            initialVolFraction=0,
+            composition=dict(C=0,H=0,O=0), 
+            Antoine=dict(A=0,B=0,C=0),
+            liquidMolarDensity=3500 ):
+        self.name=name
+        self.initialVolFraction=initialVolFraction
+        self.composition=composition
+        self.Antoine=Antoine
+        self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
+        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
 
 class LiquidFilmCell:
     """
@@ -20,12 +34,22 @@ class LiquidFilmCell:
     represents each cell after descritization. when initialize, nSpecies is
     the number of hydrocarbon species, N2 and O2 will be automatically added.
     """
-    def __init__(self, nSpecies=1, diameter=1, thickness=1, length=1,
+    def __init__(self, fuel=[], solver=ChemistrySolver(), diameter=1, thickness=1, length=1,
                  T=400, P=OneAtm):
         #use nSpecies, the code will calculate molWeight based on nC, nH and nO
         #2 means [O2 N2]
-        self.nSpecies = nSpecies
-        self.molWeight = zeros(self.nSpecies)
+        # 7 surrogate model
+        fuel=[
+            FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
+            FuelComponent('n-C13(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0),
+            FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3 ),
+            FuelComponent('n-C16(5)',  0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51, C=154.45 ),3415.0),
+            FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148, B=2396.8,  C=199.5736),2.6e3),
+            FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
+            FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
+        ]
+        self.nSpecies = solver.Nspecies
+        self.molWeight = solver.properties.MolecularWeight
         #evapFlux out
         self.evapFlux = zeros(self.nSpecies)
         # area and vol
@@ -46,6 +70,15 @@ class LiquidFilmCell:
         self.volFrac = zeros(self.nSpecies)
         self.concs = zeros(self.nSpecies)
         self.Dvi = zeros(self.nSpecies)
+        # process from fuel input
+        concs_dict=dict.fromkeys( solver.getSpeciesNames() )
+        for speciesName in solver.getSpeciesNames():
+            molDens_dict[speciesName]=0.0
+            concs_dict[speciesName]= 0.0
+            antoine_dict[speciesName] = 0.0
+        for component in fuel:
+            concs_dict[component.name]=component.initialConcentration # mol/m3
+        self.concs,units = ArrayFromDict(concs_dict)
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
@@ -221,9 +254,19 @@ if __name__ == "__main__":
 	qi = diesel.vaporDiff(Lv=dia)
 	#print 'the mass flux out of the interface ',qi
 	print 'the initial h is', diesel.thickness
-	print 'start evaporating'
-	diesel.advance(arange(0, 0.309, 0.001),True)
-	print 'the concentrations are ', diesel.concs
-	print 'the vapor densities are ', diesel.getVaporDens()
-	print 'the new h is', diesel.thickness
-	print '%f percent film left', diesel.thickness / initial_film_thickness
+        # chem solver exp
+
+        solver = ChemistrySolver()
+        solver.setTemperature(diesel.T)
+        print solver.Nspecies
+        solver.setConcentrations(diesel.concs)
+        print 'concentrations are',diesel.concs
+        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
+        print('new concs are', concentrations_now)
+        
+	# print 'start evaporating'
+	# diesel.advance(arange(0, 0.309, 0.001),True)
+	# print 'the concentrations are ', diesel.concs
+	# print 'the vapor densities are ', diesel.getVaporDens()
+	# print 'the new h is', diesel.thickness
+	# print '%f percent film left', diesel.thickness / initial_film_thickness

@@ -656,22 +656,24 @@ if __name__ == "__main__":
     print "Starting to solve it in one go"
     concentration_history_array = odeint(solver.getRightSideOfODE(),concentrations,timesteps)
     print "Solved"
+    mass_concentrations = concentration_history_array[-1] * solver.properties.MolecularWeight
+    print mass_concentrations
     
-    # plot the graph
-    pylab.semilogy(timesteps,concentration_history_array)
-    pylab.legend(_speciesnames)
-    pylab.show()
+    # # plot the graph
+    # pylab.semilogy(timesteps,concentration_history_array)
+    # pylab.legend(_speciesnames)
+    # pylab.show()
     
-    # solve it in the solver, to show the API
-    print "Starting to solve it step by step (in 10 times fewer steps)"
-    time_now = timesteps[0]
-    concentrations_now = concentrations
-    for step in xrange(1,len(timesteps),10):
-        time = timesteps[step]
-        concentrations_now = solver.solveConcentrationsAfterTime(concentrations_now, time-time_now )
-        time_now = time
-        pylab.semilogy((time_now),concentrations_now.reshape((1,24)), '.')
-    print "Solved"
+    # # solve it in the solver, to show the API
+    # print "Starting to solve it step by step (in 10 times fewer steps)"
+    # time_now = timesteps[0]
+    # concentrations_now = concentrations
+    # for step in xrange(1,len(timesteps),10):
+    #     time = timesteps[step]
+    #     concentrations_now = solver.solveConcentrationsAfterTime(concentrations_now, time-time_now )
+    #     time_now = time
+    #     pylab.semilogy((time_now),concentrations_now.reshape((1,24)), '.')
+    # print "Solved"
     
     mass_concentrations = concentrations * solver.properties.MolecularWeight
     mass_fractions = mass_concentrations / mass_concentrations.sum()
