@@ -279,13 +279,42 @@ def DictFromArray(inArray, units=None):
         outDict[speciesName] = value
     return outDict
 
-class SpeciesProperties():
+class PropertiesOfSpecies():
+    """An individual species' properties"""
+    def __init__(self, properties_dict):
+        for key,value in properties_dict.iteritems():
+            # insert it into the instance's attribute dictionary
+            self.__dict__[key] = value
+        self.species_name = properties_dict['ChemkinName']
+    def __getattr__(self,property_name):
+        # will only get called if not found in attribute dictionary
+        # don't yet have any extra definitions:
+        raise AttributeError("Don't have the property '%s' for species '%s'."%(property_name,self.species_name))
+        
+class PropertiesStore():
     """
     A class to store and evaluate Species Properties.
     """
     def __init__(self, resultsDir='RMG_results'):
         self._properties = dict()
         self.loadPropertiesFromFile(resultsDir)
+        
+    def __getattr__(self, property_name):
+        """
+        Get an array of the property. Length is Nspecies; order is same as chemistry model.
+        
+        >> s = SpeciesProperties()
+        >> s.Radius
+        """
+        try:
+            return self.getPropertyArray(property_name)
+        except KeyError:
+            raise AttributeError("Can't find property %s"%name)
+        
+    def __get__(self,species_name):
+        """Get properties of an individual species."""
+        spec_prop = self._properties[species_name]
+        return spec_prop
         
     def loadPropertiesFromFile(self, resultsDir):
         """
@@ -301,7 +330,7 @@ class SpeciesProperties():
         reader = csv.DictReader(propsfile, dialect=csv.excel_tab)
         properties = dict()
         for spec_prop in reader:
-            properties[spec_prop['ChemkinName']] = spec_prop
+            properties[spec_prop['ChemkinName']] = PropertiesOfSpecies(spec_prop)
         propsfile.close()
         self._properties = properties
         
@@ -317,10 +346,10 @@ class SpeciesProperties():
             print "These are the ones I have:",self._properties.keys()
             raise 
         try:
-            value = spec_prop[property_name]
-        except KeyError:
+            value = spec_prop.__getattr__(property_name)
+        except AttributeError:
             print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
-            print "These are the ones I have:",spec_prop.keys()
+            print "These are the ones I have:",spec_prop.__dict__.keys()
             raise
         return value
     
@@ -348,7 +377,7 @@ class ChemistrySolver():
         self.T = 0
         
         self.concentrations = numpy.array([])
-        self.properties = SpeciesProperties(resultsDir)
+        self.properties = PropertiesStore(resultsDir)
     
     def loadChemistryModel(self, resultsDir):
         print "Loading chemistry from",resultsDir
