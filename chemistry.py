@@ -324,8 +324,40 @@ class PropertiesOfSpecies():
         """Get the molar volume"""
         print "FIX THE UNITS"
         return self.Radius*self.Radius*self.Radius * math.pi * 4/3
-    _calculated_properties['MolarVolume']=getMolarVolume
+    _calculated_properties['MolarVolume']=getMolarVolume  # make a fake attribute
     
+    def getPartitionCoefficient(self):
+        """
+        Get the partition coefficient, K: ratio of solvent to gas concentrations.
+        
+        K>1 means concentration is higher in solution than in the gas.
+        
+        Abraham constants here are for dry decane, taken from from 
+        M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29-47
+        http://dx.doi.org/10.1016/j.chroma.2003.12.004
+        """
+        # Solvent parameters  here are for dry decane, from from 
+        # M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29-47
+        # http://dx.doi.org/10.1016/j.chroma.2003.12.004
+        # if you change them, remember to update the docstring above!
+        c = 0.156
+        s = 0
+        b = 0
+        e = -0.143
+        l = 0.989
+        a = 0
+        # Solute parameters are properties of the species
+        S=self.AbrahamS
+        B=self.AbrahamB
+        E=self.AbrahamE
+        L=self.AbrahamL
+        A=self.AbrahamA
+        # Abraham model:
+        logK=c + s*S + b*B + e*E + l*L + a*A 
+        partition_coefficient = 10**logK
+        return partition_coefficient
+    # make a fake attribute
+    _calculated_properties['PartitionCoefficient']=getPartitionCoefficient 
     
             
 class PropertiesStore():
