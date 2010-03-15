@@ -284,7 +284,8 @@ class SpeciesProperties():
     A class to store and evaluate Species Properties.
     """
     def __init__(self, resultsDir='RMG_results'):
-        self._properties = self.loadPropertiesFromFile(resultsDir)
+        self._properties = dict()
+        self.loadPropertiesFromFile(resultsDir)
         
     def loadPropertiesFromFile(self, resultsDir):
         """
@@ -302,9 +303,32 @@ class SpeciesProperties():
         for spec_prop in reader:
             properties[spec_prop['ChemkinName']] = spec_prop
         propsfile.close()
-        return properties
+        self._properties = properties
         
+    def getSpeciesProperty(self,species_name,property_name):
+        """Get the value of a property of a species. General method."""
+        try:
+            spec_prop = self._properties[species_name]
+        except KeyError:
+            print "Don't have any properties for the species named '%s'."%species_name
+            print "These are the ones I have:",self._properties.keys()
+            raise 
+        try:
+            value = spec_prop[property_name]
+        except KeyError:
+            print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
+            print "These are the ones I have:",spec_prop.keys()
+            raise
+        return value
     
+    def getPropertyArray(self,property_name):
+        """Get an array of the property. Length is Nspecies; order is same as chemistry model.
+        
+        Probably quite slow, so wise to store the result."""
+        values = numpy.zeros(len(_species))
+        for species_index, species_name in enumerate(_speciesnames):
+            values[species_index] = self.getSpeciesProperty(species_name,property_name)
+        return values
 
 class ChemistrySolver():
     """A chemistry solver."""
