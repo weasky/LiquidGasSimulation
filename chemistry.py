@@ -483,9 +483,8 @@ class ChemistrySolver():
     """A chemistry solver."""
     
     def __init__(self, resultsDir='RMG_results'):
-        
         self.loadChemistryModel(resultsDir)
-        
+        self.speciesnames = _speciesnames
         #: Number of species
         self.Nspecies = len(_species)
         print "Liquid phase has %d species"%self.Nspecies, _speciesnames
@@ -507,7 +506,6 @@ class ChemistrySolver():
         else:
             print "Already had chemistry loaded! If you want different chemistry please restart your python shell"
     
-
     
     def getSpeciesNames(self):
         return _speciesnames
