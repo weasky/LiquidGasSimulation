@@ -284,6 +284,20 @@ class ChemistrySolver():
     """A chemistry solver."""
     
     def __init__(self, resultsDir='RMG_results'):
+        
+        self.loadChemistryModel(resultsDir)
+        
+        #: Number of species
+        self.Nspecies = len(_species)
+        print "Liquid phase has %d species"%self.Nspecies, _speciesnames
+        
+        self.calculateStoichiometries()
+        self.T = 0
+        
+        self.concentrations = numpy.array([])
+        self.loadSpeciesProperties(resultsDir)
+    
+    def loadChemistryModel(self, resultsDir):
         print "Loading chemistry from",resultsDir
         ctifile = os.path.join(resultsDir,'chemkin','chem.cti')
         base = os.path.basename(ctifile)
@@ -293,14 +307,24 @@ class ChemistrySolver():
             execfile(ctifile)
         else:
             print "Already had chemistry loaded! If you want different chemistry please restart your python shell"
-        
-        self.calculateStoichiometries()
-        self.T = 0
-        self.concentrations = numpy.array([])
-        
-        """Number of species"""
-        self.Nspecies = len(_species)
     
+    def loadSpeciesProperties(self, resultsDir):
+        """
+        Load the species properties from the RMG_Solvation_Properties.txt file
+        
+        This will fill the self.properties dictionary, 
+        with dictionaries of properties for each species.
+        """
+        import csv
+        print "Loading species properties from",resultsDir
+        propsfilename = os.path.join(resultsDir,'RMG_Solvation_Properties.txt')
+        propsfile = open(propsfilename)
+        reader = csv.DictReader(propsfile, dialect=csv.excel_tab)
+        properties = dict()
+        for spec_prop in reader:
+            properties[spec_prop['ChemkinName']] = spec_prop
+        self.properties = properties
+        propsfile.close()
     
     def getSpeciesNames(self):
         return _speciesnames
