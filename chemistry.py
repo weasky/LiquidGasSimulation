@@ -15,6 +15,7 @@ import sys, os
 import math
 import pylab, numpy
 from scipy.integrate import odeint
+import re
 
 # get quantities package from http://pypi.python.org/pypi/quantities
 # read about it at http://packages.python.org/quantities/index.html
@@ -321,9 +322,13 @@ class PropertiesOfSpecies():
         raise AttributeError # if you haven't already returned
         
     def getMolarVolume(self):
-        """Get the molar volume"""
-        print "FIX THE UNITS"
-        return self.Radius*self.Radius*self.Radius * math.pi * 4/3
+        """Get the molar volume, in m3/mol"""
+        molecule_volume =  self.Radius*self.Radius*self.Radius * math.pi * 4/3
+        molar_volume = molecule_volume * 6.0221415E23
+        return molar_volume
+        # seems to be about 3 times too high.
+        # molar volume of undecane = 1/(0.74 g/ml / 156.31 g/mol) = 0.00021122973 m3/mol
+        # whereas p['n-C11(2)'].MolarVolume = 0.00063723
     _calculated_properties['MolarVolume']=getMolarVolume  # make a fake attribute
     
     def getPartitionCoefficient(self):
@@ -358,6 +363,52 @@ class PropertiesOfSpecies():
         return partition_coefficient
     # make a fake attribute
     _calculated_properties['PartitionCoefficient']=getPartitionCoefficient 
+    
+    
+    def getDiffusivityInAir(self,Temperature,pressure_in_bar):
+        """
+        Diffusivity of non-ring HCO compound in air
+        
+        Use Fuiller, Schettier, and Giddings correlation
+        as in Eq. 11-4.1 in Reid, Prausnitz and Sherwood
+        
+        input: T in K; p in bar;
+        output diffusivity d in m2/s
+        """        
+        wC=12.011; wH=1.008; wO=16;   wair=28.97;
+        vC=16.5;   vH=1.98;  vO=5.48; vair=20.1;
+        
+        vHCO=self.nC*vC+self.nH*vH+self.nO*vO;
+        wHCO=self.nC*wC+self.nH*wH+self.nO*wO;
+        
+        pinv=1./pressure_in_bar;
+        
+        d=1e-3 * Temperature**1.75 * math.sqrt((wHCO+wair)/(wHCO*wair))*pinv/ \
+                (vHCO**.33333+vair**.33333)**2;
+        return d*1e-4; #result in m2/s
+        
+
+    def getNumberOfCarbons(self):
+        """Get the number of Carbon atoms in the molecule"""
+        m = re.search('C(\d*)',self.ChemicalFormula)
+        if not m: return 0
+        if not m.group(1): return 1
+        return int(m.group(1))
+    _calculated_properties['nC']=getNumberOfCarbons
+    def getNumberOfHydrogens(self):
+        """Get the number of Carbon atoms in the molecule"""
+        m = re.search('H(\d*)',self.ChemicalFormula)
+        if not m: return 0
+        if not m.group(1): return 1
+        return int(m.group(1))
+    _calculated_properties['nH']=getNumberOfHydrogens
+    def getNumberOfOxygens(self):
+        """Get the number of Carbon atoms in the molecule"""
+        m = re.search('O(\d*)',self.ChemicalFormula)
+        if not m: return 0
+        if not m.group(1): return 1
+        return int(m.group(1))
+    _calculated_properties['nC']=getNumberOfOxygens
     
             
 class PropertiesStore():
