@@ -335,7 +335,7 @@ class PropertiesOfSpecies():
         """
         Get the partition coefficient, K: ratio of solvent to gas concentrations.
         
-        K>1 means concentration is higher in solution than in the gas.
+        K > 1 means concentration is higher in solution than in the gas.
         
         Abraham constants here are for dry decane, taken from from 
         M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29-47
@@ -408,7 +408,7 @@ class PropertiesOfSpecies():
         if not m: return 0
         if not m.group(1): return 1
         return int(m.group(1))
-    _calculated_properties['nC']=getNumberOfOxygens
+    _calculated_properties['nO']=getNumberOfOxygens
     
             
 class PropertiesStore():
