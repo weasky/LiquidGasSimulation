@@ -280,23 +280,60 @@ def DictFromArray(inArray, units=None):
     return outDict
 
 class PropertiesOfSpecies():
-    """An individual species' properties"""
+    """
+    An individual species' properties
+    
+    >> ps=PropertiesStore()
+    >> oxygen = ps['O2(1)'] // oxygen is now a PropertiesOfSpecies instance
+    >> oxygen.Radius
+    """
+    
+    # add [property: function] pairs to this dictionary for calculatable fake attributes
+    _calculated_properties = dict() 
+        
     def __init__(self, properties_dict):
         for key,value in properties_dict.iteritems():
+            # try to turn it into a float
+            try:
+                value = float(value)
+            except ValueError:
+                pass 
             # insert it into the instance's attribute dictionary
-            self.__dict__[key] = value
+            setattr(self,key,value)
         self.species_name = properties_dict['ChemkinName']
-    def __getattr__(self,property_name):
-        # will only get called if not found in attribute dictionary
-        # don't yet have any extra definitions:
-        raise AttributeError("Don't have the property '%s' for species '%s'."%(property_name,self.species_name))
+    
+    def _getAttributeNames(self):
+        """Get a list of extra (fake) attributes. Useful for ipython shell.""" 
+        return self.__class__._calculated_properties.keys()
         
+    def __getattr__(self,property_name):
+        """
+        Get a (fake) attribute.
+        
+        Will only get called if not found in attribute dictionary, or called explicitly.
+        Will only call functions stored in the _calculated_properties dictionary of the class. 
+        """
+        try:
+            function = self.__class__._calculated_properties[property_name]
+        except KeyError:
+            raise AttributeError("Don't know how to calculate %s"%property_name)
+        return function(self)
+        raise AttributeError # if you haven't already returned
+        
+    def getMolarVolume(self):
+        """Get the molar volume"""
+        print "FIX THE UNITS"
+        return self.Radius*self.Radius*self.Radius * math.pi * 4/3
+    _calculated_properties['MolarVolume']=getMolarVolume
+    
+    
+            
 class PropertiesStore():
     """
-    A class to store and evaluate Species Properties.
+    A class to store and evaluate Properties of all the Species in the system.
     """
     def __init__(self, resultsDir='RMG_results'):
-        self._properties = dict()
+        self._specs_props = dict()
         self.loadPropertiesFromFile(resultsDir)
         
     def __getattr__(self, property_name):
@@ -309,11 +346,11 @@ class PropertiesStore():
         try:
             return self.getPropertyArray(property_name)
         except KeyError:
-            raise AttributeError("Can't find property %s"%name)
+            raise AttributeError
         
-    def __get__(self,species_name):
+    def __getitem__(self,species_name):
         """Get properties of an individual species."""
-        spec_prop = self._properties[species_name]
+        spec_prop = self._specs_props[species_name]
         return spec_prop
         
     def loadPropertiesFromFile(self, resultsDir):
@@ -328,11 +365,9 @@ class PropertiesStore():
         propsfilename = os.path.join(resultsDir,'RMG_Solvation_Properties.txt')
         propsfile = open(propsfilename)
         reader = csv.DictReader(propsfile, dialect=csv.excel_tab)
-        properties = dict()
         for spec_prop in reader:
-            properties[spec_prop['ChemkinName']] = PropertiesOfSpecies(spec_prop)
+            self._specs_props[spec_prop['ChemkinName']] = PropertiesOfSpecies(spec_prop)
         propsfile.close()
-        self._properties = properties
         
     def getSpeciesProperty(self,species_name,property_name):
         """Get the value of a property of a species. General method."""
@@ -340,16 +375,15 @@ class PropertiesStore():
             print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
             species_name='O2(1)'
         try:
-            spec_prop = self._properties[species_name]
+            spec_prop = self._specs_props[species_name]
         except KeyError:
             print "Don't have any properties for the species named '%s'."%species_name
-            print "These are the ones I have:",self._properties.keys()
+            print "These are the species I have:",self._specs_props.keys()
             raise 
         try:
-            value = spec_prop.__getattr__(property_name)
+            value = getattr(spec_prop,property_name)
         except AttributeError:
-            print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
-            print "These are the ones I have:",spec_prop.__dict__.keys()
+            # print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
             raise
         return value
     
