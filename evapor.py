@@ -50,6 +50,8 @@ class LiquidFilmCell:
         ]
         self.nSpecies = solver.Nspecies
         self.speciesnames = solver.speciesnames
+        #tmp, may delete in future
+        self.solver = solver
         self.molWeight = solver.properties.MolecularWeight/1000. #to kg/m^3
         #evapFlux out
         self.evapFlux = zeros(self.nSpecies)
@@ -65,7 +67,7 @@ class LiquidFilmCell:
         self.P = P
         self.Psat = zeros(self.nSpecies)
         self.massDens = zeros(self.nSpecies)
-        self.molDens = 1./solver.properties.MolarVolume*3. #not correct yet
+        self.molDens = zeros(self.nSpecies)
         self.massFrac = zeros(self.nSpecies)
         self.molFrac = zeros(self.nSpecies)
         self.volFrac = zeros(self.nSpecies)
@@ -80,30 +82,43 @@ class LiquidFilmCell:
         concs_dict=dict.fromkeys(solver.speciesnames)
         volFrac_dict=dict.fromkeys(solver.speciesnames)
         antoine_dict=dict.fromkeys(solver.speciesnames)
-        molDens_dict = zip(solver.speciesnames,1./solver.properties.MolarVolume)
+        molDens_dict = dict(zip(solver.speciesnames,1./solver.properties.MolarVolume))
         for speciesName in solver.speciesnames:
             concs_dict[speciesName]= 0.0
             volFrac_dict[speciesName] = 0.0
             antoine_dict[speciesName] = 0.0
         for component in fuel:
             concs_dict[component.name]=component.initialConcentration # mol/m3
-            volFrac_dict[speciesName] = component.initialVolFraction
-            antoine_dict[speciesName] = component.Antoine
-            molDens_dict[speciesnames] = component.liquidMolarDensity
+            volFrac_dict[component.name] = component.initialVolFraction
+            antoine_dict[component.name] = component.Antoine
+            molDens_dict[component.name] = component.liquidMolarDensity
         self.concs = array([concs_dict[s] for s in self.speciesnames])
         self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
+        self.molDens = array([molDens_dict[s] for s in self.speciesnames])
         #updating
         self.massDens = self.molDens * self.molWeight
         molFrac =self.volFrac * self.molDens
         self.molFrac = molFrac / sum(molFrac)
         massFrac = self.volFrac * self.massDens
         self.massFrac = massFrac / sum(massFrac)
-        #self.antoine 
+        # adjust antonie coeff, metch Psat
+        self.vaporConcs = self.concs/solver.properties.PartitionCoefficient
+        self.Psat = sum(self.concs) * R * self.T/solver.properties.PartitionCoefficient
+        Psat_dict = dict(zip(solver.speciesnames,self.Psat))
+        for component in fuel:
+            Psat_dict[component.name]=self.getPsat(component.Antoine['A'],
+                                                   component.Antoine['B'],
+                                                   component.Antoine['C']) # mol/m3
+        self.Psat = array([Psat_dict[s] for s in self.speciesnames])
+        self.vaporConcs = self.Psat * self.molFrac / R / self.T
+        self.vaporMassDens = self.vaporConcs * self.molWeight
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
+        #get air pressure and concs
+        self.update()
 
     def setEvapFlux(self, evapFlux):
         """Set the flux of species evaporating."""
@@ -165,22 +180,19 @@ class LiquidFilmCell:
         # rescale the vol frac, concentration, mass frac etc.
         # for now, keep those things unchanged
 
-    def setAntoine(self, A, B, C):
+    def getPsat(self, A, B, C):
         """ use Antoine Equation to get saturated vapor pressure
         note the units in Antoine Eqn is mmHg and C
         P = 10^(A-B/(C+T))
         use the system temperature
         """
-        A = array(A);B = array(B);C = array(C)
         # transfer from mmHg to Pa
         # A = A0 + log10(101325/760)
         A = A + 2.124903
         # transfer from C to K
         C = C-273.15
         # Antoine's Equation
-        self.Psat = 10. ** (A-B / (C + self.T))
-        # get air's partial pressure
-        self.update()
+        return 10. ** (A-B / (C + self.T))
 
 
     def getVaporDens(self):
@@ -257,33 +269,24 @@ if __name__ == "__main__":
         #               3415.0, 2600.0, 2889., 2729.]) #mol/m3
 	print 'diesel components mol density is', diesel.molDens #
 	print 'diesel components mass density is', diesel.massDens #kg/m3
-	diesel.setVolFrac(volFrac=[0.05, 0.19, 0.11, 0.25, 0.12, 0.18, 0.10])
 	print 'the mol fraction is ', diesel.molFrac
 	print 'the mass fraction is ', diesel.massFrac
 	print 'the concentrations are ', diesel.concs
-	diesel.setAntoine(
-                      A=[6.9722, 7.00756, 7.03592, 7.02867, 7.8148, 7.0153, 7.0842],
-                      B=[1569.57, 1690.67, 1826.948, 1830.51, 2396.8, 1932.8, 2054],
-                      C=[187.7, 174.22, 195.002, 154.45, 199.5736, 137.6, 120.1])
+        print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.solver.properties.PartitionCoefficient)*R*diesel.T
 	print 'the saturated vapor pressure is', diesel.Psat
+        print 'the total vapor pressure using Antoine is ',sum(diesel.Psat*diesel.molFrac)
 	print 'the O2 and N2 partial pressure is ', diesel.airP[0], diesel.airP[1]
 	print 'the O2 and n2 mole fraction are ', diesel.airMolFrac[0], diesel.airMolFrac[1]
-	print 'the mol fraction is ', diesel.molFrac
-	print 'the mass fraction is ', diesel.massFrac
-	print 'the concentrations are ', diesel.concs
-	print 'the vapor densities are ', diesel.getVaporDens()
+        
+	print 'the vapor densities are ', diesel.vaporMassDens
 	qi = diesel.vaporDiff(Lv=dia)
 	#print 'the mass flux out of the interface ',qi
 	print 'the initial h is', diesel.thickness
         # chem solver exp
 
-        solver = ChemistrySolver()
-        solver.setTemperature(diesel.T)
-        print solver.Nspecies
-        solver.setConcentrations(diesel.concs)
         print 'concentrations are',diesel.concs
-        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
-        print('new concs are', concentrations_now)
+#        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
+ #       print('new concs are', concentrations_now)
         
 	# print 'start evaporating'
 	# diesel.advance(arange(0, 0.309, 0.001),True)
