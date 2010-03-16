@@ -484,7 +484,6 @@ class ChemistrySolver():
     
     def __init__(self, resultsDir='RMG_results'):
         self.loadChemistryModel(resultsDir)
-        self.speciesnames = _speciesnames
         #: Number of species
         self.Nspecies = len(_species)
         print "Liquid phase has %d species"%self.Nspecies, _speciesnames
@@ -506,8 +505,8 @@ class ChemistrySolver():
         else:
             print "Already had chemistry loaded! If you want different chemistry please restart your python shell"
     
-    
-    def getSpeciesNames(self):
+    @property
+    def speciesnames(self):
         return _speciesnames
     
     def setConcentrations(self, concentrations, zero_others=False):
@@ -632,8 +631,8 @@ if __name__ == "__main__":
         FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
         FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
     ]
-    concs_dict=dict.fromkeys( solver.getSpeciesNames() )
-    for speciesName in solver.getSpeciesNames():
+    concs_dict=dict.fromkeys( solver.speciesnames )
+    for speciesName in solver.speciesnames:
         concs_dict[speciesName]=pq.Quantity(0.0,'mol/m**3')
     for component in fuel:
         concs_dict[component.name]=component.initialConcentration # mol/m3
@@ -679,3 +678,5 @@ if __name__ == "__main__":
     mass_fractions = mass_concentrations / mass_concentrations.sum()
     
     gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
+
+    

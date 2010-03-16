@@ -25,7 +25,7 @@ class FuelComponent():
         self.initialVolFraction=initialVolFraction
         self.composition=composition
         self.Antoine=Antoine
-        self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
+        self.liquidMolarDensity=liquidMolarDensity # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
 
 class LiquidFilmCell:
@@ -49,7 +49,8 @@ class LiquidFilmCell:
             FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
         ]
         self.nSpecies = solver.Nspecies
-        self.molWeight = solver.properties.MolecularWeight
+        self.speciesnames = solver.speciesnames
+        self.molWeight = solver.properties.MolecularWeight/1000. #to kg/m^3
         #evapFlux out
         self.evapFlux = zeros(self.nSpecies)
         # area and vol
@@ -64,21 +65,40 @@ class LiquidFilmCell:
         self.P = P
         self.Psat = zeros(self.nSpecies)
         self.massDens = zeros(self.nSpecies)
-        self.molDens = zeros(self.nSpecies)
+        self.molDens = 1./solver.properties.MolarVolume*3. #not correct yet
         self.massFrac = zeros(self.nSpecies)
         self.molFrac = zeros(self.nSpecies)
         self.volFrac = zeros(self.nSpecies)
         self.concs = zeros(self.nSpecies)
+        self.nC = solver.properties.nC
+        self.nH = solver.properties.nH
+        self.nO = solver.properties.nO
         self.Dvi = zeros(self.nSpecies)
+        self.Dvi = diffusivity_hco_in_air(T=self.T,p=self.P*1.e-5,nC=self.nC,
+                                          nH=self.nH,nO=self.nO)
         # process from fuel input
-        concs_dict=dict.fromkeys( solver.getSpeciesNames() )
-        for speciesName in solver.getSpeciesNames():
-            molDens_dict[speciesName]=0.0
+        concs_dict=dict.fromkeys(solver.speciesnames)
+        volFrac_dict=dict.fromkeys(solver.speciesnames)
+        antoine_dict=dict.fromkeys(solver.speciesnames)
+        molDens_dict = zip(solver.speciesnames,1./solver.properties.MolarVolume)
+        for speciesName in solver.speciesnames:
             concs_dict[speciesName]= 0.0
+            volFrac_dict[speciesName] = 0.0
             antoine_dict[speciesName] = 0.0
         for component in fuel:
             concs_dict[component.name]=component.initialConcentration # mol/m3
-        self.concs,units = ArrayFromDict(concs_dict)
+            volFrac_dict[speciesName] = component.initialVolFraction
+            antoine_dict[speciesName] = component.Antoine
+            molDens_dict[speciesnames] = component.liquidMolarDensity
+        self.concs = array([concs_dict[s] for s in self.speciesnames])
+        self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
+        #updating
+        self.massDens = self.molDens * self.molWeight
+        molFrac =self.volFrac * self.molDens
+        self.molFrac = molFrac / sum(molFrac)
+        massFrac = self.volFrac * self.massDens
+        self.massFrac = massFrac / sum(massFrac)
+        #self.antoine 
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
@@ -228,13 +248,14 @@ if __name__ == "__main__":
 	L = 0.5E-3
 	initial_film_thickness = 3E-6
 
-	diesel = LiquidFilmCell(nSpecies=7, T=473, diameter=dia, length=L, thickness=initial_film_thickness)
-	diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
-                  nH=[24, 28, 10, 34, 26, 40, 44],
-                  nO=[0, 0, 0, 0, 0, 0, 0])
+	diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
+	# diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
+        #           nH=[24, 28, 10, 34, 26, 40, 44],
+        #           nO=[0, 0, 0, 0, 0, 0, 0])
 	print 'diesel components mol weight is', diesel.molWeight #g/mol
-	diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
-                      3415.0, 2600.0, 2889., 2729.]) #mol/m3
+	# diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
+        #               3415.0, 2600.0, 2889., 2729.]) #mol/m3
+	print 'diesel components mol density is', diesel.molDens #
 	print 'diesel components mass density is', diesel.massDens #kg/m3
 	diesel.setVolFrac(volFrac=[0.05, 0.19, 0.11, 0.25, 0.12, 0.18, 0.10])
 	print 'the mol fraction is ', diesel.molFrac
