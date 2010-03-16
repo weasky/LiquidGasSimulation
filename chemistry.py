@@ -325,7 +325,7 @@ class PropertiesOfSpecies():
         """Get the molar volume, in m3/mol"""
         molecule_volume =  self.Radius*self.Radius*self.Radius * math.pi * 4/3
         molar_volume = molecule_volume * 6.0221415E23
-        return molar_volume
+        return molar_volume / 3.0 #<--- temporary hack!
         # seems to be about 3 times too high.
         # molar volume of undecane = 1/(0.74 g/ml / 156.31 g/mol) = 0.00021122973 m3/mol
         # whereas p['n-C11(2)'].MolarVolume = 0.00063723
