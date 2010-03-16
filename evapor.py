@@ -288,42 +288,42 @@ class LiquidFilmCell:
         self.massFrac = ytt / sum(ytt)
 
 if __name__ == "__main__":
-	dia = 0.14E-3
-	L = 0.5E-3
-	initial_film_thickness = 3E-6
+    dia = 0.14E-3
+    L = 0.5E-3
+    initial_film_thickness = 3E-6
 
-	diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
-	# diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
+    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
+    # diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
         #           nH=[24, 28, 10, 34, 26, 40, 44],
         #           nO=[0, 0, 0, 0, 0, 0, 0])
-	print 'diesel components mol weight is', diesel.molWeight #g/mol
-	# diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
+    print 'diesel components mol weight is', diesel.molWeight #g/mol
+    # diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
         #               3415.0, 2600.0, 2889., 2729.]) #mol/m3
-	print 'diesel components mol density is', diesel.molDens #
-	print 'diesel components mass density is', diesel.massDens #kg/m3
-	print 'the mol fraction is ', diesel.molFrac
-	print 'the mass fraction is ', diesel.massFrac
-	print 'the concentrations are ', diesel.concs
-        print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.solver.properties.PartitionCoefficient)*R*diesel.T
-	print 'the saturated vapor pressure is', diesel.Psat
-        print 'the total vapor pressure using Antoine is ',sum(diesel.Psat*diesel.molFrac)
-	print 'the O2 and N2 partial pressure is ', diesel.airP[0], diesel.airP[1]
-	print 'the O2 and n2 mole fraction are ', diesel.airMolFrac[0], diesel.airMolFrac[1]
+    print 'diesel components mol density is', diesel.molDens #
+    print 'diesel components mass density is', diesel.massDens #kg/m3
+    print 'the mol fraction is ', diesel.molFrac
+    print 'the mass fraction is ', diesel.massFrac
+    print 'the concentrations are ', diesel.concs
+    print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.solver.properties.PartitionCoefficient)*R*diesel.T
+    print 'the saturated vapor pressure is', diesel.Psat
+    print 'the total vapor pressure using Antoine is ',sum(diesel.Psat*diesel.molFrac)
+    print 'the O2 and N2 partial pressure is ', diesel.airP[0], diesel.airP[1]
+    print 'the O2 and n2 mole fraction are ', diesel.airMolFrac[0], diesel.airMolFrac[1]
         
-	print 'the vapor densities are ', diesel.vaporMassDens
-	qi = diesel.vaporDiff(Lv=dia)
-	#print 'the mass flux out of the interface ',qi
-	print 'the initial h is', diesel.thickness
+    print 'the vapor densities are ', diesel.vaporMassDens
+    qi = diesel.vaporDiff(Lv=dia)
+    #print 'the mass flux out of the interface ',qi
+    print 'the initial h is', diesel.thickness
         # chem solver exp
 
-        print 'concentrations are',diesel.concs
-        print 'netRatesofCreation is ',diesel.solver.getNetRatesOfCreation(diesel.concs)
+    print 'concentrations are',diesel.concs
+    print 'netRatesofCreation is ',diesel.solver.getNetRatesOfCreation(diesel.concs)
 #        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
  #       print('new concs are', concentrations_now)
         
-	# print 'start evaporating'
-	# diesel.advance(arange(0, 10, 0.001),plotresult=True,reaction=True)
-	# print 'the concentrations are ', diesel.concs
-	# print 'the vapor densities are ', diesel.getVaporDens()
-	# print 'the new h is', diesel.thickness
-	# print '%f percent film left', diesel.thickness / initial_film_thickness
+    # print 'start evaporating'
+    # diesel.advance(arange(0, 10, 0.001),plotresult=True,reaction=True)
+    # print 'the concentrations are ', diesel.concs
+    # print 'the vapor densities are ', diesel.getVaporDens()
+    # print 'the new h is', diesel.thickness
+    # print '%f percent film left', diesel.thickness / initial_film_thickness
