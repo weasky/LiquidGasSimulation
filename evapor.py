@@ -1,5 +1,5 @@
 import ctml_writer as ctml
-from numpy import pi,exp, append, arange, array, zeros
+from numpy import pi,exp, append, arange, array, zeros, linspace
 from scipy.integrate import odeint
 from tools import diffusivity_hco_in_air
 
@@ -182,6 +182,9 @@ class LiquidFilmCell:
         self.molFrac = self.molFrac * (1-tot)
         # rescale the vol frac, concentration, mass frac etc.
         # for now, keep those things unchanged
+        # hack, should use dict in future
+        self.concs[1] = sum(self.concs)*self.airMolFrac[1]
+        self.concs[2] = sum(self.concs)*self.airMolFrac[0]
 
     def getPsat(self, A, B, C):
         """ use Antoine Equation to get saturated vapor pressure
@@ -241,10 +244,6 @@ class LiquidFilmCell:
         self.update()
         return drhodt
 
-    def test(self):
-        reactConcs = self.solver.getNetRatesOfCreation(self.concs)
-        print reactConcs      
-
     def rightSideofReactODE(self, Y, t):
         """
         drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
@@ -259,9 +258,8 @@ class LiquidFilmCell:
         Qi = self.vaporDiff(Lv=self.dia)
         Q = sum(Qi)
         #reaction source term, turn the mole to mass frac dens
-        reactConcs = self.solver.getNetRatesOfCreation(molFracDens)
-        print reactConcs
-
+        reactConcs = self.solver.getRightSideOfODE(molFracDens,t)*self.molWeight
+   
         dhdt = -1. / sum(massFracDens) * Q
         drhodt = -ratio * Qi - ratio * massFracDens * dhdt + reactConcs
         drhodt = append(drhodt, dhdt)
@@ -317,13 +315,13 @@ if __name__ == "__main__":
         # chem solver exp
 
         print 'concentrations are',diesel.concs
-        print 'netRatesofCreation is ',diesel.solver.getNetRatesOfCreation(diesel.concs)
 #        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
  #       print('new concs are', concentrations_now)
         
-	# print 'start evaporating'
-	# diesel.advance(arange(0, 10, 0.001),plotresult=True,reaction=True)
-	# print 'the concentrations are ', diesel.concs
+	print 'start evaporating'
+        timesteps=linspace(0,10,1001)
+	diesel.advance(timesteps,plotresult=True,reaction=True)
+	print 'the concentrations are ', diesel.concs
 	# print 'the vapor densities are ', diesel.getVaporDens()
 	# print 'the new h is', diesel.thickness
 	# print '%f percent film left', diesel.thickness / initial_film_thickness

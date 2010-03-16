@@ -576,15 +576,7 @@ class ChemistrySolver():
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
         return net_rates_of_creation
-    
-    def getNetRatesOfCreation(self,concentrations):
-        """abstracted from getRightSideOfODE
-        Get the net rate of creation of all species at a concentration and T."""
-        forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
-        reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
-        net_rates = forward_rates - reverse_rates
-        net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
-        return net_rates_of_creation
+
         
     def solveConcentrationsAfterTime(self, starting_concentrations, reaction_time, temperature=None ):
         """Solve the simulation for a given time starting from a given concentration.
@@ -643,7 +635,8 @@ if __name__ == "__main__":
         concs_dict[speciesName]=pq.Quantity(0.0,'mol/m**3')
     for component in fuel:
         concs_dict[component.name]=component.initialConcentration # mol/m3
-    concs_dict['O2(1)']=pq.Quantity(10,'mol/m**3') # haven't a clue
+    concs_dict['O2(1)']=pq.Quantity(1.066,'mol/m**3') # haven't a clue
+    concs_dict['N2']=pq.Quantity(2.207,'mol/m**3')
     concentrations,units = ArrayFromDict(concs_dict)
     print "Initial concentrations:", concentrations, units
     
@@ -654,8 +647,8 @@ if __name__ == "__main__":
     
     # set up timesteps
     start=0
-    stop=1
-    steps=101
+    stop=10
+    steps=1001
     timesteps=pylab.linspace(start,stop,steps)
     
     # solve it here using odeint
@@ -663,8 +656,8 @@ if __name__ == "__main__":
     concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
     print "Solved"
     mass_concentrations = concentration_history_array[-1] * solver.properties.MolecularWeight
-   # print mass_concentrations
-    print 'netRatesofCreation is ', solver.getNetRatesOfCreation(concentrations)
+    print mass_concentrations*solver.properties.MolecularWeight
+
     
     # # plot the graph
     # pylab.semilogy(timesteps,concentration_history_array)
