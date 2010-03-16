@@ -111,6 +111,7 @@ class LiquidFilmCell:
         self.Psat = array([Psat_dict[s] for s in self.speciesnames])
         self.vaporConcs = self.Psat * self.molFrac / R / self.T
         self.vaporMassDens = self.vaporConcs * self.molWeight
+        self.vaporMassDens[:3] = 0.
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
@@ -213,7 +214,10 @@ class LiquidFilmCell:
         Q_i = Dv_i rhov_i/Lv
         return an array
         """
-        rhovi = self.getVaporDens()
+        self.vaporConcs = self.Psat * self.molFrac / R / self.T
+        self.vaporMassDens = self.vaporConcs * self.molWeight
+        self.vaporMassDens[:3] = 0.
+        rhovi = self.vaporMassDens
         if (sum(self.evapFlux) == 0):
             Qi = self.Dvi * rhovi / Lv
             Qi = Qi * self.dia / 4. / self.len
@@ -222,7 +226,7 @@ class LiquidFilmCell:
         else:
             #print 'evaporation flux <0 ,something wrong'
             Qi = self.Dvi * self.evapFlux
-        Qi = zeros(self.nSpecies)
+        
         return Qi
 
     def rightSideofODE(self, Y, t):
@@ -273,7 +277,8 @@ class LiquidFilmCell:
         yt = odeint(rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
-            plt.plot(t, yt)
+            plt.semilogy(t, yt)
+            plt.legend(self.speciesnames)
             plt.show()
         self.thickness = yt[-1][-1]
         ytt = yt[-1][:-1]
@@ -310,18 +315,24 @@ if __name__ == "__main__":
         
     print 'the vapor densities are ', diesel.vaporMassDens
     qi = diesel.vaporDiff(Lv=dia)
-    #print 'the mass flux out of the interface ',qi
+    print 'the mass flux out of the interface ',qi
     print 'the initial h is', diesel.thickness
         # chem solver exp
 
-    print 'concentrations are',diesel.concs
-#   concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
-#   print('new concs are', concentrations_now)
-        
-    print 'start evaporating'
-    timesteps=linspace(0,10,1001)
-    diesel.advance(timesteps,plotresult=True,reaction=True)
+    print 'initial concentrations are',diesel.concs
+    diesel2 = copy.deepcopy(diesel)
+    print 'start evaporating without reaction'
+    timesteps=linspace(0,0.5,501)
+    diesel.advance(timesteps,plotresult=True,reaction=False)
     print 'the concentrations are ', diesel.concs
-    # print 'the vapor densities are ', diesel.getVaporDens()
-    # print 'the new h is', diesel.thickness
-    # print '%f percent film left', diesel.thickness / initial_film_thickness
+    print 'the vapor densities are ', diesel.getVaporDens()
+    print 'the new h is', diesel.thickness
+    print '%f percent film left', diesel.thickness / initial_film_thickness
+
+    print 'start evaporating with reaction'
+    timesteps=linspace(0,0.5,501)
+    diesel2.advance(timesteps,plotresult=True,reaction=True)
+    print 'the concentrations are ', diesel2.concs
+    print 'the vapor densities are ', diesel2.getVaporDens()
+    print 'the new h is', diesel2.thickness
+    print '%f percent film left', diesel2.thickness / initial_film_thickness

@@ -661,10 +661,10 @@ if __name__ == "__main__":
     
     print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
     
-    # # plot the graph
-    # pylab.semilogy(timesteps,concentration_history_array)
-    # pylab.legend(_speciesnames)
-    # pylab.show()
+    # plot the graph
+    pylab.semilogy(timesteps,concentration_history_array)
+    pylab.legend(_speciesnames)
+    pylab.show()
     
     # # solve it in the solver, to show the API
     # print "Starting to solve it step by step (in 10 times fewer steps)"
