@@ -5,6 +5,7 @@ from tools import diffusivity_hco_in_air
 
 from chemistry import ChemistrySolver
 import copy
+import time
 
 units = ctml.units
 OneAtm = ctml.OneAtm
@@ -50,8 +51,6 @@ class LiquidFilmCell:
         ]
         self.nSpecies = solver.Nspecies
         self.speciesnames = solver.speciesnames
-        #tmp, may delete in future
-        self.solver = solver
         self.molWeight = solver.properties.MolecularWeight/1000. #to kg/m^3
         #evapFlux out
         self.evapFlux = zeros(self.nSpecies)
@@ -117,6 +116,10 @@ class LiquidFilmCell:
         self.airP = zeros(2)
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
+        #tmp, may delete in future
+        solver.setTemperature(self.T)
+        solver.setConcentrations(self.concs)
+        self.solver = solver
         #get air pressure and concs
         self.update()
 
@@ -237,10 +240,36 @@ class LiquidFilmCell:
         self.update()
         return drhodt
 
-    def advance(self, t, plotresult=False):
+    def rightSideofReactODE(self, Y, t):
+        """
+        drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
+        y is mass fractional density
+        """
+        #reaction source term, turn the mole to mass frac dens
+        print "the reacConcs is ",self.solver.getRightSideofODE
+        time.sleep(2)
+        reactConcs = self.solver.getRightSideOfODE*self.molWeight
+       
+        # evaporation term
+        massFracDens = Y[:-1]
+        molFracDens = massFracDens / self.molWeight
+        self.massFrac = massFracDens / sum(massFracDens)
+        self.molFrac = molFracDens / sum(molFracDens)
+        ratio = self.area / self.vol
+        Qi = self.vaporDiff(Lv=self.dia)
+        Q = sum(Qi)
+
+        dhdt = -1. / sum(massFracDens) * Q
+        drhodt = -ratio * Qi - ratio * massFracDens * dhdt + reactConcs
+        drhodt = append(drhodt, dhdt)
+        self.update()
+        return drhodt
+
+    def advance(self, t, plotresult=False, reaction=True):
+        rightSideofODE = self.rightSideofReactODE if reaction else self.rightSideofODE
         y0 = self.concs * self.molWeight
         y0 = append(y0, self.thickness)
-        yt = odeint(self.rightSideofODE, y0, t)
+        yt = odeint(rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
             plt.plot(t, yt)
@@ -288,9 +317,9 @@ if __name__ == "__main__":
 #        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
  #       print('new concs are', concentrations_now)
         
-	# print 'start evaporating'
-	# diesel.advance(arange(0, 0.309, 0.001),True)
-	# print 'the concentrations are ', diesel.concs
-	# print 'the vapor densities are ', diesel.getVaporDens()
-	# print 'the new h is', diesel.thickness
-	# print '%f percent film left', diesel.thickness / initial_film_thickness
+	print 'start evaporating'
+	diesel.advance(arange(0, 0.309, 0.001),plotresult=True,reaction=False)
+	print 'the concentrations are ', diesel.concs
+	print 'the vapor densities are ', diesel.getVaporDens()
+	print 'the new h is', diesel.thickness
+	print '%f percent film left', diesel.thickness / initial_film_thickness
