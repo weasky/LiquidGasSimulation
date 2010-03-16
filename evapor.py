@@ -219,6 +219,7 @@ class LiquidFilmCell:
         else:
             #print 'evaporation flux <0 ,something wrong'
             Qi = self.Dvi * self.evapFlux
+        Qi = zeros(self.nSpecies)
         return Qi
 
     def rightSideofODE(self, Y, t):
@@ -240,16 +241,15 @@ class LiquidFilmCell:
         self.update()
         return drhodt
 
+    def test(self):
+        reactConcs = self.solver.getNetRatesOfCreation(self.concs)
+        print reactConcs      
+
     def rightSideofReactODE(self, Y, t):
         """
         drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
         y is mass fractional density
         """
-        #reaction source term, turn the mole to mass frac dens
-        print "the reacConcs is ",self.solver.getRightSideofODE
-        time.sleep(2)
-        reactConcs = self.solver.getRightSideOfODE*self.molWeight
-       
         # evaporation term
         massFracDens = Y[:-1]
         molFracDens = massFracDens / self.molWeight
@@ -258,6 +258,9 @@ class LiquidFilmCell:
         ratio = self.area / self.vol
         Qi = self.vaporDiff(Lv=self.dia)
         Q = sum(Qi)
+        #reaction source term, turn the mole to mass frac dens
+        reactConcs = self.solver.getNetRatesOfCreation(molFracDens)
+        print reactConcs
 
         dhdt = -1. / sum(massFracDens) * Q
         drhodt = -ratio * Qi - ratio * massFracDens * dhdt + reactConcs
@@ -314,12 +317,13 @@ if __name__ == "__main__":
         # chem solver exp
 
         print 'concentrations are',diesel.concs
+        print 'netRatesofCreation is ',diesel.solver.getNetRatesOfCreation(diesel.concs)
 #        concentrations_now = solver.solveConcentrationsAfterTime(diesel.concs, 0.001 )
  #       print('new concs are', concentrations_now)
         
-	print 'start evaporating'
-	diesel.advance(arange(0, 0.309, 0.001),plotresult=True,reaction=False)
-	print 'the concentrations are ', diesel.concs
-	print 'the vapor densities are ', diesel.getVaporDens()
-	print 'the new h is', diesel.thickness
-	print '%f percent film left', diesel.thickness / initial_film_thickness
+	# print 'start evaporating'
+	# diesel.advance(arange(0, 10, 0.001),plotresult=True,reaction=True)
+	# print 'the concentrations are ', diesel.concs
+	# print 'the vapor densities are ', diesel.getVaporDens()
+	# print 'the new h is', diesel.thickness
+	# print '%f percent film left', diesel.thickness / initial_film_thickness

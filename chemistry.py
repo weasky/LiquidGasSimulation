@@ -576,7 +576,15 @@ class ChemistrySolver():
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
         return net_rates_of_creation
-
+    
+    def getNetRatesOfCreation(self,concentrations):
+        """abstracted from getRightSideOfODE
+        Get the net rate of creation of all species at a concentration and T."""
+        forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
+        reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
+        net_rates = forward_rates - reverse_rates
+        net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+        return net_rates_of_creation
         
     def solveConcentrationsAfterTime(self, starting_concentrations, reaction_time, temperature=None ):
         """Solve the simulation for a given time starting from a given concentration.
@@ -646,8 +654,8 @@ if __name__ == "__main__":
     
     # set up timesteps
     start=0
-    stop=10
-    steps=1001
+    stop=1
+    steps=101
     timesteps=pylab.linspace(start,stop,steps)
     
     # solve it here using odeint
@@ -655,12 +663,13 @@ if __name__ == "__main__":
     concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
     print "Solved"
     mass_concentrations = concentration_history_array[-1] * solver.properties.MolecularWeight
-    print mass_concentrations
+   # print mass_concentrations
+    print 'netRatesofCreation is ', solver.getNetRatesOfCreation(concentrations)
     
-    # plot the graph
-    pylab.semilogy(timesteps,concentration_history_array)
-    pylab.legend(_speciesnames)
-    pylab.show()
+    # # plot the graph
+    # pylab.semilogy(timesteps,concentration_history_array)
+    # pylab.legend(_speciesnames)
+    # pylab.show()
     
     # # solve it in the solver, to show the API
     # print "Starting to solve it step by step (in 10 times fewer steps)"
@@ -673,9 +682,9 @@ if __name__ == "__main__":
     #     pylab.semilogy((time_now),concentrations_now.reshape((1,24)), '.')
     # print "Solved"
     
-    mass_concentrations = concentrations * solver.properties.MolecularWeight
-    mass_fractions = mass_concentrations / mass_concentrations.sum()
+    # mass_concentrations = concentrations * solver.properties.MolecularWeight
+    # mass_fractions = mass_concentrations / mass_concentrations.sum()
     
-    gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
+    # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
 
     
