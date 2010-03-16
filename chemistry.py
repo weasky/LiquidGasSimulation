@@ -652,12 +652,14 @@ if __name__ == "__main__":
     timesteps=pylab.linspace(start,stop,steps)
     
     # solve it here using odeint
+    print "Concentrations at start (mol/m3)", concentrations
     print "Starting to solve it in one go"
     concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
     print "Solved"
-    mass_concentrations = concentration_history_array[-1] * solver.properties.MolecularWeight
-    print mass_concentrations*solver.properties.MolecularWeight
-
+    final_concentrations = concentration_history_array[-1]
+    print "Concentrations at end (mol/m3)", final_concentrations
+    
+    print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
     
     # # plot the graph
     # pylab.semilogy(timesteps,concentration_history_array)
