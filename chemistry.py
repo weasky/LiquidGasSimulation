@@ -567,17 +567,16 @@ class ChemistrySolver():
         print "forward_rate_coefficients", self.forward_rate_coefficients
         print "reverse_rate_coefficients", self.reverse_rate_coefficients
         
-    def getRightSideOfODE(self):
+    def getRightSideOfODE(self,concentrations,timesteps):
         """Get the function which will be the right side of the ODE"""
         # This is probably the function to speed up, when the time comes for optimization:
-        def RightSideOfODE(concentrations, time):
-            """Get the net rate of creation of all species at a concentration and T."""
-            forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
-            reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
-            net_rates = forward_rates - reverse_rates
-            net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
-            return net_rates_of_creation
-        return RightSideOfODE
+        """Get the net rate of creation of all species at a concentration and T."""
+        forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
+        reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
+        net_rates = forward_rates - reverse_rates
+        net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+        return net_rates_of_creation
+
         
     def solveConcentrationsAfterTime(self, starting_concentrations, reaction_time, temperature=None ):
         """Solve the simulation for a given time starting from a given concentration.
@@ -593,7 +592,7 @@ class ChemistrySolver():
             self.setTemperature(T)
         self.setConcentrations(starting_concentrations)
         timesteps = (0, reaction_time)
-        concentration_history_array = odeint(self.getRightSideOfODE(),starting_concentrations,timesteps)
+        concentration_history_array = odeint(self.getRightSideOfODE,starting_concentrations,timesteps)
         return concentration_history_array[-1] # the last row is the final timepoint
         
 class FuelComponent():
@@ -653,15 +652,15 @@ if __name__ == "__main__":
     
     # solve it here using odeint
     print "Starting to solve it in one go"
-    concentration_history_array = odeint(solver.getRightSideOfODE(),concentrations,timesteps)
+    concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
     print "Solved"
     mass_concentrations = concentration_history_array[-1] * solver.properties.MolecularWeight
     print mass_concentrations
     
-    # # plot the graph
-    # pylab.semilogy(timesteps,concentration_history_array)
-    # pylab.legend(_speciesnames)
-    # pylab.show()
+    # plot the graph
+    pylab.semilogy(timesteps,concentration_history_array)
+    pylab.legend(_speciesnames)
+    pylab.show()
     
     # # solve it in the solver, to show the API
     # print "Starting to solve it step by step (in 10 times fewer steps)"
