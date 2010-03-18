@@ -113,14 +113,15 @@ if __name__ == '__main__':
     #params about the nozzle
     dia = 0.14E-3
     L = 0.5E-3
-    initial_film_thickness = 3E-6
+    initial_film_thickness = 1E-6
     run_hours = 100 #run engine 100 hours
     #temperature and pressure
-    T=473 #K
+    T=273+250 #K
     P=OneAtm
+    speed = 1500 #RPM,default 3000
 
-    diesel = LiquidFilmCell(T=473,P=1*OneAtm, diameter=dia, length=L, thickness=initial_film_thickness)
-    engine = EngineDepositSolver(diesel)
+    diesel = LiquidFilmCell(T=T,P=P, diameter=dia, length=L, thickness=initial_film_thickness)
+    engine = EngineDepositSolver(diesel,speed=speed,run_hours=run_hours)
     print ('time per cycle is ',engine.secPerCycle) #3000rpm should give 40ms
     """two deposit models for now:
     1. all lumped products go to deposit layer and they won't join the reaction in the future cycles
@@ -142,6 +143,7 @@ if __name__ == '__main__':
     print('======================Start test deposit simulation=========================')
     dia = 1e-3 #1mm
     L = 38e-3 #38 mm in heating, 50mm height tube
+    L = 50e-3
     initial_film_thickness = 5e-6 #not sure, may get an estimate from fluid dynamics
     run_hours = 20 #run test 20 hours
     #temperature and pressure
@@ -149,7 +151,8 @@ if __name__ == '__main__':
     P=1.0*OneAtm
 
     diesel = LiquidFilmCell(T=T,P=P, diameter=dia, length=L, thickness=initial_film_thickness)
-    test = TestDepositSolver(liquidfilm=diesel,air_p=20,fuel_p=25,
+    test = TestDepositSolver(liquidfilm=diesel,run_hours=run_hours,
+                             air_p=20,fuel_p=25,
                              air_pulse=50,fuel_pulse=2.5,rest_pulse=50,total_pulse=1000)
     #first model
     depositPerCycle = test.getDepositMassPerCycle()

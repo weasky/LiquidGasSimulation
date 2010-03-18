@@ -1,6 +1,7 @@
 import ctml_writer as ctml
 from numpy import pi,exp, append, arange, array, zeros, linspace
 from scipy.integrate import odeint
+from scipy.optimize import fsolve
 from tools import diffusivity_hco_in_air
 
 from chemistry import ChemistrySolver
@@ -36,7 +37,7 @@ class LiquidFilmCell:
     the number of hydrocarbon species, N2 and O2 will be automatically added.
     """
     def __init__(self, fuel=[], solver=ChemistrySolver(), diameter=1, thickness=1, length=1,
-                 T=400, P=OneAtm):
+                 T=400, P=OneAtm, reaction=True):
         #use nSpecies, the code will calculate molWeight based on nC, nH and nO
         #2 means [O2 N2]
         # 7 surrogate model
@@ -64,6 +65,7 @@ class LiquidFilmCell:
 
         self.T = T
         self.P = P
+        self.reaction = reaction
         self.Psat = zeros(self.nSpecies)
         self.massDens = zeros(self.nSpecies)
         self.molDens = zeros(self.nSpecies)
@@ -123,7 +125,23 @@ class LiquidFilmCell:
         self.solver.setConcentrations(self.concs)
         #get air pressure and concs
         self.update()
+        self.dryTime = self.getDryTime()
 
+    def getDryTime(self):
+        """find the drying time for this film.
+        """
+        drytime = fsolve(self.getThickness,0.001)
+        return drytime
+
+    def getThickness(self,t):
+        """assume 99% percent thickness gone is dry
+        TODO:may want a absolute criteria"""
+        film = copy.deepcopy(self)
+        timesteps = linspace(0,t,100)
+        film.advance(timesteps)
+        return 0.99*film.thickness 
+        
+        
     def setEvapFlux(self, evapFlux):
         """Set the flux of species evaporating."""
         assert evapFlux.size==self.nSpecies, "Expected an array of size self.nSpecies=%d"%self.nSpecies
@@ -231,25 +249,6 @@ class LiquidFilmCell:
 
     def rightSideofODE(self, Y, t):
         """
-        drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi))
-        y is mass fractional density
-        """
-        massFracDens = Y[:-1]
-        molFracDens = massFracDens / self.molWeight
-        self.massFrac = massFracDens / sum(massFracDens)
-        self.molFrac = molFracDens / sum(molFracDens)
-        ratio = self.area / self.vol
-        Qi = self.vaporDiff(Lv=self.dia)
-        Q = sum(Qi)
-
-        dhdt = -1. / sum(massFracDens) * Q
-        drhodt = -ratio * Qi - ratio * massFracDens * dhdt
-        drhodt = append(drhodt, dhdt)
-        self.update()
-        return drhodt
-
-    def rightSideofReactODE(self, Y, t):
-        """
         drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
         y is mass fractional density
         """
@@ -262,7 +261,8 @@ class LiquidFilmCell:
         Qi = self.vaporDiff(Lv=self.dia)
         Q = sum(Qi)
         #reaction source term, turn the mole to mass frac dens
-        reactConcs = self.solver.getRightSideOfODE(molFracDens,t)*self.molWeight
+        reactConcs = self.solver.getRightSideOfODE(molFracDens,t)*self.molWeight if self.reaction \
+            else zeros(self.nSpecies)
    
         dhdt = -1. / sum(massFracDens) * Q
         drhodt = -ratio * Qi - ratio * massFracDens * dhdt + reactConcs
@@ -270,11 +270,10 @@ class LiquidFilmCell:
         self.update()
         return drhodt
 
-    def advance(self, t, plotresult=False, reaction=True):
-        rightSideofODE = self.rightSideofReactODE if reaction else self.rightSideofODE
+    def advance(self, t, plotresult=False):
         y0 = self.concs * self.molWeight
         y0 = append(y0, self.thickness)
-        yt = odeint(rightSideofODE, y0, t)
+        yt = odeint(self.rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
             plt.semilogy(t, yt)
@@ -295,7 +294,7 @@ if __name__ == "__main__":
     L = 0.5E-3
     initial_film_thickness = 3E-6
 
-    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
+    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness, reaction=False)
     # diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
         #           nH=[24, 28, 10, 34, 26, 40, 44],
         #           nO=[0, 0, 0, 0, 0, 0, 0])
@@ -320,18 +319,18 @@ if __name__ == "__main__":
         # chem solver exp
 
     print 'initial concentrations are',diesel.concs
-    diesel2 = copy.deepcopy(diesel)
     print 'start evaporating without reaction'
     timesteps=linspace(0,0.5,501)
-    diesel.advance(timesteps,plotresult=True,reaction=False)
+    diesel.advance(timesteps,plotresult=True)
     print 'the concentrations are ', diesel.concs
     print 'the vapor densities are ', diesel.getVaporDens()
     print 'the new h is', diesel.thickness
     print '%f percent film left', diesel.thickness / initial_film_thickness
 
     print 'start evaporating with reaction'
+    diesel2 = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
     timesteps=linspace(0,0.5,501)
-    diesel2.advance(timesteps,plotresult=True,reaction=True)
+    diesel2.advance(timesteps,plotresult=True)
     print 'the concentrations are ', diesel2.concs
     print 'the vapor densities are ', diesel2.getVaporDens()
     print 'the new h is', diesel2.thickness
