@@ -464,11 +464,11 @@ class PropertiesStore():
             print "Don't have any properties for the species named '%s'."%species_name
             print "These are the species I have:",self._specs_props.keys()
             raise 
-        try:
-            value = getattr(spec_prop,property_name)
-        except AttributeError:
+        #try:
+        value = getattr(spec_prop,property_name)
+        #except AttributeError:
             # print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
-            raise
+            #raise
         return value
     
     def getPropertyArray(self,property_name):
