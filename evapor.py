@@ -118,9 +118,9 @@ class LiquidFilmCell:
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
         #tmp, may delete in future
-        solver.setTemperature(self.T)
-        solver.setConcentrations(self.concs)
         self.solver = solver
+        self.solver.setTemperature(self.T)
+        self.solver.setConcentrations(self.concs)
         #get air pressure and concs
         self.update()
 
