@@ -276,6 +276,7 @@ class LiquidFilmCell:
         yt = odeint(self.rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
+            plt.figure()
             plt.semilogy(t, yt)
             plt.legend(self.speciesnames)
             plt.show()
