@@ -128,19 +128,19 @@ class LiquidFilmCell:
         self.dryTime = self.getDryTime()
 
     def getDryTime(self):
-        """find the drying time for this film.
+        """
+        Find the drying time for this film. (Time to reach 0.001 of initial thickness)
         """
         drytime = fsolve(self.getThickness,0.001)
         return drytime
 
-    def getThickness(self,t):
-        """assume 99% percent thickness gone is dry
-        TODO:may want a absolute criteria"""
+    def getThickness(self,time):
+        """
+        Get the thickness after a given time, by advancing (a copy of) the simulation.
+        """
         film = copy.deepcopy(self)
-        timesteps = linspace(0,t,100)
-        film.advance(timesteps)
-        return 0.99*film.thickness 
-        
+        film.advance(time)
+        return film.thickness 
         
     def setEvapFlux(self, evapFlux):
         """Set the flux of species evaporating."""
@@ -276,6 +276,7 @@ class LiquidFilmCell:
         yt = odeint(self.rightSideofODE, y0, t)
         if(plotresult):
             import matplotlib.pyplot as plt
+            plt.figure()
             plt.semilogy(t, yt)
             plt.legend(self.speciesnames)
             plt.show()

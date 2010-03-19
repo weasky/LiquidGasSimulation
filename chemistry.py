@@ -455,7 +455,8 @@ class PropertiesStore():
     def getSpeciesProperty(self,species_name,property_name):
         """Get the value of a property of a species. General method."""
         if species_name in ['Ar','N2']:
-            print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
+            # import pdb; pdb.set_trace()
+            # print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
             species_name='O2(1)'
         try:
             spec_prop = self._specs_props[species_name]
@@ -463,11 +464,11 @@ class PropertiesStore():
             print "Don't have any properties for the species named '%s'."%species_name
             print "These are the species I have:",self._specs_props.keys()
             raise 
-        try:
-            value = getattr(spec_prop,property_name)
-        except AttributeError:
+        #try:
+        value = getattr(spec_prop,property_name)
+        #except AttributeError:
             # print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
-            raise
+            #raise
         return value
     
     def getPropertyArray(self,property_name):
