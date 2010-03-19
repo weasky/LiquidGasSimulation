@@ -1,4 +1,4 @@
-from __future__ import division,print_function
+from __future__ import division
 from numpy import pi,exp, append, arange, array, zeros, linspace, ceil
 from evapor import LiquidFilmCell, OneAtm
 import matplotlib.pyplot as plt
@@ -49,7 +49,7 @@ class EngineDepositSolver:
             self.liquidfilm = copy.deepcopy(self.initial_film)
             self.liquidfilm.concs[10:] = liquidMol[10:]/self.liquidfilm.vol
             if (cycle%50==0 ):
-                print('finished cycle %d of %d.'%(cycle,self.cycles) )
+                print 'finished cycle %d of %d.'%(cycle,self.cycles) 
                 import time
                 time.sleep(2)
         return self.totalDepositMass
@@ -101,7 +101,7 @@ class TestDepositSolver:
             self.liquidfilm = copy.deepcopy(self.initial_film)
             self.liquidfilm.concs[10:] = liquidMol[10:]/self.liquidfilm.vol
             if (cycle%50==0 ):
-                print('finished cycle %d in total %d cycles.'%(cycle,self.cycles) )
+                print 'finished cycle %d in total %d cycles.'%(cycle,self.cycles) 
                 import time
                 time.sleep(2)
 
@@ -126,25 +126,25 @@ if __name__ == '__main__':
 
     diesel = LiquidFilmCell(T=T,P=P, diameter=dia, length=L, thickness=initial_film_thickness)
     engine = EngineDepositSolver(diesel,speed=speed,run_hours=run_hours)
-    print ('Time per cycle is ',engine.secPerCycle) #3000rpm should give 40ms
+    print 'Time per cycle is ',engine.secPerCycle #3000rpm should give 40ms
     """two deposit models for now:
     1. all lumped products go to deposit layer and they won't join the reaction in the future cycles
     2. all lumped products go to deposit layer and they join the reactions in future cycles
     TODO: I will add deposit 2 layers model and Richard will add phase seperation model"""
     #first model
     depositPerCycle = engine.getDepositMassPerCycle()
-    print ('after one cycle, the liquid film has %.2f %%  left.' % (engine.liquidfilm.thickness/initial_film_thickness*100))
-    print('the deposit mass formation rate in first cycle is %f g/mm^2.' % (depositPerCycle/engine.liquidfilm.area*1000))
-    print('the deposit mass in first cycle is %g g.' % (depositPerCycle*1000 ))
-    print('if each cycle is totally independent, the total deposit mass is %f g.' % (depositPerCycle*1000*engine.cycles))
+    print 'after one cycle, the liquid film has %.2f %%  left.' % (engine.liquidfilm.thickness/initial_film_thickness*100)
+    print 'the deposit mass formation rate in first cycle is %f g/mm^2.' % (depositPerCycle/engine.liquidfilm.area*1000)
+    print 'the deposit mass in first cycle is %g g.' % (depositPerCycle*1000 )
+    print 'if each cycle is totally independent, the total deposit mass is %f g.' % (depositPerCycle*1000*engine.cycles)
     # #second model
     # totDepositMass = engine.getDepositMass()
-    # print(totDepositMass.shape)
+    # print totDepositMass.shape
     # plt.plot(arange(engine.cycles+1),totDepositMass)
     # plt.show()
-    # print('each cycle, the products are persistant, the final deposit mass is %f g.' % (totDepositMass[-1]) )
+    # print 'each cycle, the products are persistant, the final deposit mass is %f g.' % (totDepositMass[-1]) 
     """Test configuration simulation"""
-    print('======================Start test deposit simulation=========================')
+    print '======================Start test deposit simulation========================='
     dia = 1e-3 #1mm
     L = 38e-3 #38 mm in heating, 50mm height tube
     L = 50e-3
@@ -160,11 +160,8 @@ if __name__ == '__main__':
                              air_pulse=50,fuel_pulse=2.5,rest_pulse=50,total_pulse=1000)
     #first model
     depositPerCycle = test.getDepositMassPerCycle()
-    print ('In test, heating time per cycle is ',test.secPerCycle) 
-    print ('after one cycle, the liquid film has %.2f %%  left.' % (test.liquidfilm.thickness/initial_film_thickness*100))
-    print('the deposit mass formation rate in first cycle is %f g/mm^2.' % (depositPerCycle/test.liquidfilm.area*1000))
-    print('the deposit mass in first cycle is %g g.' % (depositPerCycle*1000 ))
-    print('if each cycle is totally independent, the total deposit mass is %f g.' % (depositPerCycle*1000*test.cycles))
-
-    
-    
+    print 'In test, heating time per cycle is ',test.secPerCycle
+    print 'after one cycle, the liquid film has %.2f %%  left.' % (test.liquidfilm.thickness/initial_film_thickness*100)
+    print 'the deposit mass formation rate in first cycle is %f g/mm^2.' % (depositPerCycle/test.liquidfilm.area*1000)
+    print 'the deposit mass in first cycle is %g g.' % (depositPerCycle*1000 )
+    print 'if each cycle is totally independent, the total deposit mass is %f g.' % (depositPerCycle*1000*test.cycles)
