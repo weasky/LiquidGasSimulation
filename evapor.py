@@ -97,37 +97,38 @@ class LiquidFilmCell:
         self.Dvi = diffusivity_hco_in_air(T=self.T,p=self.P*1.e-5,nC=self.nC,
                                           nH=self.nH,nO=self.nO)
         # process from fuel input
-        concs_dict=dict.fromkeys(solver.speciesnames)
-        volFrac_dict=dict.fromkeys(solver.speciesnames)
-        antoine_dict=dict.fromkeys(solver.speciesnames)
+        concs_dict   = dict.fromkeys(solver.speciesnames)
+        volFrac_dict = dict.fromkeys(solver.speciesnames)
+        antoine_dict = dict.fromkeys(solver.speciesnames)
         molDens_dict = dict(zip(solver.speciesnames,1./solver.properties.MolarVolume))
         for speciesName in solver.speciesnames:
-            concs_dict[speciesName]= 0.0
+            concs_dict[speciesName] = 0.0
             volFrac_dict[speciesName] = 0.0
             antoine_dict[speciesName] = 0.0
         for component in fuel:
-            concs_dict[component.name]=component.initialConcentration # mol/m3
+            concs_dict[component.name] = component.initialConcentration # mol/m3
             volFrac_dict[component.name] = component.initialVolFraction
             antoine_dict[component.name] = component.Antoine
             molDens_dict[component.name] = component.liquidMolarDensity
-        self.concs = array([concs_dict[s] for s in self.speciesnames])
+        self.concs   = array([concs_dict[s] for s in self.speciesnames])
         self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
         self.molDens = array([molDens_dict[s] for s in self.speciesnames])
         #updating
         self.massDens = self.molDens * self.molWeight
-        molFrac =self.volFrac * self.molDens
+        molFrac = self.volFrac * self.molDens
         self.molFrac = molFrac / sum(molFrac)
         massFrac = self.volFrac * self.massDens
         self.massFrac = massFrac / sum(massFrac)
-        self.vaporConcs = self.concs/solver.properties.PartitionCoefficient
-        self.Psat = sum(self.concs) * R * self.T/solver.properties.PartitionCoefficient
+        
+        self.vaporConcs = self.concs / solver.properties.PartitionCoefficient
+        self.Psat = sum(self.concs) * R * self.T / solver.properties.PartitionCoefficient
         # correct Psat for fuel components (uses Antoine equation to correct for T)
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
             self.Psat[species_index] = component.getPsat(self.T)
         self.vaporConcs = self.Psat * self.molFrac / R / self.T
         self.vaporMassDens = self.vaporConcs * self.molWeight
-        self.vaporMassDens[:3] = 0.
+        self.vaporMassDens[:3] = 0. # why set the Mass Densities to 0 but leave the psat, vaporconc, etc. etc.?
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
