@@ -144,11 +144,11 @@ class LiquidFilmCell:
 
     def getDryTime(self):
         """
-        Find the drying time for this film by solving the equation. however, this time may
-        cause physical problems. It would be safer to get a 1% of initial film thickness.
-        0.001 is an initial guess.
+        Find the drying time for this film - the time required to reach 1% of initial thickness.
+        
+        Works by repeatedly calling getThickness with different end times.
         """
-        drytime = fsolve(self.getThickness,0.001)
+        drytime = fsolve(self.getThickness,0.01)
         return drytime
 
     def getThickness(self,time):
