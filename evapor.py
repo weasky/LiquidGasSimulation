@@ -129,7 +129,9 @@ class LiquidFilmCell:
 
     def getDryTime(self):
         """
-        Find the drying time for this film. (Time to reach 0.001 of initial thickness)
+        Find the drying time for this film by solving the equation. however, this time may
+        cause physical problems. It would be safer to get a 1% of initial film thickness.
+        0.001 is an initial guess.
         """
         drytime = fsolve(self.getThickness,0.001)
         return drytime
@@ -139,7 +141,7 @@ class LiquidFilmCell:
         Get the thickness after a given time, by advancing (a copy of) the simulation.
         """
         film = copy.deepcopy(self)
-        film.advance(time)
+        film.advance(array([0,time]))
         return film.thickness 
         
     def setEvapFlux(self, evapFlux):
