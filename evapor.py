@@ -29,6 +29,23 @@ class FuelComponent():
         self.Antoine=Antoine
         self.liquidMolarDensity=liquidMolarDensity # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
+        
+    def getPsat(self, Temperature):
+        """Use Antoine Equation to get saturated vapor pressure at Temperature.
+        
+        Note the units in Antoine Eqn is mmHg and C
+        P = 10^(A-B/(C+T))
+        """
+        A = self.Antoine['A']
+        B = self.Antoine['B']
+        C = self.Antoine['C']
+        # transfer from mmHg to Pa
+        # A = A0 + log10(101325/760)
+        A = A + 2.124903
+        # transfer from C to K
+        C = C-273.15
+        # Antoine's Equation
+        return 10**(A-B / (C + Temperature))
 
 class LiquidFilmCell:
     """
@@ -80,40 +97,41 @@ class LiquidFilmCell:
         self.Dvi = diffusivity_hco_in_air(T=self.T,p=self.P*1.e-5,nC=self.nC,
                                           nH=self.nH,nO=self.nO)
         # process from fuel input
-        concs_dict=dict.fromkeys(solver.speciesnames)
-        volFrac_dict=dict.fromkeys(solver.speciesnames)
-        antoine_dict=dict.fromkeys(solver.speciesnames)
+        concs_dict   = dict.fromkeys(solver.speciesnames)
+        volFrac_dict = dict.fromkeys(solver.speciesnames)
+        antoine_dict = dict.fromkeys(solver.speciesnames)
         molDens_dict = dict(zip(solver.speciesnames,1./solver.properties.MolarVolume))
         for speciesName in solver.speciesnames:
-            concs_dict[speciesName]= 0.0
+            concs_dict[speciesName] = 0.0
             volFrac_dict[speciesName] = 0.0
             antoine_dict[speciesName] = 0.0
         for component in fuel:
-            concs_dict[component.name]=component.initialConcentration # mol/m3
+            concs_dict[component.name] = component.initialConcentration # mol/m3
             volFrac_dict[component.name] = component.initialVolFraction
             antoine_dict[component.name] = component.Antoine
             molDens_dict[component.name] = component.liquidMolarDensity
-        self.concs = array([concs_dict[s] for s in self.speciesnames])
+        self.concs   = array([concs_dict[s] for s in self.speciesnames])
         self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
         self.molDens = array([molDens_dict[s] for s in self.speciesnames])
         #updating
         self.massDens = self.molDens * self.molWeight
-        molFrac =self.volFrac * self.molDens
+        molFrac = self.volFrac * self.molDens
         self.molFrac = molFrac / sum(molFrac)
         massFrac = self.volFrac * self.massDens
         self.massFrac = massFrac / sum(massFrac)
-        # adjust antonie coeff, metch Psat
-        self.vaporConcs = self.concs/solver.properties.PartitionCoefficient
-        self.Psat = sum(self.concs) * R * self.T/solver.properties.PartitionCoefficient
-        Psat_dict = dict(zip(solver.speciesnames,self.Psat))
+        
+        self.vaporConcs = self.concs / solver.properties.PartitionCoefficient
+        # Psat is not really a saturated vapor pressure, 
+        # but is the x=1 extrapolation of the partial pressure vs. x 
+        # line based on the partition coefficient from the Abraham model.
+        self.Psat = sum(self.concs) * R * self.T / solver.properties.PartitionCoefficient
+        # correct Psat for fuel components (uses Antoine equation to correct for T)
         for component in fuel:
-            Psat_dict[component.name]=self.getPsat(component.Antoine['A'],
-                                                   component.Antoine['B'],
-                                                   component.Antoine['C']) # mol/m3
-        self.Psat = array([Psat_dict[s] for s in self.speciesnames])
+            species_index = self.speciesnames.index(component.name)
+            self.Psat[species_index] = component.getPsat(self.T)
         self.vaporConcs = self.Psat * self.molFrac / R / self.T
         self.vaporMassDens = self.vaporConcs * self.molWeight
-        self.vaporMassDens[:3] = 0.
+        self.vaporMassDens[:3] = 0. # why set the Mass Densities to 0 but leave the psat, vaporconc, etc. etc.?
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
@@ -129,11 +147,11 @@ class LiquidFilmCell:
 
     def getDryTime(self):
         """
-        Find the drying time for this film by solving the equation. however, this time may
-        cause physical problems. It would be safer to get a 1% of initial film thickness.
-        0.001 is an initial guess.
+        Find the drying time for this film - the time required to reach 1% of initial thickness.
+        
+        Works by repeatedly calling getThickness with different end times.
         """
-        drytime = fsolve(self.getThickness,0.001)
+        drytime = fsolve(self.getThickness,0.01)
         return drytime
 
     def getThickness(self,time):
@@ -206,20 +224,6 @@ class LiquidFilmCell:
         # hack, should use dict in future
         self.concs[1] = sum(self.concs)*self.airMolFrac[1]
         self.concs[2] = sum(self.concs)*self.airMolFrac[0]
-
-    def getPsat(self, A, B, C):
-        """ use Antoine Equation to get saturated vapor pressure
-        note the units in Antoine Eqn is mmHg and C
-        P = 10^(A-B/(C+T))
-        use the system temperature
-        """
-        # transfer from mmHg to Pa
-        # A = A0 + log10(101325/760)
-        A = A + 2.124903
-        # transfer from C to K
-        C = C-273.15
-        # Antoine's Equation
-        return 10. ** (A-B / (C + self.T))
 
 
     def getVaporDens(self):
