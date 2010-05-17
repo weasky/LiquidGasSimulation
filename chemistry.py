@@ -663,8 +663,14 @@ if __name__ == "__main__":
     print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
     
     # plot the graph
+    pylab.figure()
+    pylab.axes([0.1,0.1,0.71,0.85])
     pylab.semilogy(timesteps,concentration_history_array)
-    pylab.legend(_speciesnames)
+   # pylab.legend(_speciesnames,loc=(1.03,0.0))
+    for i in range(len(_speciesnames)):
+        pylab.annotate(_speciesnames[i], (10,final_concentrations[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-") )
     pylab.show()
     
     # # solve it in the solver, to show the API
