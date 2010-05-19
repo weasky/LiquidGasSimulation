@@ -284,6 +284,8 @@ class LiquidFilmCell:
             import matplotlib.pyplot as plt
             plt.figure()
             plt.semilogy(t, yt)
+            plt.ylabel('mass concentrations (kg/m3)')
+            plt.xlabel('time(s)')
             plt.legend(self.speciesnames)
             plt.show()
         self.thickness = yt[-1][-1]
