@@ -280,7 +280,7 @@ def DictFromArray(inArray, units=None):
         outDict[speciesName] = value
     return outDict
 
-class PropertiesOfSpecies():
+class PropertiesOfSpecies(object):
     """
     An individual species' properties
     
@@ -288,10 +288,7 @@ class PropertiesOfSpecies():
     >> oxygen = ps['O2(1)'] // oxygen is now a PropertiesOfSpecies instance
     >> oxygen.Radius
     """
-    
-    # add [property: function] pairs to this dictionary for calculatable fake attributes
-    _calculated_properties = dict() 
-        
+
     def __init__(self, properties_dict):
         for key,value in properties_dict.iteritems():
             # try to turn it into a float
@@ -303,23 +300,6 @@ class PropertiesOfSpecies():
             setattr(self,key,value)
         self.species_name = properties_dict['ChemkinName']
     
-    def _getAttributeNames(self):
-        """Get a list of extra (fake) attributes. Useful for ipython shell.""" 
-        return self.__class__._calculated_properties.keys()
-        
-    def __getattr__(self,property_name):
-        """
-        Get a (fake) attribute.
-        
-        Will only get called if not found in attribute dictionary, or called explicitly.
-        Will only call functions stored in the _calculated_properties dictionary of the class. 
-        """
-        try:
-            function = self.__class__._calculated_properties[property_name]
-        except KeyError:
-            raise AttributeError("Don't know how to calculate %s"%property_name)
-        return function(self)
-        raise AttributeError # if you haven't already returned
         
     def getMolarVolume(self):
         """Get the molar volume, in m3/mol"""
@@ -329,7 +309,7 @@ class PropertiesOfSpecies():
         # seems to be about 3 times too high.
         # molar volume of undecane = 1/(0.74 g/ml / 156.31 g/mol) = 0.00021122973 m3/mol
         # whereas p['n-C11(2)'].MolarVolume = 0.00063723
-    _calculated_properties['MolarVolume']=getMolarVolume  # make a fake attribute
+    MolarVolume = property(getMolarVolume)  # make a fake attribute
     
     def getPartitionCoefficient(self):
         """
@@ -362,7 +342,7 @@ class PropertiesOfSpecies():
         partition_coefficient = 10**logK
         return partition_coefficient
     # make a fake attribute
-    _calculated_properties['PartitionCoefficient']=getPartitionCoefficient 
+    PartitionCoefficient = property(getPartitionCoefficient)
     
     
     def getDiffusivityInAir(self,Temperature,pressure_in_bar):
@@ -386,7 +366,6 @@ class PropertiesOfSpecies():
         d=1e-3 * Temperature**1.75 * math.sqrt((wHCO+wair)/(wHCO*wair))*pinv/ \
                 (vHCO**.33333+vair**.33333)**2;
         return d*1e-4; #result in m2/s
-        
 
     def getNumberOfCarbons(self):
         """Get the number of Carbon atoms in the molecule"""
@@ -394,21 +373,21 @@ class PropertiesOfSpecies():
         if not m: return 0
         if not m.group(1): return 1
         return int(m.group(1))
-    _calculated_properties['nC']=getNumberOfCarbons
+    nC = property(getNumberOfCarbons)
     def getNumberOfHydrogens(self):
         """Get the number of Carbon atoms in the molecule"""
         m = re.search('H(\d*)',self.ChemicalFormula)
         if not m: return 0
         if not m.group(1): return 1
         return int(m.group(1))
-    _calculated_properties['nH']=getNumberOfHydrogens
+    nH = property(getNumberOfHydrogens)
     def getNumberOfOxygens(self):
         """Get the number of Carbon atoms in the molecule"""
         m = re.search('O(\d*)',self.ChemicalFormula)
         if not m: return 0
         if not m.group(1): return 1
         return int(m.group(1))
-    _calculated_properties['nO']=getNumberOfOxygens
+    nO = property(getNumberOfOxygens)
     
             
 class PropertiesStore():
