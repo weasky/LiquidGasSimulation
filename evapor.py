@@ -147,11 +147,11 @@ class LiquidFilmCell:
 
     def getDryTime(self):
         """
-        Find the drying time for this film - the time required to reach 1% of initial thickness.
+        Find the drying time for this film 
         
         Works by repeatedly calling getThickness with different end times.
         """
-        drytime = fsolve(self.getThickness,0.01)
+        drytime = fsolve(self.getThickness,0.001)
         return drytime
 
     def getThickness(self,time):
@@ -285,11 +285,13 @@ class LiquidFilmCell:
             plt.figure()
             plt.axes([0.1,0.1,0.6,0.85])
             plt.semilogy(t, yt)
+            plt.ylabel('mass concentrations (kg/m3)')
+            plt.xlabel('time(s)')
+            plt.legend(self.speciesnames)
             for i in range(len(self.speciesnames)):
                 plt.annotate(self.speciesnames[i], (t[-1],yt[-1,i]), 
                     xytext=(20,-5), textcoords='offset points', 
                     arrowprops=dict(arrowstyle="-") )
-            #plt.legend(self.speciesnames)
             plt.show()
         self.thickness = yt[-1][-1]
         ytt = yt[-1][:-1]

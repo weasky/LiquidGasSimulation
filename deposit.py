@@ -113,16 +113,18 @@ class TestDepositSolver:
         self.liquidfilm = copy.deepcopy(self.initial_film)
 
 
-if __name__ == '__main__':
+def enginerun():
+    """run engine deposit simulations"""
+    print '===============================start engine deposit simulation========================'
     #params about the nozzle
     dia = 0.14E-3
     L = 0.5E-3
-    initial_film_thickness = 1E-6
+    initial_film_thickness = 5E-6
     run_hours = 100 #run engine 100 hours
     #temperature and pressure
-    T=273+250 #K
+    T=273+200 #K
     P=OneAtm
-    speed = 1500 #RPM,default 3000
+    speed = 3000 #RPM,default 3000
 
     diesel = LiquidFilmCell(T=T,P=P, diameter=dia, length=L, thickness=initial_film_thickness)
     engine = EngineDepositSolver(diesel,speed=speed,run_hours=run_hours)
@@ -142,7 +144,9 @@ if __name__ == '__main__':
     # print totDepositMass.shape
     # plt.plot(arange(engine.cycles+1),totDepositMass)
     # plt.show()
-    # print 'each cycle, the products are persistant, the final deposit mass is %f g.' % (totDepositMass[-1]) 
+    # print 'each cycle, the products are persistant, the final deposit mass is %f g.' % (totDepositMass[-1])
+
+def testrun():
     """Test configuration simulation"""
     print '======================Start test deposit simulation========================='
     dia = 1e-3 #1mm
@@ -165,3 +169,20 @@ if __name__ == '__main__':
     print 'the deposit mass formation rate in first cycle is %f g/mm^2.' % (depositPerCycle/test.liquidfilm.area*1000)
     print 'the deposit mass in first cycle is %g g.' % (depositPerCycle*1000 )
     print 'if each cycle is totally independent, the total deposit mass is %f g.' % (depositPerCycle*1000*test.cycles)
+
+if __name__ == '__main__':
+    import sys, os
+    # use different chemistry mechanism if specified on the command line
+    if len(sys.argv)>1:
+        if (sys.argv[1]=='engine'):
+            enginerun()
+        elif (sys.argv[1]=='test'):
+            testrun()
+        else:
+            print 'please use test or engine as argument'
+    else:
+        print 'run both test and engine'
+        enginerun()
+        testrun()
+
+
