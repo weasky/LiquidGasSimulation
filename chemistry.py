@@ -125,7 +125,7 @@ class reaction(ctml.reaction):
             forwardRateCoefficient *= T**kf[1]
         #assert ctml._ue=='kcal/mol', 'unit conversion not implemented'
         #R=0.0019872065 # kcal/mol/K
-        R=pq.constants.R 
+        R = pq.constants.R
         Ea = pq.Quantity(kf[2],ctml._ue)
         Temp = pq.Quantity(T,'K')
         forwardRateCoefficient*=math.exp(-Ea/(R*Temp))
@@ -147,9 +147,9 @@ class reaction(ctml.reaction):
         """Get the change in Gibbs free energy *over R* at a given T"""
         deltaGOverR=0
         for speciesName,order in self._p.items(): # add products
-            deltaGOverR += order* getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
+            deltaGOverR += order * getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
         for speciesName,order in self._r.items(): # subtract reactants
-            deltaGOverR -= order* getSpeciesByName(speciesName).getGibbsFreeEnergy(T)       
+            deltaGOverR -= order * getSpeciesByName(speciesName).getGibbsFreeEnergy(T)
         return deltaGOverR
         
     def getEquilibriumConstant(self,T):
@@ -688,5 +688,3 @@ if __name__ == "__main__":
     # mass_fractions = mass_concentrations / mass_concentrations.sum()
     
     # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
-
-    

@@ -1,5 +1,7 @@
-gas transport solver
+Liquid chemistry, evaporation, and gas transport solver
 
-liquid evaporator
-
-Need to install numpy, scipy, pysparse, and fipy.
+Need to install:
+* numpy
+* scipy
+* pysparse
+* fipy
