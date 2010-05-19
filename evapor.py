@@ -283,10 +283,15 @@ class LiquidFilmCell:
         if(plotresult):
             import matplotlib.pyplot as plt
             plt.figure()
+            plt.axes([0.1,0.1,0.6,0.85])
             plt.semilogy(t, yt)
             plt.ylabel('mass concentrations (kg/m3)')
             plt.xlabel('time(s)')
             plt.legend(self.speciesnames)
+            for i in range(len(self.speciesnames)):
+                plt.annotate(self.speciesnames[i], (t[-1],yt[-1,i]), 
+                    xytext=(20,-5), textcoords='offset points', 
+                    arrowprops=dict(arrowstyle="-") )
             plt.show()
         self.thickness = yt[-1][-1]
         ytt = yt[-1][:-1]
