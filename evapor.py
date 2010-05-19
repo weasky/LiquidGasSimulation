@@ -287,7 +287,7 @@ class LiquidFilmCell:
             plt.semilogy(t, yt)
             plt.ylabel('mass concentrations (kg/m3)')
             plt.xlabel('time(s)')
-            plt.legend(self.speciesnames)
+            #plt.legend(self.speciesnames)
             for i in range(len(self.speciesnames)):
                 plt.annotate(self.speciesnames[i], (t[-1],yt[-1,i]), 
                     xytext=(20,-5), textcoords='offset points', 
