@@ -13,7 +13,7 @@
 
 import sys, os
 import math
-import pylab, numpy
+import matplotlib.pyplot as plt, numpy as np
 from scipy.integrate import odeint
 import re
 
@@ -201,13 +201,13 @@ class reaction(ctml.reaction):
         
     def getStoichiometryReactantsRow(self):
         """Get the stoichiometry of each species as a reactant"""
-        row = numpy.zeros(len(_species))
+        row = np.zeros(len(_species))
         for species_name,order in self._r.items(): 
             row[_speciesnames.index(species_name)] = order
         return row
     def getStoichiometryProductsRow(self):
         """Get the stoichiometry of each species as a product"""
-        row = numpy.zeros(len(_species))
+        row = np.zeros(len(_species))
         for species_name,order in self._p.items(): 
             row[_speciesnames.index(species_name)] = order
         return row
@@ -223,9 +223,9 @@ def getStoichiometryArrays():
     Returns three arrays: stoich_reactants, stoich_products, stoich_net
     These each have the size (Nreactions x Nspecies)
     """
-    stoich_reactants = numpy.zeros((len(_reactions),len(_species)))
-    stoich_products = numpy.zeros_like(stoich_reactants)
-    stoich_net = numpy.zeros_like(stoich_reactants)
+    stoich_reactants = np.zeros((len(_reactions),len(_species)))
+    stoich_products = np.zeros_like(stoich_reactants)
+    stoich_net = np.zeros_like(stoich_reactants)
     
     for rn, r in enumerate(_reactions):
         stoich_reactants[rn] = r.getStoichiometryReactantsRow()
@@ -235,14 +235,14 @@ def getStoichiometryArrays():
     
 def getForwardRateCoefficientsVector(T):
     """Get the vector of forward rate coefficients."""
-    forward_rate_coefficients = numpy.zeros(len(_reactions))
+    forward_rate_coefficients = np.zeros(len(_reactions))
     for rn, r in enumerate(_reactions):
         forward_rate_coefficients[rn] = r.getForwardRateCoefficient(T).simplified
     return forward_rate_coefficients
         
 def getReverseRateCoefficientsVector(T):
     """Get the vector of reverse rate coefficients."""
-    reverse_rate_coefficients = numpy.zeros(len(_reactions))
+    reverse_rate_coefficients = np.zeros(len(_reactions))
     for rn, r in enumerate(_reactions):
         reverse_rate_coefficients[rn] = r.getReverseRateCoefficient(T).simplified
     return reverse_rate_coefficients
@@ -261,9 +261,10 @@ def ArrayFromDict(inDict):
     Gets names (in order) from _speciesnames.
     Returns an array, and a quantities object with the units.
     """
-    outArray = pylab.array([inDict[s].simplified for s in _speciesnames])
+    outArray = np.array([inDict[s].simplified for s in _speciesnames])
     # possibly not the fastest way to do it..self.
-    units = sum(inDict.values()) / sum(outArray)
+    # dirty fix for quantities
+    units = np.sum(inDict.values())*inDict[s].units / sum(outArray)
     return outArray, units
     
 def DictFromArray(inArray, units=None):
@@ -475,7 +476,7 @@ class PropertiesStore():
         """Get an array of the property. Length is Nspecies; order is same as chemistry model.
         
         Probably quite slow, so wise to store the result."""
-        values = numpy.zeros(len(_species))
+        values = np.zeros(len(_species))
         for species_index, species_name in enumerate(_speciesnames):
             values[species_index] = self.getSpeciesProperty(species_name,property_name)
         return values
@@ -492,7 +493,7 @@ class ChemistrySolver():
         self.calculateStoichiometries()
         self.T = 0
         
-        self.concentrations = numpy.array([])
+        self.concentrations = np.array([])
         self.properties = PropertiesStore(resultsDir)
     
     def loadChemistryModel(self, resultsDir):
@@ -518,11 +519,11 @@ class ChemistrySolver():
         If zero_others==True then species not in the dictionary will have concentrations set to 0,
         otherwise they will be left alone.
         """
-        if type(concentrations)==numpy.ndarray:
+        if type(concentrations)==np.ndarray:
             assert concentrations.size==self.Nspecies, "Concentrations array should be Nspecies=%d elements long"%self.Nspecies
             self.concentrations = concentrations
         elif type(concentrations)==dict:
-            if zero_others: self.concentrations = numpy.zeros(self.Nspecies)
+            if zero_others: self.concentrations = np.zeros(self.Nspecies)
             assert self.concentrations.size == self.Nspecies, "Concentrations array hasn't been initialised." # try calling with zero_others=True
             for key,value in concentrations.iteritems():
                 i = _speciesnames.index(key)
@@ -575,7 +576,7 @@ class ChemistrySolver():
         forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
         reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
         net_rates = forward_rates - reverse_rates
-        net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+        net_rates_of_creation = np.dot(net_rates.T, self.stoich_net)
         return net_rates_of_creation
 
         
@@ -650,7 +651,7 @@ if __name__ == "__main__":
     start=0
     stop=10
     steps=1001
-    timesteps=pylab.linspace(start,stop,steps)
+    timesteps=np.linspace(start,stop,steps)
     
     # solve it here using odeint
     print "Concentrations at start (mol/m3)", concentrations
@@ -663,15 +664,15 @@ if __name__ == "__main__":
     print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
     
     # plot the graph
-    pylab.figure()
-    pylab.axes([0.1,0.1,0.71,0.85])
-    pylab.semilogy(timesteps,concentration_history_array)
+    plt.figure()
+    plt.axes([0.1,0.1,0.71,0.85])
+    plt.semilogy(timesteps,concentration_history_array)
    # pylab.legend(_speciesnames,loc=(1.03,0.0))
     for i in range(len(_speciesnames)):
-        pylab.annotate(_speciesnames[i], (10,final_concentrations[i]), 
+        plt.annotate(_speciesnames[i], (10,final_concentrations[i]), 
             xytext=(20,-5), textcoords='offset points', 
             arrowprops=dict(arrowstyle="-") )
-    pylab.show()
+    plt.show()
     
     # # solve it in the solver, to show the API
     # print "Starting to solve it step by step (in 10 times fewer steps)"
