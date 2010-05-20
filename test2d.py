@@ -38,7 +38,7 @@ diesel.update()
 print 'the air mol fracs are ',diesel.airMolFrac
 print 'the air partial pressures are ',diesel.airP
 # vapor density
-Dvi = diffusivity_hco_in_air(T=diesel.T,p=diesel.P/10.**5,
+Dvi = diffusivity_hco_in_air(T=diesel.T,p=diesel.P/1E5,
         nC=diesel.nC,nH=diesel.nH,nO=diesel.nO)
 Pi = diesel.Psat*diesel.molFrac
 Ri = R/diesel.molWeight

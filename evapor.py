@@ -177,7 +177,7 @@ class LiquidFilmCell:
         self.nO = array(nO)
         molWeight = 12.011 * self.nC + 1.008 * self.nH + 16 * self.nO
         self.molWeight = molWeight / 1000 # kg/mol
-        self.Dvi = diffusivity_hco_in_air(T=473, p=self.P / 10. ** 5,
+        self.Dvi = diffusivity_hco_in_air(T=473, p=self.P / 1E5,
                              nC=self.nC, nH=self.nH, nO=self.nO)
 
     def massDens(self, massDens):
@@ -211,11 +211,11 @@ class LiquidFilmCell:
         self.airP[0] = 0.209 * tmp
         self.airP[1] = tmp-self.airP[0]
         # air mole fraction, O2 and N2
-        self.airMolFrac[0] = 19.71 * 10 ** -4 * self.airP[0] * 10 ** -5
+        self.airMolFrac[0] = 19.71E-4 * self.airP[0] * 1E-5
         tmp_benzene=exp(-6.05445-4.95673/(self.T/100))
         tmp_decane=exp(-6.8288+0.3404/(self.T/100))
         tmp_nitrogen = 0.8*tmp_decane+0.2*tmp_benzene
-        self.airMolFrac[1] = tmp_nitrogen * self.airP[1] * 10 ** -5
+        self.airMolFrac[1] = tmp_nitrogen * self.airP[1] * 1E-5
         # rescale the hydrocarbons' mole fraction
         tot = sum(self.airMolFrac)
         self.molFrac = self.molFrac * (1-tot)
