@@ -13,9 +13,11 @@ OneAtm = ctml.OneAtm
 R = 8.314472 # J/mol K
 
 class FuelComponent():
-    """copy from Richard's chem solver
-    specific to the fuel surrogate model.
-    don't get confused with the reaction products."""
+    """
+    A component of the surrogate diesel fuel.
+    
+    Don't get confused with the reaction products.
+    """
     def __str__(self):
         return "<Species %s>"%(self.name)
     def __init__(self, name="",
@@ -23,17 +25,21 @@ class FuelComponent():
             composition=dict(C=0,H=0,O=0), 
             Antoine=dict(A=0,B=0,C=0),
             liquidMolarDensity=3500 ):
-        self.name=name
-        self.initialVolFraction=initialVolFraction
-        self.composition=composition
-        self.Antoine=Antoine
-        self.liquidMolarDensity=liquidMolarDensity # mol/m3
-        self.initialConcentration=self.liquidMolarDensity*initialVolFraction
+        self.name = name
+        self.initialVolFraction = initialVolFraction
+        self.composition = composition
+        self.Antoine = Antoine
+        self.liquidMolarDensity = liquidMolarDensity # mol/m3
+        self.initialConcentration = self.liquidMolarDensity*initialVolFraction
         
     def getPsat(self, Temperature):
-        """Use Antoine Equation to get saturated vapor pressure at Temperature.
-        
-        Note the units in Antoine Eqn is mmHg and C
+        """
+        Use Antoine Equation to get saturated vapor pressure at Temperature.
+
+        Temperature is specified in K.
+        Pressure is returned in Pa.
+              
+        Note, however, that the units in the Antoine parameters are mmHg and C
         P = 10^(A-B/(C+T))
         """
         A = self.Antoine['A']
@@ -50,7 +56,7 @@ class FuelComponent():
 class LiquidFilmCell:
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
-    represents each cell after descritization. when initialize, nSpecies is
+    represents each cell after discretization. When initializing, nSpecies is
     the number of hydrocarbon species, N2 and O2 will be automatically added.
     """
     def __init__(self, fuel=[], solver=ChemistrySolver(), diameter=1, thickness=1, length=1,
