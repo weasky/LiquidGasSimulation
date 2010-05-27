@@ -46,7 +46,7 @@ class PropertiesOfSpecies(object):
         # whereas p['n-C11(2)'].MolarVolume = 0.00063723
     MolarVolume = property(getMolarVolume)  # make a fake attribute
     
-    def getPartitionCoefficient(self):
+    def getPartitionCoefficient298(self):
         """
         Get the partition coefficient, K: ratio of solvent to gas concentrations.
         
@@ -77,7 +77,7 @@ class PropertiesOfSpecies(object):
         partition_coefficient = 10**logK
         return partition_coefficient
     # make a fake attribute
-    PartitionCoefficient = property(getPartitionCoefficient)
+    PartitionCoefficient298 = property(getPartitionCoefficient298)
     
     
     def getDiffusivityInAir(self,Temperature,pressure_in_bar):

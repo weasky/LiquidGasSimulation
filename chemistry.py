@@ -490,4 +490,4 @@ if __name__ == "__main__":
     # mass_concentrations = concentrations * solver.properties.MolecularWeight
     # mass_fractions = mass_concentrations / mass_concentrations.sum()
     
-    # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient
+    # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient298
