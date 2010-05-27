@@ -123,7 +123,62 @@ class PropertiesOfSpecies(object):
         if not m.group(1): return 1
         return int(m.group(1))
     nO = property(getNumberOfOxygens)
-    
+
+    def getSolvationThermochemistry(self):
+        """
+        This is the Java code from RMG:
+        
+        double r_solute=p_chemGraph.getRadius();
+        double r_solvent; r_solvent=3.498*Math.pow(10,-10);// 3.311;  // Manually assigned solvent radius [=] meter Calculated using Connolly solvent excluded volume from Chem3dPro
+        double r_cavity=r_solute+r_solvent;                    // Cavity radius [=] Angstrom
+        double rho; rho=0.00309*Math.pow(10,30);  //0.00381;   // number density of solvent [=] molecules/Angstrom^3   Value here is for decane using density =0.73 g/cm3
+        double parameter_y=4.1887902*rho*Math.pow(r_solvent, 3);  // Parameter y from Ashcraft Thesis Refer pg no. 60. (4/3)*pi*rho*r^3
+        double parameter_ymod=parameter_y/(1-parameter_y);     // parameter_ymod= y/(1-y) Defined for convenience
+        double R=8.314;                                        // Gas constant units J/mol K
+        double T=298;                                          // Standard state temperature
+        
+        // Definitions of K0, K1 and K2 correspond to those for K0', K1' and K2' respectively from Ashcraft's Thesis (-d/dT of K0,K1,K2)
+        double K0= -R*(-Math.log(1-parameter_y)+(4.5*parameter_ymod*parameter_ymod));
+        double K1= (R*0.5/r_solvent)*((6*parameter_ymod)+(18*parameter_ymod*parameter_ymod));
+        double K2= -(R*0.25/(r_solvent*r_solvent))*((12*parameter_ymod)+(18*parameter_ymod*parameter_ymod));
+        
+        // Basic definition of entropy change of solvation from Ashcfrat's Thesis
+        double deltaS0;
+        deltaS0=K0+(K1*r_cavity)+(K2*r_cavity*r_cavity);
+        
+        // Generation of Abraham Solute Parameters
+        AbramData result_Abraham= new AbramData();
+        result_Abraham= p_chemGraph.getAbramData();
+        
+        // Solute descriptors from the Abraham Model
+        double S=result_Abraham.S;
+        double B=result_Abraham.B;
+        double E=result_Abraham.E;
+        double L=result_Abraham.L;
+        double A=result_Abraham.A;
+        
+        //Manually specified solvent descriptors 
+        // (constants here are for dry decane, from from M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29–47 )
+        double c = 0.156;
+        double s = 0;
+        double b = 0; 
+        double e = -0.143;
+        double l = 0.989;
+        double a = 0;
+        
+        // Dry octan-1-ol, from M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29–47 
+        // c=-0.120; e=-0.203; s=0.560; a=3.560; b=0.702; l=0.939
+        
+        double logK = c + s*S + b*B + e*E + l*L + a*A;    // Implementation of Abraham Model
+        double deltaG0_decane = -8.314*298*logK;
+        //       System.out.println("The free energy of solvation in decane at 298K w/o reference state corrections  = " + deltaG0_decane +" J/mol for " );
+        
+        // Calculation of enthalpy change of solvation using the data obtained above
+        double deltaH0=deltaG0_decane+(T*deltaS0);
+        deltaS0=deltaS0/4.18;   //unit conversion from J/mol to cal/mol
+        deltaH0=deltaH0/4180;   //unit conversion from J/mol to kcal/mol
+        """
+        pass
             
 class PropertiesStore():
     """
