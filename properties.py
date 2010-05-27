@@ -8,18 +8,6 @@ import math
 import pylab, numpy
 import re
 
-# get quantities package from http://pypi.python.org/pypi/quantities
-# read about it at http://packages.python.org/quantities/index.html
-# I think this may only work with an old version - try "easy_install quantities==0.5b5"
-import quantities as pq
-pq.UnitQuantity('kilocalories', pq.cal*1e3, symbol='kcal')
-pq.UnitQuantity('kilojoules', pq.J*1e3, symbol='kJ')
-pq.UnitQuantity('kilomoles', pq.mol*1e3, symbol='kmol')
-
-
-_species=list()
-_speciesnames=list()
-
     
 def getSpeciesByName(name):
     """Select a species by its name."""
@@ -47,8 +35,7 @@ class PropertiesOfSpecies(object):
             # insert it into the instance's attribute dictionary
             setattr(self,key,value)
         self.species_name = properties_dict['ChemkinName']
-    
-        
+
     def getMolarVolume(self):
         """Get the molar volume, in m3/mol"""
         molecule_volume =  self.Radius*self.Radius*self.Radius * math.pi * 4/3
@@ -149,7 +136,9 @@ class PropertiesStore():
 
     def __getattr__(self, property_name):
         """
-        Get an array of the property. Length is Nspecies; order is same as chemistry model.
+        Get an array of the property. Length is Nspecies; 
+        The order is the same as speciesnames array passed in at initialization, or 
+        the order they are read from the file if no array is passed in.
         
         >> s = SpeciesProperties()
         >> s.Radius
@@ -167,6 +156,13 @@ class PropertiesStore():
         
     def __getitem__(self,species_name):
         """Get properties of an individual species."""
+        
+        if species_name in ['Ar','N2']:
+            # import pdb; pdb.set_trace()
+            print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
+            species_name='O2(1)'
+            
+            
         spec_prop = self._specs_props[species_name]
         return spec_prop
         
@@ -219,7 +215,6 @@ class PropertiesStore():
         for species_index, species_name in enumerate(speciesnames):
             values[species_index] = self.getSpeciesProperty(species_name,property_name)
         return values
-        
 
 
 if __name__ == "__main__":
