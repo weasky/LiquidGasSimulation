@@ -144,7 +144,7 @@ class PropertiesStore():
     """
     def __init__(self, resultsDir='RMG_results', speciesnames=None):
         self._specs_props = dict()
-        self.speciesnames = speciesnames
+        self._speciesnames = speciesnames
         self.loadPropertiesFromFile(resultsDir)
 
     def __getattr__(self, property_name):
@@ -155,7 +155,7 @@ class PropertiesStore():
         >> s.Radius
         """
         try:
-            return self.getPropertyArray(property_name, self.speciesnames)
+            return self.getPropertyArray(property_name, self._speciesnames)
         except KeyError:
             raise AttributeError
             
@@ -177,9 +177,9 @@ class PropertiesStore():
         This will fill the self.properties dictionary, 
         with dictionaries of properties for each species.
         """
-        if self.speciesnames is None:
+        if self._speciesnames is None:
             save_order = True # use the RMG_Solvation_Properties.txt file to determine species order 
-            self.speciesnames = list()
+            self._speciesnames = list()
         else:
             save_order = False # will leave the existing list speciesnames alone and use that for the order.
         import csv
@@ -189,7 +189,7 @@ class PropertiesStore():
         reader = csv.DictReader(propsfile, dialect=csv.excel_tab)
         for spec_prop in reader:
             self._specs_props[spec_prop['ChemkinName']] = PropertiesOfSpecies(spec_prop)
-            if save_order: self.speciesnames.append(spec_prop['ChemkinName'])
+            if save_order: self._speciesnames.append(spec_prop['ChemkinName'])
         propsfile.close()
         
     def getSpeciesProperty(self,species_name,property_name):
