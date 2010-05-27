@@ -8,6 +8,8 @@ from chemistry import ChemistrySolver
 import copy
 import time
 
+from properties import PropertiesOfSpecies, PropertiesStore
+
 units = ctml.units
 OneAtm = ctml.OneAtm
 R = 8.314472 # J/mol K
@@ -59,7 +61,7 @@ class LiquidFilmCell:
     represents each cell after discretization. When initializing, nSpecies is
     the number of hydrocarbon species, N2 and O2 will be automatically added.
     """
-    def __init__(self, fuel=[], solver=ChemistrySolver(), diameter=1, thickness=1, length=1,
+    def __init__(self, fuel=[], chem_solver=None, diameter=1, thickness=1, length=1,
                  T=400, P=OneAtm, reaction=True):
         #use nSpecies, the code will calculate molWeight based on nC, nH and nO
         #2 means [O2 N2]
@@ -73,9 +75,19 @@ class LiquidFilmCell:
             FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
             FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
         ]
-        self.nSpecies = solver.Nspecies
-        self.speciesnames = solver.speciesnames
-        self.molWeight = solver.properties.MolecularWeight/1000. #to kg/m^3
+        
+        if chem_solver is None: chem_solver = ChemistrySolver(resultsDir='RMG_results')
+        self.chem_solver = chem_solver
+
+        self.nSpecies = chem_solver.Nspecies
+        self.speciesnames = chem_solver.speciesnames
+        
+        # must pass it list of speciesnames so that the arrays returned are in the right size and order
+        self.properties = PropertiesStore(resultsDir='RMG_results', speciesnames=self.speciesnames)
+        
+        assert len(self.speciesnames) == self.nSpecies
+        
+        self.molWeight = self.properties.MolecularWeight/1000. #to kg 
         #evapFlux out
         self.evapFlux = zeros(self.nSpecies)
         # area and vol
@@ -96,29 +108,38 @@ class LiquidFilmCell:
         self.molFrac = zeros(self.nSpecies)
         self.volFrac = zeros(self.nSpecies)
         self.concs = zeros(self.nSpecies)
-        self.nC = solver.properties.nC
-        self.nH = solver.properties.nH
-        self.nO = solver.properties.nO
+        self.nC = self.properties.nC
+        self.nH = self.properties.nH
+        self.nO = self.properties.nO
         self.Dvi = zeros(self.nSpecies)
         self.Dvi = diffusivity_hco_in_air(T=self.T,p=self.P*1.e-5,nC=self.nC,
                                           nH=self.nH,nO=self.nO)
-        # process from fuel input
-        concs_dict   = dict.fromkeys(solver.speciesnames)
-        volFrac_dict = dict.fromkeys(solver.speciesnames)
-        antoine_dict = dict.fromkeys(solver.speciesnames)
-        molDens_dict = dict(zip(solver.speciesnames,1./solver.properties.MolarVolume))
-        for speciesName in solver.speciesnames:
+
+        # create empty dictionaries
+        concs_dict = dict()
+        volFrac_dict = dict()
+        antoine_dict = dict()
+        molDens_dict = dict()
+        
+        # set for all species listed in speciesnames
+        for speciesName in self.speciesnames:
             concs_dict[speciesName] = 0.0
             volFrac_dict[speciesName] = 0.0
             antoine_dict[speciesName] = 0.0
+            molDens_dict[speciesName] = 1 / self.properties[speciesName].MolarVolume
+        
+        # update fuel components with revised values
         for component in fuel:
             concs_dict[component.name] = component.initialConcentration # mol/m3
             volFrac_dict[component.name] = component.initialVolFraction
             antoine_dict[component.name] = component.Antoine
             molDens_dict[component.name] = component.liquidMolarDensity
+        
+        # convert dictionaries into arrays
         self.concs   = array([concs_dict[s] for s in self.speciesnames])
         self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
         self.molDens = array([molDens_dict[s] for s in self.speciesnames])
+        
         #updating
         self.massDens = self.molDens * self.molWeight
         molFrac = self.volFrac * self.molDens
@@ -126,11 +147,11 @@ class LiquidFilmCell:
         massFrac = self.volFrac * self.massDens
         self.massFrac = massFrac / sum(massFrac)
         
-        self.vaporConcs = self.concs / solver.properties.PartitionCoefficient
+        self.vaporConcs = self.concs / self.properties.PartitionCoefficient
         # Psat is not really a saturated vapor pressure, 
         # but is the x=1 extrapolation of the partial pressure vs. x 
         # line based on the partition coefficient from the Abraham model.
-        self.Psat = sum(self.concs) * R * self.T / solver.properties.PartitionCoefficient
+        self.Psat = sum(self.concs) * R * self.T / self.properties.PartitionCoefficient
         # correct Psat for fuel components (uses Antoine equation to correct for T)
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
@@ -144,9 +165,8 @@ class LiquidFilmCell:
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
         #tmp, may delete in future
-        self.solver = solver
-        self.solver.setTemperature(self.T)
-        self.solver.setConcentrations(self.concs)
+        self.chem_solver.setTemperature(self.T)
+        self.chem_solver.setConcentrations(self.concs)
         #get air pressure and concs
         self.update()
         self.dryTime = self.getDryTime()
@@ -273,7 +293,7 @@ class LiquidFilmCell:
         Qi = self.vaporDiff(Lv=self.dia)
         Q = sum(Qi)
         #reaction source term, turn the mole to mass frac dens
-        reactConcs = self.solver.getRightSideOfODE(molFracDens,t)*self.molWeight if self.reaction \
+        reactConcs = self.chem_solver.getRightSideOfODE(molFracDens,t)*self.molWeight if self.reaction \
             else zeros(self.nSpecies)
    
         dhdt = -1. / sum(massFracDens) * Q
@@ -326,7 +346,7 @@ if __name__ == "__main__":
     print 'the mol fraction is ', diesel.molFrac
     print 'the mass fraction is ', diesel.massFrac
     print 'the concentrations are ', diesel.concs
-    print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.solver.properties.PartitionCoefficient)*R*diesel.T
+    print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.properties.PartitionCoefficient)*R*diesel.T
     print 'the saturated vapor pressure is', diesel.Psat
     print 'the total vapor pressure using Antoine is ',sum(diesel.Psat*diesel.molFrac)
     print 'the O2 and N2 partial pressure is ', diesel.airP[0], diesel.airP[1]
