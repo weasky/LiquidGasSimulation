@@ -145,7 +145,7 @@ class PropertiesStore():
         """
         try:
             return self.getPropertyArray(property_name, self._speciesnames)
-        except KeyError:
+        except (KeyError, TypeError, ValueError):
             raise AttributeError
             
     def _getAttributeNames(self):
