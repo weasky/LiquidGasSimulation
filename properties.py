@@ -46,7 +46,7 @@ class PropertiesOfSpecies(object):
         # whereas p['n-C11(2)'].MolarVolume = 0.00063723
     MolarVolume = property(getMolarVolume)  # make a fake attribute
     
-    def getPartitionCoefficient(self):
+    def getPartitionCoefficient298(self):
         """
         Get the partition coefficient, K: ratio of solvent to gas concentrations.
         
@@ -77,7 +77,7 @@ class PropertiesOfSpecies(object):
         partition_coefficient = 10**logK
         return partition_coefficient
     # make a fake attribute
-    PartitionCoefficient = property(getPartitionCoefficient)
+    PartitionCoefficient298 = property(getPartitionCoefficient298)
     
     
     def getDiffusivityInAir(self,Temperature,pressure_in_bar):
@@ -123,8 +123,70 @@ class PropertiesOfSpecies(object):
         if not m.group(1): return 1
         return int(m.group(1))
     nO = property(getNumberOfOxygens)
+
+    def getSolvationThermochemistry(self):
+        """
+        Get the solvation enthalpy and entropy. In this model neither is temperature-dependent.
+        Returns a tuple: (DHsolv, DSsolv)
+        
+        DHsolv is in J/mol
+        DSsolv is in J/mol/K
+        """
+        deltaG0 = self.getSolvationFreeEnergy298()
+        deltaS0 = self.getSolvationEntropy()
+        T = 298 # standard state temperature
+        deltaH0 = deltaG0 + (T*deltaS0)
+        return deltaH0, deltaS0
+    SolvationThermochemistry = property(getSolvationThermochemistry)
+
+    def getSolvationFreeEnergy298(self):
+        """
+        Get the change in Gibbs free energy due to solvation at 298K.
+        
+        Returns Delta G at 298K in J/mol.
+        """
+        logK = math.log10( self.getPartitionCoefficient298() )
+        deltaG0 = -8.314 * 298 * logK;
+        return deltaG0
+    SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
     
-            
+    def getSolvationEntropy(self):
+        """
+        Get the solvation entropy. In this model it's not temperature-dependent.
+        
+        Returns $Delta S_{solv}$ in J/mol/K
+        
+        Based on code from RMG-Java, based on Rob Ashcraft's thesis around page 60,
+        based on THE SOLUBILITY OF GASES IN LIQUIDS Robert A. Pierotti (1963)
+        Journal of Physical Chemistry 67 (9) p. 1840-1845
+        http://dx.doi.org/10.1021/j100803a024
+        """
+        r_solute = self.Radius # should be in metres
+        r_solvent = 3.498E-10  # Manually assigned solvent radius [=] meter Calculated using Connolly solvent excluded volume from Chem3dPro
+        r_cavity = r_solute + r_solvent;   # Cavity radius [=] meter
+        rho = 3.09E27   # number density of solvent [=] molecules/Angstrom^3   Value here is for decane using density =0.73 g/cm3
+        parameter_y = 4.1887902*rho* r_solvent*r_solvent*r_solvent #  Parameter y from Ashcraft Thesis Refer pg no. 60. (4/3)*pi*rho*r^3
+        parameter_ymod = parameter_y/(1-parameter_y) # parameter_ymod= y/(1-y) Defined for convenience
+        R=8.314 # Gas constant units J/mol K
+        
+        # Definitions of K0, K1 and K2 correspond to those for K0', K1' and K2' respectively from Ashcraft's Thesis (-d/dT of K0,K1,K2)
+        K0 = -R*(-math.log(1-parameter_y)+(4.5*parameter_ymod*parameter_ymod))
+        K1 = (R*0.5/r_solvent)*((6*parameter_ymod)+(18*parameter_ymod*parameter_ymod))
+        K2 = -(R*0.25/(r_solvent*r_solvent))*((12*parameter_ymod)+(18*parameter_ymod*parameter_ymod))
+        
+        #Basic definition of entropy change of solvation from Ashcfrat's Thesis
+        deltaS0 = K0+(K1*r_cavity)+(K2*r_cavity*r_cavity)
+        
+        return deltaS0
+    SolvationEntropy = property(getSolvationEntropy)
+    
+    def getSolvationEnthalpy(self):
+        """Get the solvation enthlapy, in J/mol"""
+        deltaH, deltaS = self.getSolvationThermochemistry()
+        return deltaH
+    SolvationEnthalpy = property(getSolvationEnthalpy)
+        
+        
 class PropertiesStore():
     """
     A class to store and evaluate Properties of all the Species in the system.
