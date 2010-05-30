@@ -145,8 +145,8 @@ class PropertiesOfSpecies(object):
         
         Returns Delta G at 298K in J/mol.
         """
-        logK = math.log10( self.getPartitionCoefficient298() )
-        deltaG0 = -8.314 * 298 * logK;
+        lnK = math.log( self.getPartitionCoefficient298() ) 
+        deltaG0 = -8.314 * 298 * lnK;
         return deltaG0
     SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
     
