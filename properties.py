@@ -79,6 +79,19 @@ class PropertiesOfSpecies(object):
     # make a fake attribute
     PartitionCoefficient298 = property(getPartitionCoefficient298)
     
+    def getPartitionCoefficient(self,T):
+        """
+        Get the partition coefficient at the given temperature.
+        K: ratio of solvent to gas concentrations.
+        K > 1 means concentration is higher in solution than in the gas.
+        See getPartitionCoefficient298 for more details.
+        """
+        deltaH0, deltaS0 = self.getSolvationThermochemistry()
+        deltaG0 = deltaH0 - T * deltaS0
+        lnK = deltaG0 / (-8.314 * T )
+        partition_coefficient = math.exp(lnK)
+        return partition_coefficient
+ 
     
     def getDiffusivityInAir(self,Temperature,pressure_in_bar):
         """
