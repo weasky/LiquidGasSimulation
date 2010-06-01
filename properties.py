@@ -7,7 +7,7 @@ import sys, os
 import math
 import pylab, numpy
 import re
-
+import types
     
 def getSpeciesByName(name):
     """Select a species by its name."""
@@ -79,6 +79,19 @@ class PropertiesOfSpecies(object):
     # make a fake attribute
     PartitionCoefficient298 = property(getPartitionCoefficient298)
     
+    def PartitionCoefficientT(self, T):
+        """
+        Get the partition coefficient at the given temperature.
+        K: ratio of solvent to gas concentrations.
+        K > 1 means concentration is higher in solution than in the gas.
+        See getPartitionCoefficient298 for more details.
+        """
+        
+        deltaH0, deltaS0 = self.getSolvationThermochemistry()
+        deltaG0 = deltaH0 - T * deltaS0
+        lnK = deltaG0 / (-8.314 * T )
+        partition_coefficient = math.exp(lnK)
+        return partition_coefficient
     
     def getDiffusivityInAir(self,Temperature,pressure_in_bar):
         """
@@ -145,8 +158,8 @@ class PropertiesOfSpecies(object):
         
         Returns Delta G at 298K in J/mol.
         """
-        logK = math.log10( self.getPartitionCoefficient298() )
-        deltaG0 = -8.314 * 298 * logK;
+        lnK = math.log( self.getPartitionCoefficient298() ) 
+        deltaG0 = -8.314 * 298 * lnK;
         return deltaG0
     SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
     
@@ -202,12 +215,24 @@ class PropertiesStore():
         The order is the same as speciesnames array passed in at initialization, or 
         the order they are read from the file if no array is passed in.
         
+        Uses self.getPropertyArray()
+        
         >> s = SpeciesProperties()
         >> s.Radius
+        
+        Also works for things that are functions!
+        >> s.PartitionCoefficientT(298)
         """
         try:
             return self.getPropertyArray(property_name, self._speciesnames)
-        except (KeyError, TypeError, ValueError):
+        except (TypeError):
+            try: 
+                def fetcher_function(*args):
+                    return self.getPropertyArray(property_name, self._speciesnames, *args)
+                return fetcher_function
+            except (KeyError, TypeError, ValueError), e:
+                raise AttributeError
+        except (KeyError, TypeError, ValueError), e:
             raise AttributeError
             
     def _getAttributeNames(self):
@@ -217,13 +242,15 @@ class PropertiesStore():
         
         
     def __getitem__(self,species_name):
-        """Get properties of an individual species."""
+        """Get PropertiesOfSpecies object of an individual species.
+        
+        Substitutes O2(1) for species without known properties (Ar and N2)
+        then returns the corresponding PropertiesOfSpecies instance."""
         
         if species_name in ['Ar','N2']:
             # import pdb; pdb.set_trace()
             print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
             species_name='O2(1)'
-            
             
         spec_prop = self._specs_props[species_name]
         return spec_prop
@@ -250,8 +277,13 @@ class PropertiesStore():
             if save_order: self._speciesnames.append(spec_prop['ChemkinName'])
         propsfile.close()
         
-    def getSpeciesProperty(self,species_name,property_name):
-        """Get the value of a property of a species. General method."""
+    def getSpeciesProperty(self,species_name,property_name, *arguments):
+        """
+        Get the value of a property of a species. General method.
+        
+        Substitutes O2(1) for species without known properties (Ar, N2)
+        then gets the attribute/property of the appropriate species.
+        """
         if species_name in ['Ar','N2']:
             # import pdb; pdb.set_trace()
             # print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
@@ -263,20 +295,27 @@ class PropertiesStore():
             print "These are the species I have:",self._specs_props.keys()
             raise 
         #try:
+
         value = getattr(spec_prop,property_name)
+        if isinstance(value,types.MethodType): # it's a function (method) not a value. call it and get the value
+            value = value(*arguments)
         #except AttributeError:
             # print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
             #raise
         return value
     
-    def getPropertyArray(self,property_name, speciesnames):
-        """Get an array of the property. Length is Nspecies; order is same as chemistry model.
+    def getPropertyArray(self,property_name, speciesnames, *arguments):
+        """
+        Get an array of the property values ordered by speciesnames. 
         
+        Length is Nspecies; order is determined by speciesnames list.
         Probably quite slow, so wise to store the result."""
         values = numpy.zeros(len(speciesnames))
+        
         for species_index, species_name in enumerate(speciesnames):
-            values[species_index] = self.getSpeciesProperty(species_name,property_name)
+            values[species_index] = self.getSpeciesProperty(species_name,property_name, *arguments)
         return values
+        
 
 
 if __name__ == "__main__":
