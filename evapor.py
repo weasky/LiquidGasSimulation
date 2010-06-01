@@ -241,7 +241,6 @@ class LiquidFilmCell:
         self.concs[1] = sum(self.concs)*self.airMolFrac[1]
         self.concs[2] = sum(self.concs)*self.airMolFrac[0]
 
-
     def getVaporDens(self):
         Pi = self.Psat * self.molFrac
         Ri = R / self.molWeight
@@ -266,28 +265,27 @@ class LiquidFilmCell:
         else:
             #print 'evaporation flux <0 ,something wrong'
             Qi = self.Dvi * self.evapFlux
-        
         return Qi
 
     def rightSideofODE(self, Y, t):
         """
         drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
-        y is mass fractional density
+        y is mass density
         """
         # evaporation term
-        massFracDens = Y[:-1]
-        molFracDens = massFracDens / self.molWeight
-        self.massFrac = massFracDens / sum(massFracDens)
-        self.molFrac = molFracDens / sum(molFracDens)
+        massDens = Y[:-1]
+        molDens = massDens / self.molWeight
+        self.massFrac = massDens / sum(massDens)
+        self.molFrac = molDens / sum(molDens)
         ratio = self.area / self.vol
         Qi = self.vaporDiff(Lv=self.dia)
         Q = sum(Qi)
         #reaction source term, turn the mole to mass frac dens
-        reactConcs = self.chem_solver.getRightSideOfODE(molFracDens,t)*self.molWeight if self.reaction \
+        reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molWeight if self.reaction \
             else zeros(self.nSpecies)
    
-        dhdt = -1. / sum(massFracDens) * Q
-        drhodt = -ratio * Qi - ratio * massFracDens * dhdt + reactConcs
+        dhdt = -1. / sum(massDens) * Q
+        drhodt = -ratio * Qi - ratio * massDens * dhdt + reactConcs
         drhodt = append(drhodt, dhdt)
         self.update()
         return drhodt
@@ -314,9 +312,9 @@ class LiquidFilmCell:
         #        for iii in range(len(ytt)):
         #            if ytt[iii]<0:
         #                ytt[iii]=0.
-        molFracDens = ytt / self.molWeight
-        self.concs = molFracDens
-        self.molFrac = molFracDens / sum(molFracDens)
+        molDens = ytt / self.molWeight
+        self.concs = molDens
+        self.molFrac = molDens / sum(molDens)
         self.massFrac = ytt / sum(ytt)
 
 if __name__ == "__main__":
