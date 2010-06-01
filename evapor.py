@@ -147,11 +147,13 @@ class LiquidFilmCell:
         massFrac = self.volFrac * self.massDens
         self.massFrac = massFrac / sum(massFrac)
         
-        self.vaporConcs = self.concs / self.properties.PartitionCoefficient298
+        self.vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
+        
         # Psat is not really a saturated vapor pressure, 
         # but is the x=1 extrapolation of the partial pressure vs. x 
         # line based on the partition coefficient from the Abraham model.
-        self.Psat = sum(self.concs) * R * self.T / self.properties.PartitionCoefficient298
+        self.Psat = sum(self.concs) * R * self.T / self.properties.PartitionCoefficientT(self.T)
+        
         # correct Psat for fuel components (uses Antoine equation to correct for T)
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
