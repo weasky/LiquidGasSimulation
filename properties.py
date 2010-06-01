@@ -48,8 +48,9 @@ class PropertiesOfSpecies(object):
     
     def getPartitionCoefficient298(self):
         """
-        Get the partition coefficient, K: ratio of solvent to gas concentrations.
+        Get the solution/gas partition coefficient, K, at 298K
         
+        K = ratio of solvent to gas concentrations.
         K > 1 means concentration is higher in solution than in the gas.
         
         Abraham constants here are for dry decane, taken from from 
@@ -81,7 +82,8 @@ class PropertiesOfSpecies(object):
     
     def PartitionCoefficientT(self, T):
         """
-        Get the partition coefficient at the given temperature.
+        Get the solution/gas partition coefficient at the given temperature.
+        
         K: ratio of solvent to gas concentrations.
         K > 1 means concentration is higher in solution than in the gas.
         See getPartitionCoefficient298 for more details.
@@ -215,7 +217,7 @@ class PropertiesOfSpecies(object):
     def getSolvationEnthalpyMintz(self):
         """Get the solvation enthalpy, in J/mol, from Mintz's expression for linear alkanes.
         
-        see equation 15 in
+        See equation 15 in
         Enthalpy of Solvation Correlations For Gaseous Solutes
         Dissolved in Linear Alkanes (C5 - C16) Based on the Abraham Model
         C Mintz, K Burton, WE Acree Jr, MH Abraham
@@ -229,7 +231,7 @@ class PropertiesOfSpecies(object):
         deltaH, deltaS = self.getSolvationThermochemistryMintz()
         return deltaS
 
-    # Define which of the methods is returned as a parameter
+    # Define which of the methods is returned as a property attribute
     SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
     SolvationThermochemistry = property(getSolvationThermochemistryMintz)
     SolvationEntropy = property(getSolvationEntropyMintz)
