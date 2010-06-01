@@ -77,7 +77,6 @@ class LiquidFilmCell:
         
         if chem_solver is None: chem_solver = ChemistrySolver(resultsDir='RMG_results')
         self.chem_solver = chem_solver
-
         self.nSpecies = chem_solver.Nspecies
         self.speciesnames = chem_solver.speciesnames
         
@@ -100,6 +99,7 @@ class LiquidFilmCell:
         self.T = T
         self.P = P
         self.reaction = reaction
+        
         self.Psat = zeros(self.nSpecies)
         self.massDens = zeros(self.nSpecies)
         self.molDens = zeros(self.nSpecies)
@@ -192,8 +192,7 @@ class LiquidFilmCell:
         assert evapFlux.size==self.nSpecies, "Expected an array of size self.nSpecies=%d"%self.nSpecies
         self.evapFlux = evapFlux
         
-
-    def massDens(self, massDens):
+    def setMassDens(self, massDens):
         """ set density of the system"""
         self.massDens = array(massDens)
         self.molDens = self.massDens / self.molWeight
@@ -216,6 +215,10 @@ class LiquidFilmCell:
         self.massFrac = massFrac / a
 
     def update(self):
+        """
+        Yinchun, please could you explain what this function does?
+        Thanks, Richard.
+        """
         self.vol = pi * self.dia * self.len * self.thickness
         self.area = pi * (self.dia - 2 * self.thickness) * self.len
         # air partial pressure
