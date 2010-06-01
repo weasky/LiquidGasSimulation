@@ -2,7 +2,6 @@ import ctml_writer as ctml
 from numpy import pi,exp, append, arange, array, zeros, linspace
 from scipy.integrate import odeint
 from scipy.optimize import fsolve
-from tools import diffusivity_hco_in_air
 
 from chemistry import ChemistrySolver
 import copy
@@ -111,9 +110,7 @@ class LiquidFilmCell:
         self.nC = self.properties.nC
         self.nH = self.properties.nH
         self.nO = self.properties.nO
-        self.Dvi = zeros(self.nSpecies)
-        self.Dvi = diffusivity_hco_in_air(T=self.T,p=self.P*1.e-5,nC=self.nC,
-                                          nH=self.nH,nO=self.nO)
+        self.Dvi = self.properties.DiffusivityInAir(self.T, self.P)
 
         # create empty dictionaries
         concs_dict = dict()
@@ -193,18 +190,6 @@ class LiquidFilmCell:
         assert evapFlux.size==self.nSpecies, "Expected an array of size self.nSpecies=%d"%self.nSpecies
         self.evapFlux = evapFlux
         
-    def setCHO(self, nC, nH, nO):
-        """ set the number of atoms for each species"""
-        if(len(nC) != (self.nSpecies)):
-            print "The length of nC is not correct\n"
-            return
-        self.nC = array(nC)
-        self.nH = array(nH)
-        self.nO = array(nO)
-        molWeight = 12.011 * self.nC + 1.008 * self.nH + 16 * self.nO
-        self.molWeight = molWeight / 1000 # kg/mol
-        self.Dvi = diffusivity_hco_in_air(T=473, p=self.P / 1E5,
-                             nC=self.nC, nH=self.nH, nO=self.nO)
 
     def massDens(self, massDens):
         """ set density of the system"""
@@ -335,9 +320,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness, reaction=False)
-    # diesel.setCHO(nC=[11, 13, 11, 25, 16, 18, 10],
-        #           nH=[24, 28, 10, 34, 26, 40, 44],
-        #           nO=[0, 0, 0, 0, 0, 0, 0])
+
     print 'diesel components mol weight is', diesel.molWeight #g/mol
     # diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
         #               3415.0, 2600.0, 2889., 2729.]) #mol/m3

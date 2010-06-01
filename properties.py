@@ -24,7 +24,6 @@ class PropertiesOfSpecies(object):
     >> oxygen = ps['O2(1)'] // oxygen is now a PropertiesOfSpecies instance
     >> oxygen.Radius
     """
-
     def __init__(self, properties_dict):
         for key,value in properties_dict.iteritems():
             # try to turn it into a float
@@ -93,16 +92,18 @@ class PropertiesOfSpecies(object):
         partition_coefficient = math.exp(lnK)
         return partition_coefficient
     
-    def getDiffusivityInAir(self,Temperature,pressure_in_bar):
+    def DiffusivityInAir(self,Temperature,pressure_in_Pa):
         """
         Diffusivity of non-ring HCO compound in air
         
         Use Fuiller, Schettier, and Giddings correlation
         as in Eq. 11-4.1 in Reid, Prausnitz and Sherwood
         
-        input: T in K; p in bar;
+        input: T in K; p in Pa;
         output diffusivity d in m2/s
-        """        
+        """
+        pressure_in_bar = pressure_in_Pa * 1e-5
+        
         wC=12.011; wH=1.008; wO=16;   wair=28.97;
         vC=16.5;   vH=1.98;  vO=5.48; vair=20.1;
         
