@@ -7,7 +7,7 @@ import sys, os
 import math
 import pylab, numpy
 import re
-
+import types
     
 def getSpeciesByName(name):
     """Select a species by its name."""
@@ -263,8 +263,13 @@ class PropertiesStore():
             if save_order: self._speciesnames.append(spec_prop['ChemkinName'])
         propsfile.close()
         
-    def getSpeciesProperty(self,species_name,property_name):
-        """Get the value of a property of a species. General method."""
+    def getSpeciesProperty(self,species_name,property_name, *arguments):
+        """
+        Get the value of a property of a species. General method.
+        
+        Substitutes O2(1) for species without known properties (Ar, N2)
+        then gets the attribute/property of the appropriate species.
+        """
         if species_name in ['Ar','N2']:
             # import pdb; pdb.set_trace()
             # print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
@@ -276,20 +281,27 @@ class PropertiesStore():
             print "These are the species I have:",self._specs_props.keys()
             raise 
         #try:
+
         value = getattr(spec_prop,property_name)
+        if isinstance(value,types.MethodType): # it's a function (method) not a value. call it and get the value
+            value = value(*arguments)
         #except AttributeError:
             # print "Don't have the property '%s' for species '%s'."%(property_name,species_name)
             #raise
         return value
     
-    def getPropertyArray(self,property_name, speciesnames):
-        """Get an array of the property. Length is Nspecies; order is same as chemistry model.
+    def getPropertyArray(self,property_name, speciesnames, *arguments):
+        """
+        Get an array of the property values ordered by speciesnames. 
         
+        Length is Nspecies; order is determined by speciesnames list.
         Probably quite slow, so wise to store the result."""
         values = numpy.zeros(len(speciesnames))
+        
         for species_index, species_name in enumerate(speciesnames):
-            values[species_index] = self.getSpeciesProperty(species_name,property_name)
+            values[species_index] = self.getSpeciesProperty(species_name,property_name, *arguments)
         return values
+        
 
 
 if __name__ == "__main__":
