@@ -87,7 +87,7 @@ class PropertiesOfSpecies(object):
         See getPartitionCoefficient298 for more details.
         """
         
-        deltaH0, deltaS0 = self.getSolvationThermochemistry()
+        deltaH0, deltaS0 = self.SolvationThermochemistry
         deltaG0 = deltaH0 - T * deltaS0
         lnK = deltaG0 / (-8.314 * T )
         partition_coefficient = math.exp(lnK)
@@ -136,21 +136,38 @@ class PropertiesOfSpecies(object):
         if not m.group(1): return 1
         return int(m.group(1))
     nO = property(getNumberOfOxygens)
-
-    def getSolvationThermochemistry(self):
+    
+    def getSolvationThermochemistryMintz(self):
         """
-        Get the solvation enthalpy and entropy. In this model neither is temperature-dependent.
+        Get the solvation enthalpy and entropy. Free Energy from Abraham; Enthlapy from Mintz.
+        
+        In this model neither is temperature-dependent.
         Returns a tuple: (DHsolv, DSsolv)
         
         DHsolv is in J/mol
         DSsolv is in J/mol/K
         """
         deltaG0 = self.getSolvationFreeEnergy298()
-        deltaS0 = self.getSolvationEntropy()
+        deltaH0 = self.getSolvationEnthalpyMintz()
+        T = 298 # standard state temperature
+        deltaS0 = (deltaH0 - deltaG0 ) / T
+        return deltaH0, deltaS0
+        
+    def getSolvationThermochemistryPierotti(self):
+        """
+        Get the solvation enthalpy and entropy. Free Eneregy from Abraham; Entropy from Pierotti
+        
+        In this model neither is temperature-dependent.
+        Returns a tuple: (DHsolv, DSsolv)
+        
+        DHsolv is in J/mol
+        DSsolv is in J/mol/K
+        """
+        deltaG0 = self.getSolvationFreeEnergy298()
+        deltaS0 = self.getSolvationEntropyPierotti()
         T = 298 # standard state temperature
         deltaH0 = deltaG0 + (T*deltaS0)
         return deltaH0, deltaS0
-    SolvationThermochemistry = property(getSolvationThermochemistry)
 
     def getSolvationFreeEnergy298(self):
         """
@@ -161,11 +178,12 @@ class PropertiesOfSpecies(object):
         lnK = math.log( self.getPartitionCoefficient298() ) 
         deltaG0 = -8.314 * 298 * lnK;
         return deltaG0
-    SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
     
-    def getSolvationEntropy(self):
+    def getSolvationEntropyPierotti(self):
         """
-        Get the solvation entropy. In this model it's not temperature-dependent.
+        Get the solvation entropy, from Pierotti's scaled particle theory.
+        
+        In this model it's not temperature-dependent.
         
         Returns $Delta S_{solv}$ in J/mol/K
         
@@ -181,25 +199,43 @@ class PropertiesOfSpecies(object):
         parameter_y = 4.1887902*rho* r_solvent*r_solvent*r_solvent #  Parameter y from Ashcraft Thesis Refer pg no. 60. (4/3)*pi*rho*r^3
         parameter_ymod = parameter_y/(1-parameter_y) # parameter_ymod= y/(1-y) Defined for convenience
         R=8.314 # Gas constant units J/mol K
-        
         # Definitions of K0, K1 and K2 correspond to those for K0', K1' and K2' respectively from Ashcraft's Thesis (-d/dT of K0,K1,K2)
         K0 = -R*(-math.log(1-parameter_y)+(4.5*parameter_ymod*parameter_ymod))
         K1 = (R*0.5/r_solvent)*((6*parameter_ymod)+(18*parameter_ymod*parameter_ymod))
         K2 = -(R*0.25/(r_solvent*r_solvent))*((12*parameter_ymod)+(18*parameter_ymod*parameter_ymod))
-        
         #Basic definition of entropy change of solvation from Ashcfrat's Thesis
         deltaS0 = K0+(K1*r_cavity)+(K2*r_cavity*r_cavity)
-        
         return deltaS0
-    SolvationEntropy = property(getSolvationEntropy)
     
-    def getSolvationEnthalpy(self):
-        """Get the solvation enthlapy, in J/mol"""
-        deltaH, deltaS = self.getSolvationThermochemistry()
+    def getSolvationEnthalpyPierotti(self):
+        """Get the solvation enthlapy, in J/mol, from Abraham's G and Pierotti's S"""
+        deltaH, deltaS = self.getSolvationThermochemistryPierotti()
         return deltaH
-    SolvationEnthalpy = property(getSolvationEnthalpy)
+
+    def getSolvationEnthalpyMintz(self):
+        """Get the solvation enthalpy, in J/mol, from Mintz's expression for linear alkanes.
         
+        see equation 15 in
+        Enthalpy of Solvation Correlations For Gaseous Solutes
+        Dissolved in Linear Alkanes (C5 - C16) Based on the Abraham Model
+        C Mintz, K Burton, WE Acree Jr, MH Abraham
+        http://dx.doi.org/10.1002/qsar.200730040
+        """
+        deltaH = -6.708 + 2.999*self.AbrahamE - 9.279*self.AbrahamL # kJ/mol
+        return deltaH * 1000 # to get into J/mol
         
+    def getSolvationEntropyMintz(self):
+        """Get the solvation entropy, in J/mol, from Abraham's G and Mintz's H"""
+        deltaH, deltaS = self.getSolvationThermochemistryMintz()
+        return deltaS
+
+    # Define which of the methods is returned as a parameter
+    SolvationFreeEnergy298 = property(getSolvationFreeEnergy298)
+    SolvationThermochemistry = property(getSolvationThermochemistryMintz)
+    SolvationEntropy = property(getSolvationEntropyMintz)
+    SolvationEnthalpy = property(getSolvationEnthalpyMintz)
+    
+    
 class PropertiesStore():
     """
     A class to store and evaluate Properties of all the Species in the system.
