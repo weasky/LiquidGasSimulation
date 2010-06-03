@@ -416,14 +416,13 @@ class FuelComponent():
         self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
 
-if __name__ == "__main__":
-    import sys, os
-    # use different chemistry mechanism if specified on the command line
-    if len(sys.argv)>1:
-        solver = ChemistrySolver(resultsDir = sys.argv[1])
-    else:
-        solver = ChemistrySolver()
 
+
+def simulateDiesel(solver):
+    """Run a diesel autoxidation simulation.
+    
+    7 Surrogate fuel components are set up, some oxygen is added, and it is simulated at 430K
+    """
     # calculate the initial concentrations
     fuel=[
         FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
@@ -491,3 +490,13 @@ if __name__ == "__main__":
     # mass_fractions = mass_concentrations / mass_concentrations.sum()
     
     # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient298
+
+if __name__ == "__main__":
+    import sys, os
+    # use different chemistry mechanism if specified on the command line
+    if len(sys.argv)>1:
+        solver = ChemistrySolver(resultsDir = sys.argv[1])
+    else:
+        solver = ChemistrySolver()
+        
+    simulateDiesel(solver)
