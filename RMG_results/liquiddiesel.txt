@@ -9,10 +9,15 @@ MaxRadicalNumberPerSpecies: 3
 PrimaryThermoLibrary:
 Name: Default_H_H2
 Location: primaryThermoLibrary
+Name: DFT_QCI
+Location: DFT_QCI_thermo
+END
+
+PrimaryTransportLibrary:
 END
 
 ReadRestart: no 
-WriteRestart: yes 
+WriteRestart: no 
 
 TemperatureModel: Constant (K) 423
 
@@ -167,7 +172,7 @@ PressureDependence: off
 
 FinishController:
 (1) Goal ReactionTime 4.0 (hour)
-(2) Error Tolerance: 0.0001
+(2) Error Tolerance: 0.00001
 
 DynamicSimulator: DASSL
 //Conversions: AUTO
