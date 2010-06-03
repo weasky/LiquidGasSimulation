@@ -45,6 +45,34 @@ class PropertiesOfSpecies(object):
         # whereas p['n-C11(2)'].MolarVolume = 0.00063723
     MolarVolume = property(getMolarVolume)  # make a fake attribute
     
+    def getDepositPartitionCoefficient298(self):
+        """
+        Get the solution/deposit partition coefficient, Kd, at 298K
+        """
+        # Solvent parameters  here are for partitioning between water and dry decane, from 
+        # M.H. Abraham et al. / J. Chromatogr. A 1037 (2004) 29-47
+        # http://dx.doi.org/10.1016/j.chroma.2003.12.004
+        # if you change them, remember to update the docstring above!
+        c = 0.160
+        e = 0.585
+        s = -1.734
+        a = -3.435
+        b = -5.078
+        v = 4.582
+        # Solute parameters are properties of the species
+        S=self.AbrahamS
+        B=self.AbrahamB
+        E=self.AbrahamE
+        A=self.AbrahamA
+        V=self.AbrahamV
+        # Abraham model:
+        logK=c + s*S + b*B + e*E + v*V + a*A 
+        partition_coefficient = 10**logK
+        return partition_coefficient
+    # make a fake attribute
+    DepositPartitionCoefficient298 = property(getDepositPartitionCoefficient298)
+    
+    
     def getPartitionCoefficient298(self):
         """
         Get the solution/gas partition coefficient, K, at 298K
