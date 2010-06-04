@@ -15,7 +15,9 @@ import sys, os
 import math
 import pylab, numpy
 from scipy.integrate import odeint
+import scipy.sparse
 import re
+from PyDAS import dassl
 
 # get quantities package from http://pypi.python.org/pypi/quantities
 # read about it at http://packages.python.org/quantities/index.html
@@ -224,7 +226,7 @@ def getStoichiometryArrays():
     Returns three arrays: stoich_reactants, stoich_products, stoich_net
     These each have the size (Nreactions x Nspecies)
     """
-    stoich_reactants = numpy.zeros((len(_reactions),len(_species)))
+    stoich_reactants = numpy.zeros((len(_reactions),len(_species)), numpy.int32 )
     stoich_products = numpy.zeros_like(stoich_reactants)
     stoich_net = numpy.zeros_like(stoich_reactants)
     
@@ -232,18 +234,22 @@ def getStoichiometryArrays():
         stoich_reactants[rn] = r.getStoichiometryReactantsRow()
         stoich_products[rn] = r.getStoichiometryProductsRow()
         stoich_net[rn] = r.getStoichiometryNetRow()
+    # it would be nice to make these sparse, but we can't raise things to the power of a sparse matrix
+    # stoich_reactants = scipy.sparse.lil_matrix(stoich_reactants)
+    # stoich_products  = scipy.sparse.lil_matrix(stoich_products)
+    # stoich_net       = scipy.sparse.lil_matrix(stoich_net)
     return stoich_reactants,stoich_products,stoich_net
     
 def getForwardRateCoefficientsVector(T):
     """Get the vector of forward rate coefficients."""
-    forward_rate_coefficients = numpy.zeros(len(_reactions))
+    forward_rate_coefficients = numpy.zeros(len(_reactions), numpy.float64)
     for rn, r in enumerate(_reactions):
         forward_rate_coefficients[rn] = r.getForwardRateCoefficient(T).simplified
     return forward_rate_coefficients
         
 def getReverseRateCoefficientsVector(T):
     """Get the vector of reverse rate coefficients."""
-    reverse_rate_coefficients = numpy.zeros(len(_reactions))
+    reverse_rate_coefficients = numpy.zeros(len(_reactions), numpy.float64)
     for rn, r in enumerate(_reactions):
         reverse_rate_coefficients[rn] = r.getReverseRateCoefficient(T).simplified
     return reverse_rate_coefficients
@@ -282,11 +288,11 @@ def DictFromArray(inArray, units=None):
     return outDict
 
 
-
-class ChemistrySolver():
+class ChemistrySolver(dassl.DASSL):
     """A chemistry solver."""
     
     def __init__(self, resultsDir='RMG_results'):
+        super(ChemistrySolver,self).__init__()
         self.loadChemistryModel(resultsDir)
         #: Number of species
         self.Nspecies = len(_species)
@@ -381,7 +387,33 @@ class ChemistrySolver():
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
         return net_rates_of_creation
 
+    def residual(self, t, y, dydt):
+        """The residual function, solved by dassl.
         
+        Evaluate the residual function for this model, given the current value
+        of the independent variable `t`, dependent variables `y`, and first
+        derivatives `dydt`. Return a numpy array with the values of the residual
+        function and an integer with status information (0 if okay, -2 to
+        terminate).
+        
+        if:       dy/dt = g(y,t)
+        then:  residual = g(y,t) - dy/dt
+        
+        """
+        concentrations = y
+        forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
+        reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
+        net_rates = forward_rates - reverse_rates
+        net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+        delta = net_rates_of_creation - dydt
+        return delta, 0
+    
+#    def jacobian(self, t, y, dydt, cj):
+#        """The jacobian of the residual, used by dassl if available"""
+#        pd = np.ones(y.shape[0], np.float64)
+#        pd = pd * (-1 - cj)
+#        return np.diag(pd)
+#        
     def solveConcentrationsAfterTime(self, starting_concentrations, reaction_time, temperature=None ):
         """Solve the simulation for a given time starting from a given concentration.
         
@@ -398,7 +430,8 @@ class ChemistrySolver():
         timesteps = (0, reaction_time)
         concentration_history_array = odeint(self.getRightSideOfODE,starting_concentrations,timesteps)
         return concentration_history_array[-1] # the last row is the final timepoint
-        
+
+
 class FuelComponent():
     """Shouldn't really be part of the solv package. 
     specific to the fuel model."""
@@ -415,7 +448,6 @@ class FuelComponent():
         self.Antoine=Antoine
         self.liquidMolarDensity=pq.Quantity(liquidMolarDensity,'mol/m**3') # mol/m3
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
-
 
 
 def simulateDiesel(solver):
@@ -447,23 +479,38 @@ def simulateDiesel(solver):
     T=430 # kelvin
     solver.setTemperature(T)
     solver.setConcentrations(concentrations)
-    
+
     # set up timesteps
     start=0
     stop=10
     steps=1001
     timesteps=pylab.linspace(start,stop,steps)
     
-    # solve it here using odeint
     print "Concentrations at start (mol/m3)", concentrations
-    print "Starting to solve it in one go"
-    concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
+    
+    if False:
+        # solve it using scipy.integrate.odeint
+        print "Starting to solve it in one go using scipy.integrate.odeint"
+        concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
+
+    else:
+        # solve it using dassl
+        print "Starting to solve it in several steps using PyDAS.dassl"
+        solver.initialize(0, concentrations, atol=1e-20, rtol=1e-8)
+        
+        #check the residual works
+        solver.residual(solver.t, solver.y, solver.dydt)
+                
+        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)))
+        for step,time in enumerate(timesteps):
+            if time>0 : solver.advance(time)
+            concentration_history_array[step] = solver.y
+            print solver.t, solver.y
+
     print "Solved"
     final_concentrations = concentration_history_array[-1]
     print "Concentrations at end (mol/m3)", final_concentrations
-    
     print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
-    
     # plot the graph
     pylab.figure()
     pylab.axes([0.1,0.1,0.71,0.85])
@@ -474,6 +521,8 @@ def simulateDiesel(solver):
             xytext=(20,-5), textcoords='offset points', 
             arrowprops=dict(arrowstyle="-") )
     pylab.show()
+    
+    #assert False # to enter the debugger
     
     # # solve it in the solver, to show the API
     # print "Starting to solve it step by step (in 10 times fewer steps)"
