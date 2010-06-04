@@ -1,0 +1,304 @@
+#
+# Generated from file chem.inp
+# by ck2cti on Thu Jun  3 19:25:30 2010
+#
+units(length = "cm", time = "s", quantity = "mol", act_energy = "cal/mol")
+
+
+ideal_gas(name = "chem",
+      elements = " H  C  O  N  Ne  Ar  He  Si  S ",
+      species = """ Ar  N2  O2(1)  n-C11(2)  n-C13(3)  Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8) 
+                   HO2J(9)  SPC(42)  SPC(117)  SPC(120)  H2O2(101)  SPC(119)  C11H9J(30) """,
+      reactions = "all",
+      initial_state = state(temperature = 300.0,
+                        pressure = OneAtm)    )
+
+
+
+#-------------------------------------------------------------------------------
+#  Species data 
+#-------------------------------------------------------------------------------
+
+species(name = "Ar",
+    atoms = " Ar:1 ",
+    thermo = (
+       NASA( [  200.00,  1000.00], [  2.500000000E+00,   0.000000000E+00, 
+                0.000000000E+00,   0.000000000E+00,   0.000000000E+00,
+               -7.453750000E+02,   4.379674900E+00] ),
+       NASA( [ 1000.00,  6000.00], [  2.500000000E+00,   0.000000000E+00, 
+                0.000000000E+00,   0.000000000E+00,   0.000000000E+00,
+               -7.453750000E+02,   4.379674900E+00] )
+             ),
+    note = "L 6/88"
+       )
+
+species(name = "N2",
+    atoms = " N:2 ",
+    thermo = (
+       NASA( [  200.00,  1000.00], [  3.531005280E+00,  -1.236609880E-04, 
+               -5.029994330E-07,   2.435306120E-09,  -1.408812350E-12,
+               -1.046976280E+03,   2.967470380E+00] ),
+       NASA( [ 1000.00,  6000.00], [  2.952576370E+00,   1.396900400E-03, 
+               -4.926316030E-07,   7.860101950E-11,  -4.607552040E-15,
+               -9.239486880E+02,   5.871887620E+00] )
+             ),
+    note = "G 8/02"
+       )
+
+species(name = "O2(1)",
+    atoms = " O:2 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  3.545084030E+00,  -1.390033420E-03, 
+                6.244308680E-06,  -6.251864280E-09,   2.041197770E-12,
+               -4.494153520E+03,  -5.704726150E+00] ),
+       NASA( [  995.00,  5000.00], [  3.315085470E+00,   1.320064650E-03, 
+               -5.327143950E-07,   9.201493710E-11,  -5.758113180E-15,
+               -4.536774930E+03,  -5.040426370E+00] )
+             )
+       )
+
+species(name = "n-C11(2)",
+    atoms = " C:11  H:24 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.806602240E+00,   8.834044130E-02, 
+                4.402788810E-05,  -1.106075210E-07,   4.595582030E-11,
+               -5.178891950E+04,  -1.544619700E+01] ),
+       NASA( [  995.00,  5000.00], [  2.600614840E+01,   6.388924380E-02, 
+               -2.284074830E-05,   3.690271540E-09,  -2.216932930E-13,
+               -5.981226690E+04,  -1.443723550E+02] )
+             )
+       )
+
+species(name = "n-C13(3)",
+    atoms = " C:13  H:28 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.581511030E+00,   1.089987390E-01, 
+                4.095156050E-05,  -1.209089110E-07,   5.126246480E-11,
+               -5.911419370E+04,  -1.486353300E+01] ),
+       NASA( [  995.00,  5000.00], [  3.070534950E+01,   7.496866510E-02, 
+               -2.687816100E-05,   4.351268800E-09,  -2.617681800E-13,
+               -6.862328670E+04,  -1.700635270E+02] )
+             )
+       )
+
+species(name = "Mnphtln(4)",
+    atoms = " C:11  H:10 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.917658030E+00,   3.265254020E-02, 
+                1.020906050E-04,  -1.480989180E-07,   5.597307040E-11,
+               -1.926714350E+03,  -2.201838620E+01] ),
+       NASA( [  995.00,  5000.00], [  1.995430520E+01,   3.655355240E-02, 
+               -1.291165840E-05,   2.061363910E-09,  -1.226167260E-13,
+               -8.900713040E+03,  -1.221327620E+02] )
+             )
+       )
+
+species(name = "n-C16(5)",
+    atoms = " C:16  H:34 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.243874210E+00,   1.399861840E-01, 
+                3.633706920E-05,  -1.363609950E-07,   5.922243160E-11,
+               -6.998312590E+04,  -1.359027800E+01] ),
+       NASA( [  995.00,  5000.00], [  3.775415110E+01,   9.158779720E-02, 
+               -3.293428010E-05,   5.342764690E-09,  -3.218805120E-13,
+               -8.172083700E+04,  -2.082010270E+02] )
+             )
+       )
+
+species(name = "C10bnzn(6)",
+    atoms = " C:16  H:26 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.207951290E+00,   1.037810960E-01, 
+                8.650487520E-05,  -1.773833100E-07,   7.201115540E-11,
+               -3.956694210E+04,  -1.563249630E+01] ),
+       NASA( [  995.00,  5000.00], [  3.576468400E+01,   7.380902610E-02, 
+               -2.648247720E-05,   4.288468070E-09,  -2.579467940E-13,
+               -5.143931340E+04,  -2.034584320E+02] )
+             )
+       )
+
+species(name = "n-C19(7)",
+    atoms = " C:19  H:40 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  1.906237400E+00,   1.709736300E-01, 
+                3.172257780E-05,  -1.518130800E-07,   6.718239840E-11,
+               -8.073986630E+04,  -1.194054070E+01] ),
+       NASA( [  995.00,  5000.00], [  4.480295270E+01,   1.082069290E-01, 
+               -3.899039920E-05,   6.334260580E-09,  -3.819928440E-13,
+               -9.470619570E+04,  -2.459620450E+02] )
+             )
+       )
+
+species(name = "n-C21(8)",
+    atoms = " C:21  H:44 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  1.681146190E+00,   1.916319270E-01, 
+                2.864625020E-05,  -1.621144690E-07,   7.248904300E-11,
+               -8.786046850E+04,  -1.067105800E+01] ),
+       NASA( [  995.00,  5000.00], [  4.950215380E+01,   1.192863510E-01, 
+               -4.302781190E-05,   6.995257830E-09,  -4.220677320E-13,
+               -1.033125430E+05,  -2.709663990E+02] )
+             )
+       )
+
+species(name = "HO2J(9)",
+    atoms = " H:1  O:2 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  3.983589810E+00,  -2.361605180E-03, 
+                1.340933100E-05,  -1.410367590E-08,   4.750618410E-12,
+               -5.782858450E+03,  -1.407523850E+01] ),
+       NASA( [  995.00,  5000.00], [  3.961584930E+00,   2.391925430E-03, 
+               -7.889578690E-07,   1.206769120E-10,  -6.971812570E-15,
+               -6.009426070E+03,  -1.512967380E+01] )
+             )
+       )
+
+species(name = "SPC(42)",
+    atoms = " C:16  H:25 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.046089000E+00,   1.124967340E-01, 
+                5.464524070E-05,  -1.439955890E-07,   6.065630260E-11,
+               -2.267635030E+04,  -1.870154670E+01] ),
+       NASA( [  995.00,  5000.00], [  3.522765670E+01,   7.245788190E-02, 
+               -2.571783470E-05,   4.127780590E-09,  -2.467191650E-13,
+               -3.390103840E+04,  -2.018400080E+02] )
+             )
+       )
+
+species(name = "SPC(117)",
+    atoms = " C:16  H:25  O:2 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  1.913691360E+00,   1.215525330E-01, 
+                5.521245140E-05,  -1.536054440E-07,   6.534679770E-11,
+               -3.431914210E+04,  -1.219088090E+01] ),
+       NASA( [  995.00,  5000.00], [  3.932817010E+01,   7.338113090E-02, 
+               -2.628258040E-05,   4.248503160E-09,  -2.552073990E-13,
+               -4.682599520E+04,  -2.179395080E+02] )
+             )
+       )
+
+species(name = "SPC(120)",
+    atoms = " C:16  H:26  O:2 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  1.863742160E+00,   1.233036330E-01, 
+                6.473597270E-05,  -1.678279440E-07,   7.085029490E-11,
+               -5.260697690E+04,  -1.284760210E+01] ),
+       NASA( [  995.00,  5000.00], [  4.137300030E+01,   7.424534690E-02, 
+               -2.677937040E-05,   4.348722250E-09,  -2.620135370E-13,
+               -6.590368230E+04,  -2.305660760E+02] )
+             )
+       )
+
+species(name = "H2O2(101)",
+    atoms = " H:2  O:2 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  3.914857700E+00,   1.138835750E-03, 
+                1.114304150E-05,  -1.366851510E-08,   4.866202130E-12,
+               -2.382355980E+04,  -1.404186270E+01] ),
+       NASA( [  995.00,  5000.00], [  4.606380380E+00,   3.858693510E-03, 
+               -1.247762520E-06,   1.878381040E-10,  -1.072816180E-14,
+               -2.423344560E+04,  -1.874273980E+01] )
+             )
+       )
+
+species(name = "SPC(119)",
+    atoms = " C:16  H:24 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.121635230E+00,   1.021814350E-01, 
+                7.720524680E-05,  -1.658985380E-07,   6.797541920E-11,
+               -2.575250250E+04,  -1.375753110E+01] ),
+       NASA( [  995.00,  5000.00], [  3.537528160E+01,   6.912787010E-02, 
+               -2.465488100E-05,   3.975303080E-09,  -2.383880720E-13,
+               -3.735168920E+04,  -1.990531150E+02] )
+             )
+       )
+
+species(name = "C11H9J(30)",
+    atoms = " C:11  H:9 ",
+    thermo = (
+       NASA( [  300.00,   995.00], [  2.409682560E+00,   3.922092200E-02, 
+                8.288294810E-05,  -1.303034770E-07,   5.041675440E-11,
+                1.638717940E+04,  -2.235487190E+01] ),
+       NASA( [  995.00,  5000.00], [  2.094474030E+01,   3.310353260E-02, 
+               -1.099464310E-05,   1.668725510E-09,  -9.553406680E-14,
+                9.312753740E+03,  -1.286969920E+02] )
+             )
+       )
+
+
+
+#-------------------------------------------------------------------------------
+#  Reaction data 
+#-------------------------------------------------------------------------------
+
+#  Reaction 1
+# Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H/OneDeC      
+reaction(  "HO2J(9) + SPC(42) <=> O2(1) + C10bnzn(6)",  [3.00000E+11, 0, 0])
+
+#  Reaction 2
+# R_Addition_MultipleBond estimate: (Average of: (O2d C_sec_rad))  O2d     C_rad/H/OneDeC      
+reaction(  "O2(1) + SPC(42) <=> SPC(117)",  [7.54000E+12, 0, 0])
+
+#  Reaction 3
+# R_Recombination estimate: (Average of: (Average of: (H_rad H_rad && Average of: (C_methyl C_methyl && Average of: (C_rad/H2/Cs C_rad/H2/Cs) && Average of: (C_rad/H/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C_rad/Cs3 C_rad/Cs3))) && Average of: (Cd_pri_rad Cd_pri_rad) && Cb_rad Cb_rad && Average of: (CO_pri_rad CO_pri_rad && Average of: (CO_rad/NonDe CO_rad/NonDe)) && Average of: (O_pri_rad O_pri_rad && Average of: (O_rad/NonDe O_rad/NonDe)))))  C_rad/H/OneDeC     O_rad/NonDe      
+reaction(  "SPC(42) + HO2J(9) <=> SPC(120)",  [1.64248E+13, -0.15, 0.31])
+
+#  Reaction 4
+# H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO      
+reaction(  "C10bnzn(6) + SPC(117) <=> SPC(42) + SPC(120)",  [2.66810E+09, 0.95, 5.644])
+
+#  Reaction 5
+# Disproportionation estimate: (Average of: (O_sec_rad O_Orad))  O_rad/NonDeO     O_Orad      
+reaction(  "SPC(117) + HO2J(9) <=> SPC(120) + O2(1)",  [1.75000E+10, 0, -3.275])
+
+#  Reaction 6
+# H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC O_pri_rad && Average of: (C/H2/NonDeC O_rad/NonDeC && C/H2/NonDeC O_rad/NonDeO))))  C/H2/OneDeC     O_rad/NonDeO      
+reaction(  "C10bnzn(6) + HO2J(9) <=> SPC(42) + H2O2(101)",  [2.66810E+09, 0.95, 5.644])
+
+#  Reaction 7
+# Disproportionation estimate: (Average of: (O_sec_rad O_Orad))  O_rad/NonDeO     O_Orad      
+reaction(  "HO2J(9) + HO2J(9) <=> H2O2(101) + O2(1)",  [1.75000E+10, 0, -3.275])
+
+#  Reaction 8
+# H_Abstraction estimate: (Average of: (Average of: (O/H/NonDeC O_pri_rad)))  O_rad/NonDeO     H2O2      
+reaction(  "SPC(117) + H2O2(101) <=> SPC(120) + HO2J(9)",  [3.46000E+01, 3.4, -1.14])
+
+#  Reaction 9
+# Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad      
+reaction(  "HO2J(9) + SPC(42) <=> H2O2(101) + SPC(119)",  [4.82000E+13, 0, 0])
+
+#  Reaction 10
+# Disproportionation estimate: (Average of: (Average of: (C_rad/H/NonDeC C/H2/Nd_Csrad)))  C_rad/H/OneDeC     C/H2/Nd_Csrad      
+reaction(  "SPC(42) + SPC(42) <=> C10bnzn(6) + SPC(119)",  [1.02600E+14, -0.35, 0])
+
+#  Reaction 11
+# Disproportionation_O2d exact:   O2d     C/H2/Nd_Csrad      
+reaction(  "O2(1) + SPC(42) <=> HO2J(9) + SPC(119)",  [9.03300E+10, 0, 0])
+
+#  Reaction 12
+# Disproportionation estimate: (Average of: (Average of: (O_pri_rad C/H2/Nd_Csrad)))  O_rad/NonDeO     C/H2/Nd_Csrad      
+reaction(  "SPC(117) + SPC(42) <=> SPC(120) + SPC(119)",  [4.82000E+13, 0, 0])
+
+#  Reaction 13
+# HO2_Elimination_from_PeroxyRadical estimate: (Average of: (Average of: (R2OO_HNd_2H && R2OO_HNd_HNd && R2OO_HNd_NdNd)))  R2OO_HNd_HDe      
+reaction(  "SPC(117) => HO2J(9) + SPC(119)",  [8.00406E+10, 0.56333, 29.8])
+
+#  Reaction 14
+# Disproportionation estimate: (Average of: (Y_rad O_Orad))  O_Orad     C_rad/H2/Cb      
+reaction(  "HO2J(9) + C11H9J(30) <=> O2(1) + Mnphtln(4)",  [3.00000E+11, 0, 0])
+
+#  Reaction 15
+# H_Abstraction estimate: (Average of: (Average of: (Average of: (H2O2 InChI=1/C4H9O/c1-2-3-4-5/h5H,1-4H2 && H2O2 InChI=1/C4H9O/c1-3-4(2)5/h4-5H,2-3H2,1H3 && H2O2 InChI=1/C4H9O/c1-3-4(2)5/h4-5H,1,3H2,2H3 && H2O2 InChI=1/C4H9O/c1-4(2,3)5/h5H,1H2,2-3H3))))  C_rad/H2/Cb     H2O2      
+reaction(  "C11H9J(30) + H2O2(101) <=> Mnphtln(4) + HO2J(9)",  [2.03050E+00, 3.29, 1.0725])
+
+#  Reaction 16
+# H_Abstraction estimate: (Average of: (Average of: (C/H2/NonDeC C_methyl && Average of: (C/H2/NonDeC C_rad/H2/Cs && C/H2/NonDeC C_rad/H2/O) && Average of: (C/H2/NonDeC C_rad/H/NonDeC) && Average of: (Average of: (C/H2/NonDeC C_rad/Cs3)) && Average of: (C/H2/OneDeC C_methyl) && C/H2/TwoDe C_methyl)))  C_rad/H2/Cb     C/H2/OneDeC      
+reaction(  "C11H9J(30) + C10bnzn(6) <=> Mnphtln(4) + SPC(42)",  [3.03979E+06, 1.88583, 9.44833])
+
+#  Reaction 17
+# H_Abstraction estimate: (Average of: (Average of: (Average of: (H2O2 InChI=1/C4H9O/c1-2-3-4-5/h5H,1-4H2 && H2O2 InChI=1/C4H9O/c1-3-4(2)5/h4-5H,2-3H2,1H3 && H2O2 InChI=1/C4H9O/c1-3-4(2)5/h4-5H,1,3H2,2H3 && H2O2 InChI=1/C4H9O/c1-4(2,3)5/h5H,1H2,2-3H3))))  C_rad/H2/Cb     O/H/NonDeO      
+reaction(  "C11H9J(30) + SPC(120) <=> Mnphtln(4) + SPC(117)",  [1.01525E+00, 3.29, 1.0725])
+
+#  Reaction 18
+# Disproportionation estimate: (Average of: (Average of: (C_rad/H2/Cs C/H2/Nd_Csrad && C_rad/H2/Cd C/H2/Nd_Csrad && C_rad/H2/O C/H2/Nd_Csrad)))  C/H2/Nd_Csrad     C_rad/H2/Cb      
+reaction(  "SPC(42) + C11H9J(30) <=> SPC(119) + Mnphtln(4)",  [2.00890E+12, 0, -0.04333])
