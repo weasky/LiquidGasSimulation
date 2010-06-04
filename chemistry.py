@@ -226,7 +226,7 @@ def getStoichiometryArrays():
     Returns three arrays: stoich_reactants, stoich_products, stoich_net
     These each have the size (Nreactions x Nspecies)
     """
-    stoich_reactants = numpy.zeros((len(_reactions),len(_species)))
+    stoich_reactants = numpy.zeros((len(_reactions),len(_species)), numpy.int32 )
     stoich_products = numpy.zeros_like(stoich_reactants)
     stoich_net = numpy.zeros_like(stoich_reactants)
     
@@ -242,14 +242,14 @@ def getStoichiometryArrays():
     
 def getForwardRateCoefficientsVector(T):
     """Get the vector of forward rate coefficients."""
-    forward_rate_coefficients = numpy.zeros(len(_reactions))
+    forward_rate_coefficients = numpy.zeros(len(_reactions), numpy.float64)
     for rn, r in enumerate(_reactions):
         forward_rate_coefficients[rn] = r.getForwardRateCoefficient(T).simplified
     return forward_rate_coefficients
         
 def getReverseRateCoefficientsVector(T):
     """Get the vector of reverse rate coefficients."""
-    reverse_rate_coefficients = numpy.zeros(len(_reactions))
+    reverse_rate_coefficients = numpy.zeros(len(_reactions), numpy.float64)
     for rn, r in enumerate(_reactions):
         reverse_rate_coefficients[rn] = r.getReverseRateCoefficient(T).simplified
     return reverse_rate_coefficients
@@ -401,12 +401,10 @@ class ChemistrySolver(dassl.DASSL):
         
         """
         concentrations = y
-        
         forward_rates = self.forward_rate_coefficients*(concentrations**self.stoich_reactants).prod(1)
         reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
-
         delta = net_rates_of_creation - dydt
         return delta, 0
     
@@ -498,7 +496,8 @@ def simulateDiesel(solver):
     else:
         # solve it using dassl
         print "Starting to solve it in several steps using PyDAS.dassl"
-        solver.initialize(0, concentrations)
+        solver.initialize(0, concentrations, atol=1e-20, rtol=1e-8)
+        
         #check the residual works
         solver.residual(solver.t, solver.y, solver.dydt)
                 
@@ -506,7 +505,7 @@ def simulateDiesel(solver):
         for step,time in enumerate(timesteps):
             if time>0 : solver.advance(time)
             concentration_history_array[step] = solver.y
-            #print solver.t, solver.y
+            print solver.t, solver.y
 
     print "Solved"
     final_concentrations = concentration_history_array[-1]
