@@ -54,6 +54,38 @@ class FuelComponent():
         # Antoine's Equation
         return 10**(A-B / (C + Temperature))
 
+class DepositPhase:
+    """
+    A phase-separated deposit-forming phase inside the liquid film
+    """
+    
+    def __init__(self, properties, amounts):
+        """
+        properties is a PropertiesStore instance.
+        amounts is an array, storing the number of moles of each species inside this phase.
+        """
+        self.amounts = amounts 
+        self.properties = properties
+        
+    def equilibrate(outside_amounts):
+        """
+        Bring into equilibrium with the outside.
+        
+        Updates self.amounts and returns the amounts on the outside after equilibration.
+        
+        Assumes molar densities all equal (or something like that).
+        This function should be checked.
+        """
+        total_amounts = outside_amounts + self.amounts
+        # split is the ratio between outside and inside the deposit phase
+        split = self.properties.DepositPartitionCoefficient298
+        
+        # outside / self = split
+        self.amounts = total_amounts / (split + 1)
+        outside_amounts = self.amounts * split
+        return outside_amounts
+
+
 class LiquidFilmCell:
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
