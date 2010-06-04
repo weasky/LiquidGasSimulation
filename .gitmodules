@@ -1,0 +1,3 @@
+[submodule "PyDAS"]
+	path = PyDAS
+	url = git://github.com/rwest/PyDAS.git
