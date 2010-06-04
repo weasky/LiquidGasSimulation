@@ -297,14 +297,13 @@ class PropertiesStore():
         >> s.PartitionCoefficientT(298)
         """
         try:
-            return self.getPropertyArray(property_name, self._speciesnames)
-        except (TypeError):
-            try: 
+            if isinstance(getattr(self._specs_props.values()[0],property_name),types.MethodType):
+            # this 'property' is a method with additional arguments. Return a function not an array.
                 def fetcher_function(*args):
                     return self.getPropertyArray(property_name, self._speciesnames, *args)
                 return fetcher_function
-            except (KeyError, TypeError, ValueError), e:
-                raise AttributeError
+            else:
+                return self.getPropertyArray(property_name, self._speciesnames)
         except (KeyError, TypeError, ValueError), e:
             raise AttributeError
             
