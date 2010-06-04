@@ -65,6 +65,12 @@ class PropertiesOfSpecies(object):
         E=self.AbrahamE
         A=self.AbrahamA
         V=self.AbrahamV
+        
+        # Check to see if probably from an early version of RMG that had V units 100 times too high.
+        # this check should be deprecated soon, but for now I want to run with existing chemistry models!
+        if V > 8.7 + 9*self.nC: 
+            V=V/100
+            
         # Abraham model:
         logK=c + s*S + b*B + e*E + v*V + a*A 
         partition_coefficient = 10**logK
