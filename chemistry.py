@@ -302,6 +302,7 @@ class ChemistrySolver(dassl.DASSL):
         self.T = 0
         
         self.concentrations = numpy.array([])
+        self.constant_concentrations = [] # list of species indices whose concentration shouldbe fixed (eg O2)
         self.properties = PropertiesStore(resultsDir, _speciesnames)
     
     def loadChemistryModel(self, resultsDir):
@@ -405,6 +406,9 @@ class ChemistrySolver(dassl.DASSL):
         reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
+        # preserve some species (eg. O2 at its solubility limit)
+        for index in self.constant_concentrations:
+            net_rates_of_creation[index] = 0
         delta = net_rates_of_creation - dydt
         return delta, 0
     
@@ -450,11 +454,14 @@ class FuelComponent():
         self.initialConcentration=self.liquidMolarDensity*initialVolFraction
 
 
-def simulateDiesel(solver):
+def simulateDiesel():
     """Run a diesel autoxidation simulation.
     
     7 Surrogate fuel components are set up, some oxygen is added, and it is simulated at 430K
     """
+    
+    solver = ChemistrySolver(resultsDir='RMG_results')
+    
     # calculate the initial concentrations
     fuel=[
         FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
@@ -540,12 +547,96 @@ def simulateDiesel(solver):
     
     # gas_phase_concentrations = concentrations / solver.properties.PartitionCoefficient298
 
+
+def simulateOctane():
+    """Run an octane autoxidation simulation.
+    
+    O2 concentration is fixed throughout.
+    
+    This is to try to reproduce the kinetics reported in 
+    "Modeling of the thermal n-octane oxidation in the liquid phase"
+    Felix Garcia-Ochoa, Arturo Romero, Jose Querol
+    Ind. Eng. Chem. Res., 1989, 28 (1), pp 43-48
+    DOI: 10.1021/ie00085a009
+    """
+    
+    solver = ChemistrySolver(resultsDir='RMG_results-octane-amrit')
+    
+    # calculate the initial concentrations
+    
+    concs_dict=dict.fromkeys( solver.speciesnames )
+    for speciesName in solver.speciesnames:
+        concs_dict[speciesName]=pq.Quantity(0.0,'mol/cm**3')
+        
+    concs_dict['Octane(1)']=pq.Quantity(6.154e-3,'mol/cm**3') # from Amrit's condition file
+    concs_dict['O2(2)']=pq.Quantity(4.953e-6,'mol/cm**3')
+    concentrations,units = ArrayFromDict(concs_dict)
+    print "Initial concentrations:", concentrations, units
+    
+    # preserve O2 concentration
+    index = solver.speciesnames.index('O2(2)')
+    solver.constant_concentrations.append(index)
+    
+    # Set up solver
+    T=423 # kelvin
+    solver.setTemperature(T)
+    solver.setConcentrations(concentrations)
+
+    # set up timesteps
+    stop = 800 # 240*60  # 240 * 60
+    stepsize = 0.1  # seconds
+    start = 2 # start is the transition from logarithmic stepping to linear stepping
+    steps = (stop-start)/stepsize
+    main_steps = numpy.linspace(start+stepsize,stop,steps) # start one step after start
+    steps_before_start = 30
+    # early steps are logarithmic at 10 per decade, so 20 steps before start starts at (start)E-2
+    early_steps = numpy.logspace(numpy.log10(start)-steps_before_start/10,numpy.log10(start),steps_before_start)
+    timesteps = list(early_steps)
+    timesteps.extend(list(main_steps))
+    timesteps = numpy.array(timesteps)
+    
+    print "Concentrations at start (mol/m3)", concentrations
+    
+    if False:
+        # solve it using scipy.integrate.odeint
+        print "Starting to solve it in one go using scipy.integrate.odeint"
+        concentration_history_array = odeint(solver.getRightSideOfODE,concentrations,timesteps)
+    else:
+        # solve it using dassl
+        print "Starting to solve it in several steps using PyDAS.dassl"
+        solver.initialize(0, concentrations, atol=1e-20, rtol=1e-8)
+        solver.initialStep = 1e-6 # start off with one millisecond step
+        
+        #check the residual works
+        solver.residual(solver.t, solver.y, solver.dydt)
+                
+        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)))
+        for step,time in enumerate(timesteps):
+            if time>0 : solver.advance(time)
+            concentration_history_array[step] = solver.y
+            print solver.t, solver.y
+
+    print "Solved"
+    final_concentrations = concentration_history_array[-1]
+    print "Concentrations at end (mol/m3)", final_concentrations
+    print "Mass concentration at end (g/m3)", final_concentrations*solver.properties.MolecularWeight
+    # plot the graph
+    pylab.figure()
+    pylab.axes([0.1,0.1,0.71,0.85])
+    pylab.semilogy(timesteps,concentration_history_array)
+   # pylab.legend(_speciesnames,loc=(1.03,0.0))
+    for i in range(len(_speciesnames)):
+        pylab.annotate(_speciesnames[i], (10,final_concentrations[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-") )
+    pylab.show()
+    
+    
 if __name__ == "__main__":
     import sys, os
     # use different chemistry mechanism if specified on the command line
-    if len(sys.argv)>1:
-        solver = ChemistrySolver(resultsDir = sys.argv[1])
+    if len(sys.argv)>1 and sys.argv[1] == 'diesel':
+        simulateDiesel()
     else:
-        solver = ChemistrySolver()
-        
-    simulateDiesel(solver)
+        simulateOctane()
+    
