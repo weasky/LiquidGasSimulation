@@ -15,6 +15,7 @@ import sys, os
 import math
 import pylab, numpy
 from scipy.integrate import odeint
+import scipy.sparse
 import re
 from PyDAS import dassl
 
@@ -233,6 +234,10 @@ def getStoichiometryArrays():
         stoich_reactants[rn] = r.getStoichiometryReactantsRow()
         stoich_products[rn] = r.getStoichiometryProductsRow()
         stoich_net[rn] = r.getStoichiometryNetRow()
+    # it would be nice to make these sparse, but we can't raise things to the power of a sparse matrix
+    # stoich_reactants = scipy.sparse.lil_matrix(stoich_reactants)
+    # stoich_products  = scipy.sparse.lil_matrix(stoich_products)
+    # stoich_net       = scipy.sparse.lil_matrix(stoich_net)
     return stoich_reactants,stoich_products,stoich_net
     
 def getForwardRateCoefficientsVector(T):
@@ -494,6 +499,9 @@ def simulateDiesel(solver):
         # solve it using dassl
         print "Starting to solve it in several steps using PyDAS.dassl"
         solver.initialize(0, concentrations)
+        #check the residual works
+        solver.residual(solver.t, solver.y, solver.dydt)
+                
         concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)))
         for step,time in enumerate(timesteps):
             if time>0 : solver.advance(time)
