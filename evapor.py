@@ -7,6 +7,8 @@ from chemistry import ChemistrySolver
 import copy
 import time
 
+from PyDAS import dassl
+
 from properties import PropertiesOfSpecies, PropertiesStore
 
 units = ctml.units
@@ -94,10 +96,15 @@ class LiquidFilmCell(object):
     
     Temperature is constant throughout.
     """
-    def __init__(self, fuel=[], chem_solver=None, diameter=1, thickness=1, length=1,
-                 T=400, P=OneAtm, reaction=True):
-        #use nSpecies, the code will calculate molWeight based on nC, nH and nO
-        #2 means [O2 N2]
+    def __init__(self, chem_solver=None, diameter=1, thickness=1, length=1,
+                 T=400, P=OneAtm, reaction=True, resultsDir='RMG_results'):
+
+        # store parameters
+        self.T = T
+        self.P = P
+        self.reaction = reaction        
+        
+        
         # 7 surrogate model
         fuel=[
             FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
@@ -109,24 +116,18 @@ class LiquidFilmCell(object):
             FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
         ]
         
-        if chem_solver is None: chem_solver = ChemistrySolver(resultsDir='RMG_results')
+        if chem_solver is None: chem_solver = ChemistrySolver(resultsDir=resultsDir)
         self.chem_solver = chem_solver
         self.nSpecies = chem_solver.Nspecies
         self.speciesnames = chem_solver.speciesnames
         
-        # save some special species indices
-        self._oxygen_index = self.speciesnames.index('O2(1)')
-        self._nitrogen_index = self.speciesnames.index('N2')
-        
-        self.T = T
-        self.P = P
-        self.reaction = reaction
-        
+
         # This is the tracked variable!!!
         self.amounts = zeros(self.nSpecies)
         
+        # Get properties store.
         # must pass it list of speciesnames so that the arrays returned are in the right size and order
-        self.properties = PropertiesStore(resultsDir='RMG_results', speciesnames=self.speciesnames)
+        self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
         assert len(self.speciesnames) == self.nSpecies
         
         # store some unchanging properties here, to save time looking them up or calculating them repeatedly
@@ -135,6 +136,10 @@ class LiquidFilmCell(object):
         self.molar_volumes = self.properties.MolarVolume
         self.molar_densities = 1 / self.molar_volumes
         self.mass_densities = self.molar_densities * self.molar_masses 
+    
+        # save some special species indices
+        self._oxygen_index = self.speciesnames.index('O2(1)')
+        self._nitrogen_index = self.speciesnames.index('N2')
         
         # area and volume of liquid film cell
         self.diameter = diameter
@@ -143,6 +148,7 @@ class LiquidFilmCell(object):
         self.length = length
         self.initial_volume = pi * diameter * length * thickness
         self.area = pi * (diameter - 2 * thickness) * self.length  
+        self.volume = copy.deepcopy(self.initial_volume)
         
         
         # Set the fuel component initial amounts
@@ -187,15 +193,9 @@ class LiquidFilmCell(object):
             species_index = self.speciesnames.index(species_name)
             self.Psats[species_index] = 0
         
-        #air
-        self.airMolFrac = zeros(2)
-        self.airP = zeros(2)
-        self.airMolWeight = array([32.0, 28.0134]) / 1000.
-        self.airMassDens = array([1.429, 1.251])
-        
         # Set up the chemistry solver
         self.chem_solver.setTemperature(self.T)
-        self.chem_solver.setConcentrations(self.concs)
+        self.chem_solver.setConcentrations(self.concentrations)
         # get amount of air dissolved in the diesel
         self.update_oxygen_nitrogen()
         # find, through trial and error, how long it takes to dry out
@@ -215,26 +215,31 @@ class LiquidFilmCell(object):
     mole_fractions = property(get_mole_fractions)
 
     def get_total_volume(self):
-        """The total volume of the diesel phase, in m3"""
+        """The total volume of the diesel phase, in m3."""
         return sum(self.amounts * self.molar_volumes)
     total_volume = property(get_total_volume)
+    
+    def get_concentrations(self):
+        """The concentrations of each species, in mol/m3."""
+        return self.amounts / sum(self.amounts * self.molar_volumes)
+    concentrations = property(get_concentrations)
         
     def get_total_concentration(self):
-        """The total molar concentration of hte diesel phase, in mol/m3"""
+        """The total molar concentration of hte diesel phase, in mol/m3."""
         return sum(self.amounts) / self.get_total_volume()
     total_concentration = property(get_total_concentration)
 
     def get_vapor_concentrations(self):
-        """Vapor-phase concentrations at interface, in mol/m3"""
-        vaporConcs = self.Psat * self.mole_fractions / R / self.T
+        """Vapor-phase concentrations at interface, in mol/m3."""
+        vaporConcs = self.Psats * self.mole_fractions / R / self.T
         # an alternative would be to get them from 
         # vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
         return vaporConcs
     vapor_concentrations = property(get_vapor_concentrations)
     
     def get_vapor_partial_pressures(self):
-        """Vapor-phase partial pressures at interface, in Pa"""
-        partial_pressures = self.Psat * self.mole_fractions
+        """Vapor-phase partial pressures at interface, in Pa."""
+        partial_pressures = self.Psats * self.mole_fractions
         return partial_pressures
     vapor_partial_pressures = property(get_vapor_partial_pressures)
     
@@ -246,7 +251,7 @@ class LiquidFilmCell(object):
         
         Currently this assumes self.thickness is correct, and updates volume and area.
         """
-        self.volume = pi * self.diameter * self.length *o self.thickness
+        self.volume = pi * self.diameter * self.length * self.thickness
         self.area = pi * (self.diameter - 2 * self.thickness) * self.length
 
     def update_oxygen_nitrogen(self):
@@ -268,8 +273,12 @@ class LiquidFilmCell(object):
         tmp_nitrogen = 0.8*tmp_decane+0.2*tmp_benzene
         nitrogen_mole_fraction = tmp_nitrogen * nitrogen_partial_pressure * 1E-5
         
-        self.amounts[_oxygen_index] = self.total_amount * oxygen_mole_fraction
-        self.amounts[_nitrogen_index] = self.total_amount * nitrogen_mole_fraction
+        self.amounts[self._oxygen_index] = self.total_amount * oxygen_mole_fraction
+        self.amounts[self._nitrogen_index] = self.total_amount * nitrogen_mole_fraction
+        
+    ############
+    ## legacy functions not needed
+    ###########
 
     def getDryTime(self):
         """
@@ -288,14 +297,16 @@ class LiquidFilmCell(object):
         film.advance(array([0,time]))
         return film.thickness 
         
-
-    
-    def getVaporDens(self):
+    def get_vapor_mass_densities(self):
         """Vapor phase mass densites, in kg/m3"""
-        Pi = self.Psat * self.molFrac
-        Ri = R / self.molWeight
+        Pi = self.Psats * self.mole_fractions
+        Ri = R / self.molar_masses
         rhovi = Pi / Ri / self.T #kg/m3
         return rhovi
+    
+    #######
+    ## simulation!!!
+    #######
     
     def get_evaporative_flux(self, Lv=1):
         """
@@ -327,24 +338,29 @@ class LiquidFilmCell(object):
         """
         # evaporation term
         massDens = Y[:-1]
-        molDens = massDens / self.molWeight
-        self.massFrac = massDens / sum(massDens)
-        self.molFrac = molDens / sum(molDens)
-        ratio = self.area / self.vol
-        Qi = self.vaporDiff(Lv=self.dia)
+        molDens = massDens / self.molar_masses
+        massFrac = massDens / sum(massDens)
+        molFrac = molDens / sum(molDens)
+        self.amounts = molDens * self.volume
+        ratio = self.area / self.volume
+        Qi = self.get_evaporative_flux(Lv=self.diameter)
         Q = sum(Qi)
+        
         #reaction source term, turn the mole to mass frac dens
-        reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molWeight if self.reaction \
-            else zeros(self.nSpecies)
+        if self.reaction:
+            reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molar_masses
+        else:
+            reactConcs = zeros(self.nSpecies)
    
         dhdt = -1. / sum(massDens) * Q
         drhodt = -ratio * Qi - ratio * massDens * dhdt + reactConcs
         drhodt = append(drhodt, dhdt)
-        self.update()
+        self.update_volume_area_thickness()
+        self.update_oxygen_nitrogen()
         return drhodt
 
     def advance(self, t, plotresult=False):
-        y0 = self.concs * self.molWeight
+        y0 = self.concentrations * self.molar_masses
         y0 = append(y0, self.thickness)
         yt = odeint(self.rightSideofODE, y0, t)
         if(plotresult):
@@ -365,10 +381,13 @@ class LiquidFilmCell(object):
         #        for iii in range(len(ytt)):
         #            if ytt[iii]<0:
         #                ytt[iii]=0.
-        molDens = ytt / self.molWeight
-        self.concs = molDens
-        self.molFrac = molDens / sum(molDens)
-        self.massFrac = ytt / sum(ytt)
+        molDens = ytt / self.molar_masses
+        concentrations = molDens
+        self.amounts = concentrations * self.volume
+        
+class EvaporationSolver(dassl.DASSL):
+    """An evaporation solver"""
+    pass
 
 if __name__ == "__main__":
     dia = 0.14E-3
@@ -377,40 +396,36 @@ if __name__ == "__main__":
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness, reaction=False)
 
-    print 'diesel components mol weight is', diesel.molWeight #g/mol
-    # diesel.setMolDens(molDens=[4945.0, 4182.0, 3700.0,
-        #               3415.0, 2600.0, 2889., 2729.]) #mol/m3
-    print 'diesel components mol density is', diesel.molDens #
-    print 'diesel components mass density is', diesel.massDens #kg/m3
-    print 'the mol fraction is ', diesel.molFrac
-    print 'the mass fraction is ', diesel.massFrac
-    print 'the concentrations are ', diesel.concs
-    print 'the total vapor pressure using K is ',sum(diesel.concs/diesel.properties.PartitionCoefficient298)*R*diesel.T
-    print 'the saturated vapor pressure is', diesel.Psat
-    print 'the total vapor pressure using Antoine is ',sum(diesel.Psat*diesel.molFrac)
-    print 'the O2 and N2 partial pressure is ', diesel.airP[0], diesel.airP[1]
-    print 'the O2 and n2 mole fraction are ', diesel.airMolFrac[0], diesel.airMolFrac[1]
-        
-    print 'the vapor densities are ', diesel.vaporMassDens
-    qi = diesel.vaporDiff(Lv=dia)
+    print 'diesel components molar mass is', diesel.molar_masses #kg/mol
+    print 'diesel components molar density is', diesel.molar_densities # mol/m3
+    print 'diesel components mass density is', diesel.mass_densities #kg/m3
+    print 'the mol fraction is ', diesel.mole_fractions
+    print 'the concentrations are ', diesel.concentrations
+    print 'the total vapor pressure using K is ',sum(diesel.concentrations/diesel.properties.PartitionCoefficientT(diesel.T))*R*diesel.T
+    print 'the saturated vapor pressure is', diesel.Psats
+    print 'the total vapor pressure using Antoine is ',sum(diesel.Psats*diesel.mole_fractions)
+    print 'the total vapor pressure used in the model is ',sum(diesel.vapor_partial_pressures)
+    
+    print 'the vapor densities are ', diesel.get_vapor_mass_densities()
+    qi = diesel.get_evaporative_flux(Lv=dia)
     print 'the mass flux out of the interface ',qi
     print 'the initial h is', diesel.thickness
         # chem solver exp
 
-    print 'initial concentrations are',diesel.concs
+    print 'initial concentrations are',diesel.concentrations
     print 'start evaporating without reaction'
     timesteps=linspace(0,0.5,501)
     diesel.advance(timesteps,plotresult=True)
-    print 'the concentrations are ', diesel.concs
-    print 'the vapor densities are ', diesel.getVaporDens()
+    print 'the concentrations are ', diesel.concentrations
+    print 'the vapor densities are ', diesel.get_vapor_mass_densities()
     print 'the new h is', diesel.thickness
-    print '%f percent film left', diesel.thickness / initial_film_thickness
+    print 'fraction of film left', diesel.thickness / initial_film_thickness
 
     print 'start evaporating with reaction'
     diesel2 = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
     timesteps=linspace(0,0.5,501)
     diesel2.advance(timesteps,plotresult=True)
-    print 'the concentrations are ', diesel2.concs
-    print 'the vapor densities are ', diesel2.getVaporDens()
+    print 'the concentrations are ', diesel2.concentrations
+    print 'the vapor densities are ', diesel2.get_vapor_mass_densities()
     print 'the new h is', diesel2.thickness
-    print '%f percent film left', diesel2.thickness / initial_film_thickness
+    print 'fraction of film left', diesel2.thickness / initial_film_thickness
