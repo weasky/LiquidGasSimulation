@@ -145,13 +145,16 @@ class LiquidFilmCell:
         # this enables us to find the total concentration (at the start) necessary for Psat calculations
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
-            self.amounts[species_index] = component_volume * component.liquidMolarDensity
-            
-            
-        # Psat is not really a saturated vapor pressure, 
-        # but is the x=1 extrapolation of the partial pressure vs. x 
-        # line based on the partition coefficient from the Abraham model.
+            self.amounts[species_index] = ( self.initial_volume * 
+                                            component.initialVolFraction * 
+                                            component.liquidMolarDensity )
+        
+        # Set the Psat values
         """
+        Psat is not really a saturated vapor pressure, 
+        but is the x=1 extrapolation of the partial pressure vs. x 
+        line based on the partition coefficient from the Abraham model.
+        
         In the Henry's Law model used later to get vapor phase concentration,
          Cvi = xsi * Psati / RT            (1)
         The vapor/solution partition coefficient Kvsi is defined as
@@ -166,24 +169,27 @@ class LiquidFilmCell:
         """
         self.Psats = self.get_total_concentration() * R * self.T / self.properties.PartitionCoefficientT(self.T)
         
-        # update fuel component parameters with revised values, and set initial amounts
+        # Update fuel component parameters with revised values.
+        # (we have better information for the fuel components than for other species)
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
             self.molar_volumes[species_index] = 1 / component.liquidMolarDensity
-            component_volume = self.initial_volume * component.initialVolFraction 
-            self.amounts[species_index] = component_volume * component.liquidMolarDensity
             # Psat for fuel components uses Antoine equation
             self.Psats[species_index] = component.getPsat(self.T)
         
-        self.vaporConcs = self.Psat * self.molFrac / R / self.T
-        self.vaporMassDens = self.vaporConcs * self.molar_masses
-        self.vaporMassDens[:3] = 0. # why set the Mass Densities to 0 but leave the psat, vaporconc, etc. etc.?
+        
+        # Some species we don't want "evaporating" so set their Psat values to zero.
+        for species_name in "Ar  N2  O2(1)".split():
+            species_index = self.speciesnames.index(species_name)
+            self.Psats[species_index] = 0
+        
         #air
         self.airMolFrac = zeros(2)
         self.airP = zeros(2)
         self.airMolWeight = array([32.0, 28.0134]) / 1000.
         self.airMassDens = array([1.429, 1.251])
-        #tmp, may delete in future
+        
+        # Set up the chemistry solver
         self.chem_solver.setTemperature(self.T)
         self.chem_solver.setConcentrations(self.concs)
         #get air pressure and concs
@@ -197,6 +203,13 @@ class LiquidFilmCell:
     def get_total_concentration(self):
         """The total molar concentration of hte diesel phase, in mol/m3"""
         return sum(self.amounts) / self.get_total_volume()
+
+    def get_vapor_concentrations(self):
+        """Vapor-phase concentrations at interface, in mol/m3"""
+        vaporConcs = self.Psat * self.molFrac / R / self.T
+        # an alternative would be to get them from 
+        # vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
+        return vaporConcs
 
     def getDryTime(self):
         """
@@ -242,8 +255,9 @@ class LiquidFilmCell:
         Yinchun, please could you explain what this function does?
         Thanks, Richard.
         """
-        self.vol = pi * self.dia * self.len * self.thickness
-        self.area = pi * (self.dia - 2 * self.thickness) * self.len
+        # thickness has changed, so update volume and area
+        self.volume = pi * self.diameter * self.length * self.thickness
+        self.area = pi * (self.diameter - 2 * self.thickness) * self.length
         # air partial pressure
         tmp = self.P-sum(self.Psat * self.molFrac)
         # O2 vol frac 20.9% of air
@@ -269,13 +283,7 @@ class LiquidFilmCell:
         Ri = R / self.molWeight
         rhovi = Pi / Ri / self.T #kg/m3
         return rhovi
-        
-    def get_vapor_concentrations(self):
-        """Vapor-phase concentrations at interface, in mol/m3"""
-        vaporConcs = self.Psat * self.molFrac / R / self.T
-        # an alternative would be to get them from 
-        # vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
-        return vaporConcs
+    
 
     def get_evaporative_flux(self, Lv=1):
         """
