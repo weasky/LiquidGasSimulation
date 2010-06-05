@@ -86,7 +86,7 @@ class DepositPhase:
         return outside_amounts
 
 
-class LiquidFilmCell:
+class LiquidFilmCell(object):
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
     represents each cell after discretization. When initializing, nSpecies is
@@ -113,6 +113,10 @@ class LiquidFilmCell:
         self.chem_solver = chem_solver
         self.nSpecies = chem_solver.Nspecies
         self.speciesnames = chem_solver.speciesnames
+        
+        # save some special species indices
+        self._oxygen_index = self.speciesnames.index('O2(1)')
+        self._nitrogen_index = self.speciesnames.index('N2')
         
         self.T = T
         self.P = P
@@ -195,21 +199,40 @@ class LiquidFilmCell:
         #get air pressure and concs
         self.update()
         self.dryTime = self.getDryTime()
+    
+    def get_total_amount(self):
+        """The total amount of stuff in the diesel phase, in mol."""
+        return sum(self.amounts)
+    total_amount = property(get_total_amount)
+    
+    def get_mole_fractions(self):
+        """The amount (mole) fractions in the diesel phase. Sum to 1."""
+        return self.amounts / sum(self.amounts)
+    mole_fractions = property(get_mole_fractions)
 
     def get_total_volume(self):
         """The total volume of the diesel phase, in m3"""
         return sum(self.amounts * self.molar_volumes)
+    total_volume = property(get_total_volume)
         
     def get_total_concentration(self):
         """The total molar concentration of hte diesel phase, in mol/m3"""
         return sum(self.amounts) / self.get_total_volume()
+    total_concentration = property(get_total_concentration)
 
     def get_vapor_concentrations(self):
         """Vapor-phase concentrations at interface, in mol/m3"""
-        vaporConcs = self.Psat * self.molFrac / R / self.T
+        vaporConcs = self.Psat * self.mole_fractions / R / self.T
         # an alternative would be to get them from 
         # vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
         return vaporConcs
+    vapor_concentrations = property(get_vapor_concentrations)
+    
+    def get_vapor_partial_pressures(self):
+        """Vapor-phase partial pressures at interface, in Pa"""
+        partial_pressures = self.Psat * self.mole_fractions
+        return partial_pressures
+    vapor_partial_pressures = property(get_vapor_partial_pressures)
 
     def getDryTime(self):
         """
@@ -258,25 +281,21 @@ class LiquidFilmCell:
         # thickness has changed, so update volume and area
         self.volume = pi * self.diameter * self.length * self.thickness
         self.area = pi * (self.diameter - 2 * self.thickness) * self.length
-        # air partial pressure
-        tmp = self.P-sum(self.Psat * self.molFrac)
-        # O2 vol frac 20.9% of air
-        self.airP[0] = 0.209 * tmp
-        self.airP[1] = tmp-self.airP[0]
-        # air mole fraction, O2 and N2
-        self.airMolFrac[0] = 19.71E-4 * self.airP[0] * 1E-5
+        air_partial_pressure = self.P - sum(self.vapor_partial_pressures)
+        oxygen_partial_pressure = 0.209 * air_partial_pressure
+        nitrogen_partial_pressure = air_partial_pressure - oxygen_partial_pressure
+        # air mole fraction, O2 and N2. 
+        # Not sure where these correlations came from. Perhaps Yinchun can help..?
+        oxygen_mole_fraction = 19.71E-4 * oxygen_partial_pressure * 1E-5
+        
         tmp_benzene=exp(-6.05445-4.95673/(self.T/100))
         tmp_decane=exp(-6.8288+0.3404/(self.T/100))
         tmp_nitrogen = 0.8*tmp_decane+0.2*tmp_benzene
-        self.airMolFrac[1] = tmp_nitrogen * self.airP[1] * 1E-5
-        # rescale the hydrocarbons' mole fraction
-        tot = sum(self.airMolFrac)
-        self.molFrac = self.molFrac * (1-tot)
-        # rescale the vol frac, concentration, mass frac etc.
-        # for now, keep those things unchanged
-        # hack, should use dict in future
-        self.concs[1] = sum(self.concs)*self.airMolFrac[1]
-        self.concs[2] = sum(self.concs)*self.airMolFrac[0]
+        nitrogen_mole_fraction = tmp_nitrogen * nitrogen_partial_pressure * 1E-5
+        
+        self.amounts[_oxygen_index] = self.total_amount * oxygen_mole_fraction
+        self.amounts[_nitrogen_index] = self.total_amount * nitrogen_mole_fraction
+    
 
     def getVaporDens(self):
         Pi = self.Psat * self.molFrac
