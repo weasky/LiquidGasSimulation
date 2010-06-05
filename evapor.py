@@ -91,6 +91,8 @@ class LiquidFilmCell:
     This is a class for the thin liquid film on the cylinder wall. The instance
     represents each cell after discretization. When initializing, nSpecies is
     the number of hydrocarbon species, N2 and O2 will be automatically added.
+    
+    Temperature is constant throughout.
     """
     def __init__(self, fuel=[], chem_solver=None, diameter=1, thickness=1, length=1,
                  T=400, P=OneAtm, reaction=True):
@@ -112,83 +114,53 @@ class LiquidFilmCell:
         self.nSpecies = chem_solver.Nspecies
         self.speciesnames = chem_solver.speciesnames
         
-        # must pass it list of speciesnames so that the arrays returned are in the right size and order
-        self.properties = PropertiesStore(resultsDir='RMG_results', speciesnames=self.speciesnames)
-        
-        assert len(self.speciesnames) == self.nSpecies
-        
-        self.molWeight = self.properties.MolecularWeight/1000. #to kg 
-        #evapFlux out
-        self.evapFlux = zeros(self.nSpecies)
-        # area and vol
-        self.dia = diameter
-        self.thickness = thickness
-        self.initial_thickness = copy.deepcopy(thickness) # in case it's not just a float!
-        self.len = length
-        self.vol = pi * self.dia * self.len * self.thickness
-        self.area = pi * (self.dia - 2 * self.thickness) * self.len
-
         self.T = T
         self.P = P
         self.reaction = reaction
         
-        self.Psat = zeros(self.nSpecies)
-        self.massDens = zeros(self.nSpecies)
-        self.molDens = zeros(self.nSpecies)
-        self.massFrac = zeros(self.nSpecies)
-        self.molFrac = zeros(self.nSpecies)
-        self.volFrac = zeros(self.nSpecies)
-        self.concs = zeros(self.nSpecies)
-        self.nC = self.properties.nC
-        self.nH = self.properties.nH
-        self.nO = self.properties.nO
-        self.Dvi = self.properties.DiffusivityInAir(self.T, self.P)
+        # This is the tracked variable!!!
+        self.amounts = zeros(self.nSpecies)
+        
+        # must pass it list of speciesnames so that the arrays returned are in the right size and order
+        self.properties = PropertiesStore(resultsDir='RMG_results', speciesnames=self.speciesnames)
+        assert len(self.speciesnames) == self.nSpecies
+        
+        # store some properties here, to save time looking them up or calculating them repeatedly
 
-        # create empty dictionaries
-        concs_dict = dict()
-        volFrac_dict = dict()
-        antoine_dict = dict()
-        molDens_dict = dict()
+        self.Dvi = self.properties.DiffusivityInAir(self.T, self.P)
+        self.molar_masses = self.properties.MolecularWeight/1000. #to kg 
+        self.molar_volumes = self.properties.MolarVolume
+        self.molar_densities = 1 / self.molar_volumes
+        self.mass_densities = self.molar_densities * self.molar_masses 
         
-        # set for all species listed in speciesnames
-        for speciesName in self.speciesnames:
-            concs_dict[speciesName] = 0.0
-            volFrac_dict[speciesName] = 0.0
-            antoine_dict[speciesName] = 0.0
-            molDens_dict[speciesName] = 1 / self.properties[speciesName].MolarVolume
-        
-        # update fuel components with revised values
-        for component in fuel:
-            concs_dict[component.name] = component.initialConcentration # mol/m3
-            volFrac_dict[component.name] = component.initialVolFraction
-            antoine_dict[component.name] = component.Antoine
-            molDens_dict[component.name] = component.liquidMolarDensity
-        
-        # convert dictionaries into arrays
-        self.concs   = array([concs_dict[s] for s in self.speciesnames])
-        self.volFrac = array([volFrac_dict[s] for s in self.speciesnames])
-        self.molDens = array([molDens_dict[s] for s in self.speciesnames])
-        
-        #updating
-        self.massDens = self.molDens * self.molWeight
-        molFrac = self.volFrac * self.molDens
-        self.molFrac = molFrac / sum(molFrac)
-        massFrac = self.volFrac * self.massDens
-        self.massFrac = massFrac / sum(massFrac)
-        
+        # area and volume of liquid film cell
+        self.diameter = diameter
+        self.thickness = thickness
+        self.initial_thickness = copy.deepcopy(thickness) # in case it's not just a float!
+        self.length = length
+        self.initial_volume = pi * diameter * length * thickness
+        self.area = pi * (diameter - 2 * thickness) * self.length  
+       
+
         self.vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
         
         # Psat is not really a saturated vapor pressure, 
         # but is the x=1 extrapolation of the partial pressure vs. x 
         # line based on the partition coefficient from the Abraham model.
-        self.Psat = sum(self.concs) * R * self.T / self.properties.PartitionCoefficientT(self.T)
+        self.Psats = sum(self.concs) * R * self.T / self.properties.PartitionCoefficientT(self.T)
         
-        # correct Psat for fuel components (uses Antoine equation to correct for T)
+        # update fuel component parameters with revised values, and set initial amounts
         for component in fuel:
             species_index = self.speciesnames.index(component.name)
-            self.Psat[species_index] = component.getPsat(self.T)
+            self.molar_volumes[species_index] = 1 / component.liquidMolarDensity
+            component_volume = self.initial_volume * component.initialVolFraction 
+            self.amounts[species_index] = component_volume * component.liquidMolarDensity
+            # Psat for fuel components uses Antoine equation
+            self.Psats[species_index] = component.getPsat(self.T)
+            
+            
         self.vaporConcs = self.Psat * self.molFrac / R / self.T
-        self.vaporMassDens = self.vaporConcs * self.molWeight
+        self.vaporMassDens = self.vaporConcs * self.molar_masses
         self.vaporMassDens[:3] = 0. # why set the Mass Densities to 0 but leave the psat, vaporconc, etc. etc.?
         #air
         self.airMolFrac = zeros(2)
@@ -201,6 +173,9 @@ class LiquidFilmCell:
         #get air pressure and concs
         self.update()
         self.dryTime = self.getDryTime()
+
+    def getTotalVolume(self):
+        return sum(self.amounts * self.molarVolumes)
 
     def getDryTime(self):
         """
@@ -218,11 +193,6 @@ class LiquidFilmCell:
         film = copy.deepcopy(self)
         film.advance(array([0,time]))
         return film.thickness 
-        
-    def setEvapFlux(self, evapFlux):
-        """Set the flux of species evaporating."""
-        assert evapFlux.size==self.nSpecies, "Expected an array of size self.nSpecies=%d"%self.nSpecies
-        self.evapFlux = evapFlux
         
     def setMassDens(self, massDens):
         """ set density of the system"""
@@ -278,25 +248,31 @@ class LiquidFilmCell:
         Ri = R / self.molWeight
         rhovi = Pi / Ri / self.T #kg/m3
         return rhovi
+        
+    def get_vapor_concentrations(self):
+        vaporConcs = self.Psat * self.molFrac / R / self.T
+        return vaporConcs
 
-    def vaporDiff(self, Lv=1):
+    def get_evaporative_flux(self, Lv=1):
         """
-        The surface flux at the interface. A simple approximation is
+        The surface flux at the interface, in mol/m2/s.
+        
+        A simple approximation is
         Q_i = Dv_i rhov_i/Lv
-        return an array
+        
+        Where rhov_i is the molar density (concentration) in the vapor phase
+        at the interface and Lv is a characteristic length.
+        
+        Returns an array.
         """
-        self.vaporConcs = self.Psat * self.molFrac / R / self.T
-        self.vaporMassDens = self.vaporConcs * self.molWeight
-        self.vaporMassDens[:3] = 0.
-        rhovi = self.vaporMassDens
-        if (sum(self.evapFlux) == 0):
-            Qi = self.Dvi * rhovi / Lv
-            Qi = Qi * self.dia / 4. / self.len
-        elif (sum(self.evapFlux) > 0):
-            Qi = self.Dvi * self.evapFlux
-        else:
-            #print 'evaporation flux <0 ,something wrong'
-            Qi = self.Dvi * self.evapFlux
+        #self.vaporConcs = self.Psat * self.molFrac / R / self.T
+        #self.vaporMassDens = self.vaporConcs * self.molWeight
+        #self.vaporMassDens[:3] = 0.
+        
+        rhovi = self.get_vapor_concentrations()
+
+        Qi = self.Dvi * rhovi / Lv
+        Qi = Qi * self.dia / 4. / self.len
         return Qi
 
     def rightSideofODE(self, Y, t):
