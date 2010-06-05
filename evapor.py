@@ -196,10 +196,14 @@ class LiquidFilmCell(object):
         # Set up the chemistry solver
         self.chem_solver.setTemperature(self.T)
         self.chem_solver.setConcentrations(self.concs)
-        #get air pressure and concs
-        self.update()
-        self.dryTime = self.getDryTime()
-    
+        # get amount of air dissolved in the diesel
+        self.update_oxygen_nitrogen()
+        # find, through trial and error, how long it takes to dry out
+        # self.dryTime = self.getDryTime()
+        
+    ############
+    # Attribute-style parameter functions:
+    ############
     def get_total_amount(self):
         """The total amount of stuff in the diesel phase, in mol."""
         return sum(self.amounts)
@@ -233,6 +237,39 @@ class LiquidFilmCell(object):
         partial_pressures = self.Psat * self.mole_fractions
         return partial_pressures
     vapor_partial_pressures = property(get_vapor_partial_pressures)
+    
+    #############
+    ## update functions
+    #############
+    def update_volume_area_thickness(self):
+        """Update the volume and area, from thickness.
+        
+        Currently this assumes self.thickness is correct, and updates volume and area.
+        """
+        self.volume = pi * self.diameter * self.length *o self.thickness
+        self.area = pi * (self.diameter - 2 * self.thickness) * self.length
+
+    def update_oxygen_nitrogen(self):
+        """
+        Update the amount of oxygen and nitrogen dissolved in the deposit.
+        
+        This uses some relationship between mole fraction and partial pressure,
+        that Yinchun has found somewhere. Please could you elaborate?
+        """
+        air_partial_pressure = self.P - sum(self.vapor_partial_pressures)
+        oxygen_partial_pressure = 0.209 * air_partial_pressure
+        nitrogen_partial_pressure = air_partial_pressure - oxygen_partial_pressure
+        # air mole fraction, O2 and N2. 
+        # Not sure where these correlations came from. Perhaps Yinchun can help..?
+        oxygen_mole_fraction = 19.71E-4 * oxygen_partial_pressure * 1E-5
+        
+        tmp_benzene=exp(-6.05445-4.95673/(self.T/100))
+        tmp_decane=exp(-6.8288+0.3404/(self.T/100))
+        tmp_nitrogen = 0.8*tmp_decane+0.2*tmp_benzene
+        nitrogen_mole_fraction = tmp_nitrogen * nitrogen_partial_pressure * 1E-5
+        
+        self.amounts[_oxygen_index] = self.total_amount * oxygen_mole_fraction
+        self.amounts[_nitrogen_index] = self.total_amount * nitrogen_mole_fraction
 
     def getDryTime(self):
         """
@@ -251,59 +288,15 @@ class LiquidFilmCell(object):
         film.advance(array([0,time]))
         return film.thickness 
         
-    def setMassDens(self, massDens):
-        """ set density of the system"""
-        self.massDens = array(massDens)
-        self.molDens = self.massDens / self.molWeight
 
-    def setMolDens(self, molDens):
-        """ set mole density of the system"""
-        self.molDens = array(molDens)
-        self.massDens = self.molDens * self.molWeight
-
-    def setVolFrac(self, volFrac):
-        self.volFrac = volFrac
-        self.concs = self.volFrac * self.molDens
-        """ mole fraction"""
-        molFrac = volFrac * self.molDens
-        a = sum(molFrac)
-        self.molFrac = molFrac / a
-        """ mass fraction"""
-        massFrac = volFrac * self.massDens
-        a = sum(massFrac)
-        self.massFrac = massFrac / a
-
-    def update(self):
-        """
-        Yinchun, please could you explain what this function does?
-        Thanks, Richard.
-        """
-        # thickness has changed, so update volume and area
-        self.volume = pi * self.diameter * self.length * self.thickness
-        self.area = pi * (self.diameter - 2 * self.thickness) * self.length
-        air_partial_pressure = self.P - sum(self.vapor_partial_pressures)
-        oxygen_partial_pressure = 0.209 * air_partial_pressure
-        nitrogen_partial_pressure = air_partial_pressure - oxygen_partial_pressure
-        # air mole fraction, O2 and N2. 
-        # Not sure where these correlations came from. Perhaps Yinchun can help..?
-        oxygen_mole_fraction = 19.71E-4 * oxygen_partial_pressure * 1E-5
-        
-        tmp_benzene=exp(-6.05445-4.95673/(self.T/100))
-        tmp_decane=exp(-6.8288+0.3404/(self.T/100))
-        tmp_nitrogen = 0.8*tmp_decane+0.2*tmp_benzene
-        nitrogen_mole_fraction = tmp_nitrogen * nitrogen_partial_pressure * 1E-5
-        
-        self.amounts[_oxygen_index] = self.total_amount * oxygen_mole_fraction
-        self.amounts[_nitrogen_index] = self.total_amount * nitrogen_mole_fraction
     
-
     def getVaporDens(self):
+        """Vapor phase mass densites, in kg/m3"""
         Pi = self.Psat * self.molFrac
         Ri = R / self.molWeight
         rhovi = Pi / Ri / self.T #kg/m3
         return rhovi
     
-
     def get_evaporative_flux(self, Lv=1):
         """
         The surface flux at the interface, in mol/m2/s.
