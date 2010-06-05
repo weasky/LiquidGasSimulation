@@ -130,13 +130,13 @@ class PropertiesOfSpecies(object):
     
     def DiffusivityInAir(self,Temperature,pressure_in_Pa):
         """
-        Diffusivity of non-ring HCO compound in air
+        Diffusivity of non-ring HCO compound in air, in m2/s
         
         Use Fuiller, Schettier, and Giddings correlation
         as in Eq. 11-4.1 in Reid, Prausnitz and Sherwood
         
         input: T in K; p in Pa;
-        output diffusivity d in m2/s
+        output diffusivity D in m2/s
         """
         pressure_in_bar = pressure_in_Pa * 1e-5
         

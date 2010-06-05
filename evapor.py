@@ -125,9 +125,8 @@ class LiquidFilmCell:
         self.properties = PropertiesStore(resultsDir='RMG_results', speciesnames=self.speciesnames)
         assert len(self.speciesnames) == self.nSpecies
         
-        # store some properties here, to save time looking them up or calculating them repeatedly
-
-        self.Dvi = self.properties.DiffusivityInAir(self.T, self.P)
+        # store some unchanging properties here, to save time looking them up or calculating them repeatedly
+        self.Dvi = self.properties.DiffusivityInAir(self.T, self.P) # m2/s
         self.molar_masses = self.properties.MolecularWeight/1000. #to kg 
         self.molar_volumes = self.properties.MolarVolume
         self.molar_densities = 1 / self.molar_volumes
@@ -140,14 +139,32 @@ class LiquidFilmCell:
         self.length = length
         self.initial_volume = pi * diameter * length * thickness
         self.area = pi * (diameter - 2 * thickness) * self.length  
-       
-
-        self.vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
         
+        
+        # Set the fuel component initial amounts
+        # this enables us to find the total concentration (at the start) necessary for Psat calculations
+        for component in fuel:
+            species_index = self.speciesnames.index(component.name)
+            self.amounts[species_index] = component_volume * component.liquidMolarDensity
+            
+            
         # Psat is not really a saturated vapor pressure, 
         # but is the x=1 extrapolation of the partial pressure vs. x 
         # line based on the partition coefficient from the Abraham model.
-        self.Psats = sum(self.concs) * R * self.T / self.properties.PartitionCoefficientT(self.T)
+        """
+        In the Henry's Law model used later to get vapor phase concentration,
+         Cvi = xsi * Psati / RT            (1)
+        The vapor/solution partition coefficient Kvsi is defined as
+         Kvsi = Csi / Cvi                  (2)
+        Substituting (2) into (1), along with xi = Csi/Cstotal gives
+         'Psati' = RT Cstotal / Kvsi
+         
+         We can only calculate this once we know the total concentration.
+         We will assume it doesn't change significantly from the start, but
+         we have to wait until the intial fuel concentrations have been set
+         before we can evaluate these terms.
+        """
+        self.Psats = self.get_total_concentration() * R * self.T / self.properties.PartitionCoefficientT(self.T)
         
         # update fuel component parameters with revised values, and set initial amounts
         for component in fuel:
@@ -157,8 +174,7 @@ class LiquidFilmCell:
             self.amounts[species_index] = component_volume * component.liquidMolarDensity
             # Psat for fuel components uses Antoine equation
             self.Psats[species_index] = component.getPsat(self.T)
-            
-            
+        
         self.vaporConcs = self.Psat * self.molFrac / R / self.T
         self.vaporMassDens = self.vaporConcs * self.molar_masses
         self.vaporMassDens[:3] = 0. # why set the Mass Densities to 0 but leave the psat, vaporconc, etc. etc.?
@@ -174,8 +190,13 @@ class LiquidFilmCell:
         self.update()
         self.dryTime = self.getDryTime()
 
-    def getTotalVolume(self):
-        return sum(self.amounts * self.molarVolumes)
+    def get_total_volume(self):
+        """The total volume of the diesel phase, in m3"""
+        return sum(self.amounts * self.molar_volumes)
+        
+    def get_total_concentration(self):
+        """The total molar concentration of hte diesel phase, in mol/m3"""
+        return sum(self.amounts) / self.get_total_volume()
 
     def getDryTime(self):
         """
@@ -250,7 +271,10 @@ class LiquidFilmCell:
         return rhovi
         
     def get_vapor_concentrations(self):
+        """Vapor-phase concentrations at interface, in mol/m3"""
         vaporConcs = self.Psat * self.molFrac / R / self.T
+        # an alternative would be to get them from 
+        # vaporConcs = self.concs / self.properties.PartitionCoefficientT(self.T)
         return vaporConcs
 
     def get_evaporative_flux(self, Lv=1):
@@ -264,15 +288,16 @@ class LiquidFilmCell:
         at the interface and Lv is a characteristic length.
         
         Returns an array.
-        """
-        #self.vaporConcs = self.Psat * self.molFrac / R / self.T
-        #self.vaporMassDens = self.vaporConcs * self.molWeight
-        #self.vaporMassDens[:3] = 0.
-        
+        """        
         rhovi = self.get_vapor_concentrations()
-
+        # Dvi : m2/s
+        # rhovi : mol/m3
+        # Lv: m
+        # Qi: mol/m2/s
         Qi = self.Dvi * rhovi / Lv
-        Qi = Qi * self.dia / 4. / self.len
+        
+        # Not sure what this is for:
+        # Qi = Qi * self.dia / 4. / self.len
         return Qi
 
     def rightSideofODE(self, Y, t):
