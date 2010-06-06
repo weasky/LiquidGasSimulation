@@ -378,7 +378,7 @@ class ChemistrySolver(dassl.DASSL):
         print "forward_rate_coefficients", self.forward_rate_coefficients
         print "reverse_rate_coefficients", self.reverse_rate_coefficients
         
-    def getRightSideOfODE(self,concentrations,timesteps):
+    def getRightSideOfODE(self,concentrations,timesteps=None):
         """Get the function which will be the right side of the ODE"""
         # This is probably the function to speed up, when the time comes for optimization:
         """Get the net rate of creation of all species at a concentration and T."""
@@ -386,7 +386,7 @@ class ChemistrySolver(dassl.DASSL):
         reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
-        return net_rates_of_creation
+        return net_rates_of_creation # (mol/m3/s)
 
     def residual(self, t, y, dydt):
         """The residual function, solved by dassl.
