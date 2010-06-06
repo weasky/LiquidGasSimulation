@@ -357,7 +357,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Get the thickness after a given time, by advancing (a copy of) the simulation.
         """
         film = copy.deepcopy(self)
-        film.advance(array([0,time]))
+        film.advance(array([0,time], numpy.float64))
         return film.thickness 
         
     def get_vapor_mass_densities(self):
@@ -465,7 +465,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         if self.reaction:
             reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molar_masses
         else:
-            reactConcs = zeros(self.nSpecies)
+            reactConcs = zeros(self.nSpecies, numpy.float64)
    
         dhdt = -1. / sum(massDens) * Q
         drhodt = -ratio * Qi - ratio * massDens * dhdt + reactConcs
@@ -535,8 +535,7 @@ if __name__ == "__main__":
         import pdb; pdb.set_trace()
         residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
         
-        
-        concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies))
+        concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)
             concentration_history_array[step] = diesel.y[:diesel.nSpecies]
