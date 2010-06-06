@@ -37,12 +37,23 @@ class PropertiesOfSpecies(object):
 
     def getMolarVolume(self):
         """Get the molar volume, in m3/mol"""
-        molecule_volume =  self.Radius*self.Radius*self.Radius * math.pi * 4/3
-        molar_volume = molecule_volume * 6.0221415E23
-        return molar_volume / 3.0 #<--- temporary hack!
-        # seems to be about 3 times too high.
-        # molar volume of undecane = 1/(0.74 g/ml / 156.31 g/mol) = 0.00021122973 m3/mol
-        # whereas p['n-C11(2)'].MolarVolume = 0.00063723
+     #   molecule_volume =  self.Radius*self.Radius*self.Radius * math.pi * 4/3
+     #   molar_volume = molecule_volume * 6.0221415E23
+     #   return molar_volume / 3.0 #<--- temporary hack!
+     #   # seems to be about 3 times too high.
+     #   # molar volume of undecane = 1/(0.74 g/ml / 156.31 g/mol) = 0.00021122973 m3/mol
+     #   # whereas p['n-C11(2)'].MolarVolume = 0.00063723
+     
+        V = self.AbrahamV
+        # Check to see if probably from an early version of RMG that had V units 100 times too high.
+        # this check should be deprecated soon, but for now I want to run with existing chemistry models!
+        if V > 8.7 + 9*self.nC: 
+            V=V/100
+        #    (V*100) is cm3/mol
+        # so (V/10000) is m3/mol
+        molar_volume = V / 10000 
+        return molar_volume
+        
     MolarVolume = property(getMolarVolume)  # make a fake attribute
     
     def getDepositPartitionCoefficient298(self):
@@ -281,7 +292,7 @@ class PropertiesStore():
         self._specs_props = dict()
         self._speciesnames = speciesnames
         self.loadPropertiesFromFile(resultsDir)
-        self.nSpecies = len(speciesnames)
+        self.nSpecies = len(self._speciesnames)
 
     def __getattr__(self, property_name):
         """
