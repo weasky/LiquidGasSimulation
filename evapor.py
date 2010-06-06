@@ -163,8 +163,7 @@ class DepositPhase(Phase):
      #   outside_amounts = self.amounts * split
      #   return outside_amounts
 
-# the vector 'y' solved by dassl is the amounts, divided by SCALE
-SCALE = 1e-12  # so dassl is tracking some numbers larger than the actual amounts 
+
 
 class LiquidFilmCell(dassl.DASSL, Phase):
     """
@@ -193,6 +192,9 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         self.EVAPORATION = EVAPORATION
         self.CHEMICAL_REACTION = CHEMICAL_REACTION
         self.PHASE_SEPARATION = PHASE_SEPARATION
+        
+        # the vector 'y' solved by dassl is the amounts, divided by SCALE
+        self.SCALE = 1e-12  # so dassl is tracking some numbers larger than the actual amounts 
         
         # 7 surrogate model
         fuel=[
@@ -430,8 +432,8 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         NOTE! This function returns a tuple: (residual, 0)
         """
         
-        self.amounts = SCALE * y[:self.nSpecies] 
-        self.deposit.amounts = SCALE * y[self.nSpecies:]
+        self.amounts = self.SCALE * y[:self.nSpecies] 
+        self.deposit.amounts = self.SCALE * y[self.nSpecies:]
         
         self.update_oxygen_nitrogen() # changes the amounts of these
         
@@ -458,7 +460,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
             dNdt_evaporation = numpy.zeros_like(self.amounts)
             
         dNdt_diesel = dNdt_reaction - dNdt_into_deposit - dNdt_evaporation
-        g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / SCALE
+        g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / self.SCALE
         #print 'g=',repr(g)
         #print "y=",repr(y)
         #print "dydt=",repr(dydt)
@@ -466,10 +468,10 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         #print "residual=",repr(residual)
         return (residual, 0)
         
-    def initialize_solver(self, time=0, atol=1e-5, rtol=1e-8):
+    def initialize_solver(self, time=0, atol=1e-20, rtol=1e-8):
         """Initialize the DASSL solver."""
         self.nonnegative = True
-        y = numpy.concatenate((self.amounts,self.deposit.amounts)) / SCALE
+        y = numpy.concatenate((self.amounts,self.deposit.amounts)) / self.SCALE
         # if simple ODE not DAE then residual with dydt=0 is in fact dydt
         # the residual method returns (residual,0) so take [0] element to get residual
         dydt = self.residual(time, y, numpy.zeros_like(y))[0] 
@@ -541,7 +543,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False )
+                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=False )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
@@ -563,7 +565,7 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.2,501)
+        timesteps=linspace(0,0.13,1001)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
@@ -573,8 +575,8 @@ if __name__ == "__main__":
         deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)
-            diesel_history_array[step] = diesel.y[:diesel.nSpecies] * SCALE
-            deposit_history_array[step] = diesel.y[diesel.nSpecies:] * SCALE
+            diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE
+            deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE
             print diesel.t, diesel.y
     
     
