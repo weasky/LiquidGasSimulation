@@ -101,9 +101,10 @@ class DepositPhase(Phase):
     
     def __init__(self, properties, temperature, amounts = None):
         """
-        properties is a PropertiesStore instance.
-        amounts is an array, storing the number of moles of each species inside 
-        this phase; default is zeros.
+        * properties is a PropertiesStore instance.
+        * temperature is in Kelvin.
+        * amounts is an array, storing the number of moles of each species 
+          inside this phase; zeros if unspecified.
         """
         Phase.__init__(self, properties)
         self.T = temperature
@@ -111,18 +112,32 @@ class DepositPhase(Phase):
             self.amounts = zeros(properties.nSpecies)
         else:
             self.amounts = amounts
+        
+        """Liquid-liquid mass transfer coefficients for stirred systems 
+        seem to be of the order of magnitude 1e-5 m/s (eg. http://www.kirj.ee/public/va_ke/k50-1-3.pdf)
+        which seems to be roughly what the diffusivities in air are (in m2/s),
+        so we shall just use these for now (they're probably correlated).
+        We'll ramp the pressure up a little to make them smaller as it's a stagnant film.
+         """
+        self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e6) # m2/s, though we're using as m/s
             
     def get_diesel_equilibrium_concentrations(self):
-        """Solution-phase concentrations at interface at equilibrium, in mol/m3."""
-        diesel_concentrations = self.concentrations / self.properties.DepositPartitionCoefficientT(self.T)
+        """Solution-phase concentrations at interface at equilibrium, in mol/m3.
+        
+        Currently this is not temperature-dependent.
+        """
+        diesel_concentrations = self.concentrations / self.properties.DepositPartitionCoefficient298
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
     
-    def flux_in(outside_concentrations):
+    def fluxes_in(self, outside_concentrations):
         """The fluxes of species into the deposit phase from diesel at outside_concentration, in mol/m2/s."""
-        pass
+        driving_forces = outside_concentrations - self.diesel_equilibrium_concentrations
+        fluxes = driving_force * self.mass_transfer_coefficients
+        return fluxes
+        
 
-    def equilibrate(outside_concentrations):
+    def equilibrate(self, outside_concentrations):
         """
         Bring into equilibrium with the outside.
         
@@ -130,15 +145,15 @@ class DepositPhase(Phase):
         
         THIS FUNCTION IS WRONG
         """
-        assert False, "This function is all WRONG!"
-        total_amounts = outside_amounts + self.amounts
-        # split is the ratio between outside and inside the deposit phase
-        split = self.properties.DepositPartitionCoefficient298
-        
-        # outside / self = split
-        self.amounts = total_amounts / (split + 1)
-        outside_amounts = self.amounts * split
-        return outside_amounts
+        pass
+     #   total_amounts = outside_amounts + self.amounts
+     #   # split is the ratio between outside and inside the deposit phase
+     #   split = self.properties.DepositPartitionCoefficient298
+     #   
+     #   # outside / self = split
+     #   self.amounts = total_amounts / (split + 1)
+     #   outside_amounts = self.amounts * split
+     #   return outside_amounts
 
 
 class LiquidFilmCell(dassl.DASSL, Phase):
