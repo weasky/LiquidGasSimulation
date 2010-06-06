@@ -123,16 +123,18 @@ class DepositPhase(Phase):
         seem to be of the order of magnitude 1e-5 m/s (eg. http://www.kirj.ee/public/va_ke/k50-1-3.pdf)
         which seems to be roughly what the diffusivities in air are (in m2/s),
         so we shall just use these for now (they're probably correlated).
-        We'll ramp the pressure up a little to make them smaller as it's a stagnant film.
+         
          """
-        self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e6) # m2/s, though we're using as m/s
-            
+        
+        self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e5) # m2/s, though we're using as m/s
+        self.mass_transfer_coefficients *= 1e-3 # slow it down for testing
+          
     def get_diesel_equilibrium_concentrations(self):
         """Solution-phase concentrations at interface at equilibrium, in mol/m3.
         
         Currently this is not temperature-dependent.
         """
-        diesel_concentrations = self.concentrations / self.properties.DepositPartitionCoefficient298
+        diesel_concentrations = self.concentrations * self.properties.DepositPartitionCoefficient298
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
     
@@ -161,7 +163,8 @@ class DepositPhase(Phase):
      #   outside_amounts = self.amounts * split
      #   return outside_amounts
 
-SCALE = 1e-9
+# the vector 'y' solved by dassl is the amounts, divided by SCALE
+SCALE = 1e-12  # so dassl is tracking some numbers larger than the actual amounts 
 
 class LiquidFilmCell(dassl.DASSL, Phase):
     """
@@ -172,8 +175,13 @@ class LiquidFilmCell(dassl.DASSL, Phase):
     Temperature is constant throughout.
     """
     
-    def __init__(self, chem_solver=None, diameter=1, thickness=1, length=1,
-                 T=400, P=OneAtm, reaction=True, resultsDir='RMG_results'):
+    def __init__(self, chem_solver=None,
+                 diameter=1, thickness=1, length=1,
+                 T=400, P=OneAtm,
+                 EVAPORATION=True,
+                 CHEMICAL_REACTION=True,
+                 PHASE_SEPARATION=True,
+                 resultsDir='RMG_results'):
         # Initialize the DASSL solver
         dassl.DASSL.__init__(self)  
 
@@ -181,7 +189,10 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # store parameters
         self.T = T
         self.P = P
-        self.reaction = reaction        
+        
+        self.EVAPORATION = EVAPORATION
+        self.CHEMICAL_REACTION = CHEMICAL_REACTION
+        self.PHASE_SEPARATION = PHASE_SEPARATION
         
         # 7 surrogate model
         fuel=[
@@ -424,14 +435,28 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         
         self.update_oxygen_nitrogen() # changes the amounts of these
         
-        dNdt_into_deposit = self.deposit.fluxes_in(self.concentrations)
-        #print 'dNdt_into_deposit',dNdt_into_deposit
-        # chem_solver deals with concentrations; to get amounts, scale by total volume
-        dNdt_reaction = 0* self.total_volume * self.chem_solver.getRightSideOfODE(self.concentrations)
-        #print 'dNdt_reaction',dNdt_reaction
-        # evaporative_flux is per surface area
-        dNdt_evaporation = self.area * self.get_evaporative_flux(Lv=self.diameter)
-        #print 'dNdt_evaporation',dNdt_evaporation
+        if self.PHASE_SEPARATION:
+            dNdt_into_deposit = self.area * self.deposit.fluxes_in(self.concentrations)
+            dNdt_into_deposit[self._oxygen_index] = 0
+            dNdt_into_deposit[self._nitrogen_index] = 0
+            #print 'dNdt_into_deposit',repr(dNdt_into_deposit)
+        else:
+            dNdt_into_deposit = numpy.zeros_like(self.amounts)
+        
+        if self.CHEMICAL_REACTION:
+            # chem_solver deals with concentrations; to get amounts, scale by total volume
+            dNdt_reaction =  self.total_volume * self.chem_solver.getRightSideOfODE(self.concentrations)
+            #print 'dNdt_reaction',dNdt_reaction
+        else:
+            dNdt_reaction = numpy.zeros_like(self.amounts)
+            
+        if self.EVAPORATION:
+            # evaporative_flux is per surface area
+            dNdt_evaporation = self.area * self.get_evaporative_flux(Lv=self.diameter)
+            #print 'dNdt_evaporation',dNdt_evaporation
+        else:
+            dNdt_evaporation = numpy.zeros_like(self.amounts)
+            
         dNdt_diesel = dNdt_reaction - dNdt_into_deposit - dNdt_evaporation
         g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / SCALE
         #print 'g=',repr(g)
@@ -441,8 +466,9 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         #print "residual=",repr(residual)
         return (residual, 0)
         
-    def initialize_solver(self, time=0, atol=1e-8, rtol=1e-8):
+    def initialize_solver(self, time=0, atol=1e-5, rtol=1e-8):
         """Initialize the DASSL solver."""
+        self.nonnegative = True
         y = numpy.concatenate((self.amounts,self.deposit.amounts)) / SCALE
         # if simple ODE not DAE then residual with dydt=0 is in fact dydt
         # the residual method returns (residual,0) so take [0] element to get residual
@@ -514,7 +540,8 @@ if __name__ == "__main__":
     L = 0.5E-3
     initial_film_thickness = 3E-6
 
-    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness, reaction=False)
+    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
+                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
@@ -532,10 +559,11 @@ if __name__ == "__main__":
     print 'the initial h is', diesel.thickness
     print 'initial concentrations are',diesel.concentrations
     
+    # import pdb; pdb.set_trace(); # pause for debugging
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.2,101)
+        timesteps=linspace(0,0.2,501)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
@@ -545,28 +573,28 @@ if __name__ == "__main__":
         deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)
-            diesel_history_array[step] = diesel.y[:diesel.nSpecies]
-            deposit_history_array[step] = diesel.y[diesel.nSpecies:]
+            diesel_history_array[step] = diesel.y[:diesel.nSpecies] * SCALE
+            deposit_history_array[step] = diesel.y[diesel.nSpecies:] * SCALE
             print diesel.t, diesel.y
     
     
     final_amounts = diesel_history_array[-1]
-    pylab.figure()
+    pylab.figure(1)
     pylab.axes([0.1,0.1,0.71,0.85])
     pylab.plot(timesteps,diesel_history_array)
     for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1],final_amounts[i]), 
+        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
             xytext=(20,-5), textcoords='offset points', 
             arrowprops=dict(arrowstyle="-") )
     pylab.title('diesel amounts')
     pylab.show()
     
     final_amounts = deposit_history_array[-1]
-    pylab.figure()
+    pylab.figure(2)
     pylab.axes([0.1,0.1,0.71,0.85])
     pylab.plot(timesteps,deposit_history_array)
     for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1],final_amounts[i]), 
+        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
             xytext=(20,-5), textcoords='offset points', 
             arrowprops=dict(arrowstyle="-") )
     pylab.title('deposit amounts')
