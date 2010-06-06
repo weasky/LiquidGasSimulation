@@ -56,28 +56,81 @@ class FuelComponent():
         # Antoine's Equation
         return 10**(A-B / (C + Temperature))
 
-class DepositPhase:
+class Phase(object):
+    """A base class for a phase contaning some amounts of some species."""
+    
+    def __init__(self, properties):
+        """Store the properties store instance, and cache some useful properties."""
+        self.properties = properties
+        # save these to avoid recomputing them
+        self.molar_masses = self.properties.MolecularWeight/1000. #to kg 
+        self.molar_volumes = self.properties.MolarVolume
+        self.molar_densities = 1 / self.molar_volumes
+        self.mass_densities = self.molar_densities * self.molar_masses 
+            
+    def get_total_amount(self):
+        """The total amount of stuff in the phase, in mol."""
+        return sum(self.amounts)
+    total_amount = property(get_total_amount)
+    
+    def get_mole_fractions(self):
+        """The amount (mole) fractions in the phase. Sum to 1."""
+        return self.amounts / sum(self.amounts)
+    mole_fractions = property(get_mole_fractions)
+
+    def get_total_volume(self):
+        """The total volume of the phase, in m3."""
+        return sum(self.amounts * self.molar_volumes)
+    total_volume = property(get_total_volume)
+    
+    def get_concentrations(self):
+        """The concentrations of each species, in mol/m3."""
+        return self.amounts / sum(self.amounts * self.molar_volumes)
+    concentrations = property(get_concentrations)
+        
+    def get_total_concentration(self):
+        """The total molar concentration of the phase, in mol/m3."""
+        return sum(self.amounts) / self.get_total_volume()
+    total_concentration = property(get_total_concentration)
+    
+    
+class DepositPhase(Phase):
     """
     A phase-separated deposit-forming phase inside the liquid film
     """
     
-    def __init__(self, properties, amounts):
+    def __init__(self, properties, temperature, amounts = None):
         """
         properties is a PropertiesStore instance.
-        amounts is an array, storing the number of moles of each species inside this phase.
+        amounts is an array, storing the number of moles of each species inside 
+        this phase; default is zeros.
         """
-        self.amounts = amounts 
-        self.properties = properties
-        
-    def equilibrate(outside_amounts):
+        Phase.__init__(self, properties)
+        self.T = temperature
+        if amounts is None:
+            self.amounts = zeros(properties.nSpecies)
+        else:
+            self.amounts = amounts
+            
+    def get_diesel_equilibrium_concentrations(self):
+        """Solution-phase concentrations at interface at equilibrium, in mol/m3."""
+        diesel_concentrations = self.concentrations / self.properties.DepositPartitionCoefficientT(self.T)
+        return diesel_concentrations
+    diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
+    
+    def flux_in(outside_concentrations):
+        """The fluxes of species into the deposit phase from diesel at outside_concentration, in mol/m2/s."""
+        pass
+
+    def equilibrate(outside_concentrations):
         """
         Bring into equilibrium with the outside.
         
         Updates self.amounts and returns the amounts on the outside after equilibration.
         
-        Assumes molar densities all equal (or something like that).
-        This function should be checked.
+        THIS FUNCTION IS WRONG
         """
+        assert False, "This function is all WRONG!"
         total_amounts = outside_amounts + self.amounts
         # split is the ratio between outside and inside the deposit phase
         split = self.properties.DepositPartitionCoefficient298
@@ -88,7 +141,7 @@ class DepositPhase:
         return outside_amounts
 
 
-class LiquidFilmCell(object):
+class LiquidFilmCell(dassl.DASSL, Phase):
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
     represents each cell after discretization. When initializing, nSpecies is
@@ -98,12 +151,14 @@ class LiquidFilmCell(object):
     """
     def __init__(self, chem_solver=None, diameter=1, thickness=1, length=1,
                  T=400, P=OneAtm, reaction=True, resultsDir='RMG_results'):
+        # Initialize the DASSL solver
+        dassl.DASSL.__init__(self)  
+
 
         # store parameters
         self.T = T
         self.P = P
         self.reaction = reaction        
-        
         
         # 7 surrogate model
         fuel=[
@@ -116,40 +171,36 @@ class LiquidFilmCell(object):
             FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
         ]
         
+        # Set up and store chemistry solver
         if chem_solver is None: chem_solver = ChemistrySolver(resultsDir=resultsDir)
         self.chem_solver = chem_solver
         self.nSpecies = chem_solver.Nspecies
         self.speciesnames = chem_solver.speciesnames
-        
+        assert len(self.speciesnames) == self.nSpecies        
 
-        # This is the tracked variable!!!
-        self.amounts = zeros(self.nSpecies)
-        
         # Get properties store.
         # must pass it list of speciesnames so that the arrays returned are in the right size and order
         self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
-        assert len(self.speciesnames) == self.nSpecies
         
-        # store some unchanging properties here, to save time looking them up or calculating them repeatedly
+        # Initialize the Phase parent class; sets up 'amounts' variable and caches some properties
+        Phase.__init__(self, self.properties)
+
+        # deposit
+        self.deposit = DepositPhase(self.properties, self.T)
+        
+        # store some other unchanging properties here, to save time looking them up or calculating them repeatedly
         self.Dvi = self.properties.DiffusivityInAir(self.T, self.P) # m2/s
-        self.molar_masses = self.properties.MolecularWeight/1000. #to kg 
-        self.molar_volumes = self.properties.MolarVolume
-        self.molar_densities = 1 / self.molar_volumes
-        self.mass_densities = self.molar_densities * self.molar_masses 
-    
+
+
         # save some special species indices
         self._oxygen_index = self.speciesnames.index('O2(1)')
         self._nitrogen_index = self.speciesnames.index('N2')
         
         # area and volume of liquid film cell
         self.diameter = diameter
-        self.thickness = thickness
         self.initial_thickness = copy.deepcopy(thickness) # in case it's not just a float!
         self.length = length
         self.initial_volume = pi * diameter * length * thickness
-        self.area = pi * (diameter - 2 * thickness) * self.length  
-        self.volume = copy.deepcopy(self.initial_volume)
-        
         
         # Set the fuel component initial amounts
         # this enables us to find the total concentration (at the start) necessary for Psat calculations
@@ -204,31 +255,7 @@ class LiquidFilmCell(object):
     ############
     # Attribute-style parameter functions:
     ############
-    def get_total_amount(self):
-        """The total amount of stuff in the diesel phase, in mol."""
-        return sum(self.amounts)
-    total_amount = property(get_total_amount)
-    
-    def get_mole_fractions(self):
-        """The amount (mole) fractions in the diesel phase. Sum to 1."""
-        return self.amounts / sum(self.amounts)
-    mole_fractions = property(get_mole_fractions)
-
-    def get_total_volume(self):
-        """The total volume of the diesel phase, in m3."""
-        return sum(self.amounts * self.molar_volumes)
-    total_volume = property(get_total_volume)
-    
-    def get_concentrations(self):
-        """The concentrations of each species, in mol/m3."""
-        return self.amounts / sum(self.amounts * self.molar_volumes)
-    concentrations = property(get_concentrations)
-        
-    def get_total_concentration(self):
-        """The total molar concentration of hte diesel phase, in mol/m3."""
-        return sum(self.amounts) / self.get_total_volume()
-    total_concentration = property(get_total_concentration)
-
+ 
     def get_vapor_concentrations(self):
         """Vapor-phase concentrations at interface, in mol/m3."""
         vaporConcs = self.Psats * self.mole_fractions / R / self.T
@@ -242,6 +269,20 @@ class LiquidFilmCell(object):
         partial_pressures = self.Psats * self.mole_fractions
         return partial_pressures
     vapor_partial_pressures = property(get_vapor_partial_pressures)
+    
+    def get_thickness(self):
+        """Thickness of the film, in m."""
+        thickness = self.total_volume / pi / self.diameter / self.length
+        return thickness
+    thickness = property(get_thickness)
+
+    def get_area(self):
+        """Area of the interface with the vapor phase, in m^2.
+        
+        Takes into account the thickness of the film, which is probably negligible.
+        """
+        return pi * (self.diameter - 2 * self.thickness) * self.length
+    area = property(get_area)
     
     #############
     ## update functions
@@ -331,6 +372,28 @@ class LiquidFilmCell(object):
         # Qi = Qi * self.dia / 4. / self.len
         return Qi
 
+    def residual(self, t, y, dydt):
+        """The residual function, solved by dassl.
+        
+        Evaluate the residual function for this model, given the current value
+        of the independent variable `t`, dependent variables `y`, and first
+        derivatives `dydt`. Return a numpy array with the values of the residual
+        function and an integer with status information (0 if okay, -2 to
+        terminate).
+        
+        if:       dy/dt = g(t,y,dy/dt)
+        then:  residual = g(t,t,dy/dt) - dy/dt
+        
+        In this case, y is the amounts of each species in the diesel phase, then
+        the amounts of each species in the deposit phase.
+        
+        """
+        self.amounts = y[:self.nSpecies] 
+        self.deposit.amounts = y[self.nSpecies:]
+        
+        dNdt_deposit = self.deposit.flux_in(self.concentrations)
+        
+
     def rightSideofODE(self, Y, t):
         """
         drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
@@ -385,9 +448,8 @@ class LiquidFilmCell(object):
         concentrations = molDens
         self.amounts = concentrations * self.volume
         
-class EvaporationSolver(dassl.DASSL):
-    """An evaporation solver"""
-    pass
+
+        
 
 if __name__ == "__main__":
     dia = 0.14E-3
@@ -410,9 +472,11 @@ if __name__ == "__main__":
     qi = diesel.get_evaporative_flux(Lv=dia)
     print 'the mass flux out of the interface ',qi
     print 'the initial h is', diesel.thickness
-        # chem solver exp
-
     print 'initial concentrations are',diesel.concentrations
+    
+    print "Trying DASSL solver"
+    solver = EvaporationSolver(diesel)
+    
     print 'start evaporating without reaction'
     timesteps=linspace(0,0.5,501)
     diesel.advance(timesteps,plotresult=True)

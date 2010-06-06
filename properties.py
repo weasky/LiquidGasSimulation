@@ -281,6 +281,7 @@ class PropertiesStore():
         self._specs_props = dict()
         self._speciesnames = speciesnames
         self.loadPropertiesFromFile(resultsDir)
+        self.nSpecies = len(speciesnames)
 
     def __getattr__(self, property_name):
         """
