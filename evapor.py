@@ -410,6 +410,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         In this case, y is the amounts of each species in the diesel phase, then
         the amounts of each species in the deposit phase.
         
+        NOTE! This function returns a tuple: (residual, 0)
         """
         
         self.amounts = SCALE * y[:self.nSpecies] 
@@ -432,12 +433,15 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         print "dydt=",repr(dydt)
         residual = g-dydt
         print "residual=",repr(residual)
-        return residual
+        return residual, 0
         
     def initialize_solver(self, time=0, atol=1e-8, rtol=1e-8):
         """Initialize the DASSL solver."""
         y = numpy.concatenate((self.amounts,self.deposit.amounts)) / SCALE
-        dydt = self.residual(time, y, numpy.zeros_like(y)) # if simple ODE not DAE then residual with dydt=0 is in fact dydt
+        # if simple ODE not DAE then residual with dydt=0 is in fact dydt
+        # the residual method returns (residual,0) so take [0] element to get residual
+        dydt = self.residual(time, y, numpy.zeros_like(y))[0] 
+        print "I have dydt0 = ",repr(dydt)
         dassl.DASSL.initialize(self, time, y0=y, dydt0=dydt, atol=atol, rtol=rtol)
         
 
@@ -527,11 +531,9 @@ if __name__ == "__main__":
         diesel.initialize_solver()
         timesteps=linspace(0,0.5,501)
         
-        #check the residual works
+        #check the residual works (although the initialise_solver above has just done so)
         import pdb; pdb.set_trace()
         residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
-        # use it to store the initial dydt
-        diesel.dydt = residual
         
         
         concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies))
