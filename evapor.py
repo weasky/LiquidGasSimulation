@@ -70,7 +70,7 @@ class Phase(object):
         self.mass_densities = self.molar_densities * self.molar_masses 
 
         if amounts is None:
-            self.amounts = zeros(properties.nSpecies)
+            self.amounts = zeros(properties.nSpecies, numpy.float64)
         else:
             self.amounts = amounts
             
@@ -91,7 +91,10 @@ class Phase(object):
     
     def get_concentrations(self):
         """The concentrations of each species, in mol/m3."""
-        return self.amounts / sum(self.amounts * self.molar_volumes)
+        if self.amounts.any():
+            return self.amounts / sum(self.amounts * self.molar_volumes)
+        else: # they're all zero
+            return self.amounts * 0
     concentrations = property(get_concentrations)
         
     def get_total_concentration(self):
@@ -157,6 +160,7 @@ class DepositPhase(Phase):
      #   outside_amounts = self.amounts * split
      #   return outside_amounts
 
+SCALE = 1e-9
 
 class LiquidFilmCell(dassl.DASSL, Phase):
     """
@@ -166,12 +170,13 @@ class LiquidFilmCell(dassl.DASSL, Phase):
     
     Temperature is constant throughout.
     """
+    
     def __init__(self, chem_solver=None, diameter=1, thickness=1, length=1,
                  T=400, P=OneAtm, reaction=True, resultsDir='RMG_results'):
         # Initialize the DASSL solver
         dassl.DASSL.__init__(self)  
 
-
+        
         # store parameters
         self.T = T
         self.P = P
@@ -388,7 +393,8 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Not sure what this is for:
         # Qi = Qi * self.dia / 4. / self.len
         return Qi
-
+    
+    
     def residual(self, t, y, dydt):
         """The residual function, solved by dassl.
         
@@ -405,24 +411,34 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         the amounts of each species in the deposit phase.
         
         """
-        self.amounts = y[:self.nSpecies] 
-        self.deposit.amounts = y[self.nSpecies:]
+        
+        self.amounts = SCALE * y[:self.nSpecies] 
+        self.deposit.amounts = SCALE * y[self.nSpecies:]
         
         self.update_oxygen_nitrogen() # changes the amounts of these
         
         dNdt_into_deposit = self.deposit.fluxes_in(self.concentrations)
+        print 'dNdt_into_deposit',dNdt_into_deposit
         # chem_solver deals with concentrations; to get amounts, scale by total volume
         dNdt_reaction = self.total_volume * self.chem_solver.getRightSideOfODE(self.concentrations)
+        print 'dNdt_reaction',dNdt_reaction
         # evaporative_flux is per surface area
         dNdt_evaporation = self.area * self.get_evaporative_flux(Lv=self.diameter)
+        print 'dNdt_evaporation',dNdt_evaporation
         dNdt_diesel = dNdt_reaction - dNdt_into_deposit - dNdt_evaporation
-        g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit))
-        return g - dydt
+        g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / SCALE
+        print 'g=',repr(g)
+        print "y=",repr(y)
+        print "dydt=",repr(dydt)
+        residual = g-dydt
+        print "residual=",repr(residual)
+        return residual
         
-    def initialize_solver(self, time=0, atol=1e-20, rtol=1e-8):
+    def initialize_solver(self, time=0, atol=1e-8, rtol=1e-8):
         """Initialize the DASSL solver."""
-        y = numpy.concatenate((self.amounts,self.deposit.amounts))
-        dassl.DASSL.initialize(self, time, y, atol=atol, rtol=rtol)
+        y = numpy.concatenate((self.amounts,self.deposit.amounts)) / SCALE
+        dydt = self.residual(time, y, numpy.zeros_like(y)) # if simple ODE not DAE then residual with dydt=0 is in fact dydt
+        dassl.DASSL.initialize(self, time, y0=y, dydt0=dydt, atol=atol, rtol=rtol)
         
 
     def rightSideofODE(self, Y, t):
@@ -490,9 +506,9 @@ if __name__ == "__main__":
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness, reaction=False)
 
-    print 'diesel components molar mass is', diesel.molar_masses #kg/mol
+    print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
-    print 'diesel components mass density is', diesel.mass_densities #kg/m3
+    print 'diesel components mass density is', diesel.mass_densities # kg/m3
     print 'the mol fraction is', diesel.mole_fractions
     print 'the concentrations are', diesel.concentrations
     print 'the total vapor pressure using K is',sum(diesel.concentrations/diesel.properties.PartitionCoefficientT(diesel.T))*R*diesel.T
@@ -509,11 +525,15 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.5,501)    
+        timesteps=linspace(0,0.5,501)
         
         #check the residual works
-        diesel.residual(diesel.t, diesel.y, diesel.dydt)
-                
+        import pdb; pdb.set_trace()
+        residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
+        # use it to store the initial dydt
+        diesel.dydt = residual
+        
+        
         concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies))
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)

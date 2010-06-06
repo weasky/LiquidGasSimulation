@@ -383,7 +383,7 @@ class PropertiesStore():
         
         Length is Nspecies; order is determined by speciesnames list.
         Probably quite slow, so wise to store the result."""
-        values = numpy.zeros(len(speciesnames))
+        values = numpy.zeros(len(speciesnames), numpy.float64)
         
         for species_index, species_name in enumerate(speciesnames):
             values[species_index] = self.getSpeciesProperty(species_name,property_name, *arguments)
