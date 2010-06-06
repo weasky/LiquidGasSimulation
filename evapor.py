@@ -7,6 +7,7 @@ from scipy.optimize import fsolve
 from chemistry import ChemistrySolver
 import copy
 import time
+import pylab
 
 from PyDAS import dassl
 
@@ -266,6 +267,11 @@ class LiquidFilmCell(dassl.DASSL, Phase):
             species_index = self.speciesnames.index(species_name)
             self.Psats[species_index] = 0
         
+        # put some diesel in the deposit phase to get it started!
+        DEPOSIT_START_FRACTION = 0.1
+        self.deposit.amounts = self.amounts * DEPOSIT_START_FRACTION
+        self.amounts = self.amounts * (1 - DEPOSIT_START_FRACTION)
+        
         # Set up the chemistry solver
         self.chem_solver.setTemperature(self.T)
         self.chem_solver.setConcentrations(self.concentrations)
@@ -419,21 +425,21 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         self.update_oxygen_nitrogen() # changes the amounts of these
         
         dNdt_into_deposit = self.deposit.fluxes_in(self.concentrations)
-        print 'dNdt_into_deposit',dNdt_into_deposit
+        #print 'dNdt_into_deposit',dNdt_into_deposit
         # chem_solver deals with concentrations; to get amounts, scale by total volume
-        dNdt_reaction = self.total_volume * self.chem_solver.getRightSideOfODE(self.concentrations)
-        print 'dNdt_reaction',dNdt_reaction
+        dNdt_reaction = 0* self.total_volume * self.chem_solver.getRightSideOfODE(self.concentrations)
+        #print 'dNdt_reaction',dNdt_reaction
         # evaporative_flux is per surface area
         dNdt_evaporation = self.area * self.get_evaporative_flux(Lv=self.diameter)
-        print 'dNdt_evaporation',dNdt_evaporation
+        #print 'dNdt_evaporation',dNdt_evaporation
         dNdt_diesel = dNdt_reaction - dNdt_into_deposit - dNdt_evaporation
         g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / SCALE
-        print 'g=',repr(g)
-        print "y=",repr(y)
-        print "dydt=",repr(dydt)
-        residual = g-dydt
-        print "residual=",repr(residual)
-        return residual, 0
+        #print 'g=',repr(g)
+        #print "y=",repr(y)
+        #print "dydt=",repr(dydt)
+        residual = g - dydt
+        #print "residual=",repr(residual)
+        return (residual, 0)
         
     def initialize_solver(self, time=0, atol=1e-8, rtol=1e-8):
         """Initialize the DASSL solver."""
@@ -529,32 +535,59 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.5,501)
+        timesteps=linspace(0,0.2,101)
         
         #check the residual works (although the initialise_solver above has just done so)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
         
-        concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+        diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+        deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)
-            concentration_history_array[step] = diesel.y[:diesel.nSpecies]
+            diesel_history_array[step] = diesel.y[:diesel.nSpecies]
+            deposit_history_array[step] = diesel.y[diesel.nSpecies:]
             print diesel.t, diesel.y
-    else:
-        print 'start evaporating without reaction'
-        timesteps=linspace(0,0.5,501)
-        diesel.advance(timesteps,plotresult=True)
-        print 'the concentrations are ', diesel.concentrations
-        print 'the vapor densities are ', diesel.get_vapor_mass_densities()
-        print 'the new h is', diesel.thickness
-        print 'fraction of film left', diesel.thickness / initial_film_thickness
+    
+    
+    final_amounts = diesel_history_array[-1]
+    pylab.figure()
+    pylab.axes([0.1,0.1,0.71,0.85])
+    pylab.plot(timesteps,diesel_history_array)
+    for i in range(len(diesel.speciesnames)):
+        pylab.annotate(diesel.speciesnames[i], (timesteps[-1],final_amounts[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-") )
+    pylab.title('diesel amounts')
+    pylab.show()
+    
+    final_amounts = deposit_history_array[-1]
+    pylab.figure()
+    pylab.axes([0.1,0.1,0.71,0.85])
+    pylab.plot(timesteps,deposit_history_array)
+    for i in range(len(diesel.speciesnames)):
+        pylab.annotate(diesel.speciesnames[i], (timesteps[-1],final_amounts[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-") )
+    pylab.title('deposit amounts')
+    pylab.show()
         
-        print 'start evaporating with reaction'
-        diesel2 = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
-        timesteps=linspace(0,0.5,501)
-        diesel2.advance(timesteps,plotresult=True)
-        print 'the concentrations are ', diesel2.concentrations
-        print 'the vapor densities are ', diesel2.get_vapor_mass_densities()
-        print 'the new h is', diesel2.thickness
-        print 'fraction of film left', diesel2.thickness / initial_film_thickness
+        
+    #else:
+    #    print 'start evaporating without reaction'
+    #    timesteps=linspace(0,0.5,501)
+    #    diesel.advance(timesteps,plotresult=True)
+    #    print 'the concentrations are ', diesel.concentrations
+    #    print 'the vapor densities are ', diesel.get_vapor_mass_densities()
+    #    print 'the new h is', diesel.thickness
+    #    print 'fraction of film left', diesel.thickness / initial_film_thickness
+    #    
+    #    print 'start evaporating with reaction'
+    #    diesel2 = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness)
+    #    timesteps=linspace(0,0.5,501)
+    #    diesel2.advance(timesteps,plotresult=True)
+    #    print 'the concentrations are ', diesel2.concentrations
+    #    print 'the vapor densities are ', diesel2.get_vapor_mass_densities()
+    #    print 'the new h is', diesel2.thickness
+    #    print 'fraction of film left', diesel2.thickness / initial_film_thickness
         
