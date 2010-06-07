@@ -1,0 +1,13 @@
+Ar                 0   136.500     3.330     0.000     0.000     0.000 !CHEMKIN-v4.1.1
+He                 0    10.200     2.576     0.000     0.000     0.000 !CHEMKIN-v4.1.1
+N2                 1    97.530     3.621     0.000     1.760     4.000 !CHEMKIN-v4.1.1
+SPC(1)             2   374.459     8.198     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 587.368K Pc=  16.181bar Vc= 586.500cm3/mol Tb= 427.500K	(CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+SPC(2)             2   353.989     7.999     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 612.850K Pc=  19.338bar Vc= 651.500cm3/mol Tb= 451.080K	(CsH3R, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+SPC(3)             2   359.327     8.741     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 657.115K Pc=  16.444bar Vc= 763.500cm3/mol Tb= 496.840K	(CsH3R, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+SPC(4)             2   310.417     5.385     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 370.902K Pc=  30.390bar Vc=  82.500cm3/mol Tb= 221.580K	(CsH3R)
+SPC(5)             2   370.244     9.857     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 724.213K Pc=  13.185bar Vc= 931.500cm3/mol Tb= 565.480K	(CsH3R, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+O2(6)              1   107.400     3.458     0.000     1.600     3.800 ! Primary Transport Library: GRIMech3.0 (Species ID: O2)	
+SPC(7)             2   390.496    10.946     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 793.526K Pc=  10.806bar Vc=1099.500cm3/mol Tb= 634.120K	(CsH3R, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+SPC(8)             2   412.811    11.636     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 841.703K Pc=   9.561bar Vc=1211.500cm3/mol Tb= 679.880K	(CsH3R, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)
+HO2J(43)           2   107.400     3.458     0.000     0.000     1.000 ! Primary Transport Library: GRIMech3.0 (Species ID: HO2)	 ! *
+SPC(17)            2   371.384     8.142     0.000     0.000     1.000 ! LJ parameters estimated by RMG: Tc= 587.368K Pc=  16.605bar Vc= 586.500cm3/mol Tb= 427.500K	(CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH2R2, CsH3R)

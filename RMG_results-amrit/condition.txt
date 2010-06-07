@@ -1,0 +1,201 @@
+//tracks the consumption of diesel surrogate in the presence of O2.
+//notice the primary reaction library is turned off because this is not 
+//an oxidation mechanism. Also the sensitivity analysis section is missing 
+//because we are using the dassl solver.
+
+Database: RMG_database
+
+//MaxCarbonNumberPerSpecies: 50
+//MaxOxygenNumberPerSpecies: 10
+//MaxRadicalNumberPerSpecies: 2
+
+PrimaryThermoLibrary:
+//Name: GRIMech3.0
+//Location: GRI-Mech3.0
+Name: RMG-old
+Location: primaryThermoLibrary
+END
+
+PrimaryTransportLibrary:
+Name: GRIMech3.0
+Location: GRI-Mech3.0
+END
+
+ReadRestart: no
+WriteRestart: no
+
+TemperatureModel: Constant (K) 500
+PressureModel: Constant (atm) 210
+
+EquationOfState: Liquid
+
+Solvation: on
+
+InitialStatus:
+
+(1) n-decylbenzene 5e-3 (mol/cm3)
+1  C 0 {2,B}  {6,B}  {7,S}
+2  C 0 {1,B}  {3,B}
+3  C 0 {2,B}  {4,B}
+4  C 0 {3,B}  {5,B}
+5  C 0 {4,B}  {6,B}
+6  C 0 {5,B}  {1,B}
+7  C 0 {1,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S}
+
+(2) n-undecane 1.0e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S} {3,S}
+3  C 0 {2,S} {4,S}
+4  C 0 {3,S} {5,S}
+5  C 0 {4,S} {6,S}
+6  C 0 {5,S} {7,S}
+7  C 0 {6,S} {8,S}
+8  C 0 {7,S} {9,S}
+9  C 0 {8,S} {10,S}
+10 C 0 {9,S} {11,S}
+11 C 0 {10,S}
+
+(3) n-tridecane 4.0e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S}
+
+(4) naphthalene 2.0e-3 (mol/cm3)
+1  C 0 {2,B}  {10,B} {11,S}
+2  C 0 {1,B}  {3,B} 
+3  C 0 {2,B}  {4,B}
+4  C 0 {3,B}  {5,B}
+5  C 0 {4,B}  {6,B}  {10,B}
+6  C 0 {5,B}  {7,B}
+7  C 0 {6,B}  {8,B}
+8  C 0 {7,B}  {9,B}
+9  C 0 {8,B}  {10,B}
+10 C 0 {9,B}  {5,B}  {1,B}
+11 C 0 {1,S}
+
+
+(5) n-hexadecane 5e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S}
+
+(6) O2 1.0E-5 (mol/cm3) ConstantConcentration
+1 O 0 {2,D}
+2 O 0 {1,D}
+
+(7) n-nonadecane 4.0e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S} {17,S}
+17 C 0 {16,S} {18,S}
+18 C 0 {17,S} {19,S}
+19 C 0 {18,S}
+
+(8) n-heneicosane 2.0e-3 (mol/cm3)
+1  C 0 {2,S}
+2  C 0 {1,S}  {3,S}
+3  C 0 {2,S}  {4,S}
+4  C 0 {3,S}  {5,S}
+5  C 0 {4,S}  {6,S}
+6  C 0 {5,S}  {7,S}
+7  C 0 {6,S}  {8,S}
+8  C 0 {7,S}  {9,S}
+9  C 0 {8,S}  {10,S}
+10 C 0 {9,S}  {11,S}
+11 C 0 {10,S} {12,S}
+12 C 0 {11,S} {13,S}
+13 C 0 {12,S} {14,S}
+14 C 0 {13,S} {15,S}
+15 C 0 {14,S} {16,S}
+16 C 0 {15,S} {17,S}
+17 C 0 {16,S} {18,S}
+18 C 0 {17,S} {19,S}
+19 C 0 {18,S} {20,S}
+20 C 0 {19,S} {21,S}
+21 C 0 {20,S}
+
+END
+
+InertGas:
+//N2 0.8797 (mol/cm3)
+//Ar 0.0e-6 (mol/cm3)
+END
+
+SpectroscopicDataEstimator: off
+PressureDependence: off 
+
+FinishController:
+(1) Goal ReactionTime: 900 (sec)
+(2) Error Tolerance: 0.01
+
+DynamicSimulator: DASSL
+TimeStep: AUTO
+Atol: 1e-18
+Rtol: 1e-8
+
+//Error bars: On
+//Display sensitivity coefficients: On
+//Display sensitivity information for:
+//n-decylbenzene
+//END
+
+PrimaryReactionLibrary:
+//Name: RMG-example
+//Location: RMG_database/primaryReactionLibrary/Example
+END
+
+SeedMechanism:
+//Name: Leeds
+//Location: RMG_database/SeedMechanisms/combustion_core/version5
+//Name: GRIMech3.0
+//Location: RMG_database/SeedMechanisms/GRI-Mech3.0
+END
+
+ChemkinUnits:
+A: moles
+Ea: kcal/mol
