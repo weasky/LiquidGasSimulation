@@ -471,7 +471,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         #print "residual=",repr(residual)
         return (residual, 0)
         
-    def initialize_solver(self, time=0, atol=1e-10, rtol=1e-8):
+    def initialize_solver(self, time=0, atol=1e-15, rtol=1e-8):
         """Initialize the DASSL solver."""
        # self.nonnegative = True
         y = numpy.concatenate((self.amounts,self.deposit.amounts)) / self.SCALE
@@ -546,7 +546,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=True )
+                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
@@ -568,7 +568,7 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.13,1001)
+        timesteps=linspace(0,0.04,501)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
