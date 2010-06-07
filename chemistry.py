@@ -204,13 +204,13 @@ class reaction(ctml.reaction):
         
     def getStoichiometryReactantsRow(self):
         """Get the stoichiometry of each species as a reactant"""
-        row = numpy.zeros(len(_species))
+        row = numpy.zeros(len(_species), numpy.int32)
         for species_name,order in self._r.items(): 
             row[_speciesnames.index(species_name)] = order
         return row
     def getStoichiometryProductsRow(self):
         """Get the stoichiometry of each species as a product"""
-        row = numpy.zeros(len(_species))
+        row = numpy.zeros(len(_species), numpy.int32)
         for species_name,order in self._p.items(): 
             row[_speciesnames.index(species_name)] = order
         return row
@@ -301,7 +301,7 @@ class ChemistrySolver(dassl.DASSL):
         self.calculateStoichiometries()
         self.T = 0
         
-        self.concentrations = numpy.array([])
+        self.concentrations = numpy.array([], numpy.float64)
         self.constant_concentrations = [] # list of species indices whose concentration shouldbe fixed (eg O2)
         self.properties = PropertiesStore(resultsDir, _speciesnames)
     
@@ -332,7 +332,7 @@ class ChemistrySolver(dassl.DASSL):
             assert concentrations.size==self.Nspecies, "Concentrations array should be Nspecies=%d elements long"%self.Nspecies
             self.concentrations = concentrations
         elif type(concentrations)==dict:
-            if zero_others: self.concentrations = numpy.zeros(self.Nspecies)
+            if zero_others: self.concentrations = numpy.zeros(self.Nspecies, numpy.float64)
             assert self.concentrations.size == self.Nspecies, "Concentrations array hasn't been initialised." # try calling with zero_others=True
             for key,value in concentrations.iteritems():
                 i = _speciesnames.index(key)
@@ -378,7 +378,7 @@ class ChemistrySolver(dassl.DASSL):
         print "forward_rate_coefficients", self.forward_rate_coefficients
         print "reverse_rate_coefficients", self.reverse_rate_coefficients
         
-    def getRightSideOfODE(self,concentrations,timesteps):
+    def getRightSideOfODE(self,concentrations,timesteps=None):
         """Get the function which will be the right side of the ODE"""
         # This is probably the function to speed up, when the time comes for optimization:
         """Get the net rate of creation of all species at a concentration and T."""
@@ -386,7 +386,7 @@ class ChemistrySolver(dassl.DASSL):
         reverse_rates = self.reverse_rate_coefficients*(concentrations**self.stoich_products).prod(1)
         net_rates = forward_rates - reverse_rates
         net_rates_of_creation = numpy.dot(net_rates.T, self.stoich_net)
-        return net_rates_of_creation
+        return net_rates_of_creation # (mol/m3/s)
 
     def residual(self, t, y, dydt):
         """The residual function, solved by dassl.
@@ -508,7 +508,7 @@ def simulateDiesel():
         #check the residual works
         solver.residual(solver.t, solver.y, solver.dydt)
                 
-        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)))
+        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : solver.advance(time)
             concentration_history_array[step] = solver.y
@@ -593,7 +593,7 @@ def simulateOctane():
     early_steps = numpy.logspace(numpy.log10(start)-steps_before_start/10,numpy.log10(start),steps_before_start)
     timesteps = list(early_steps)
     timesteps.extend(list(main_steps))
-    timesteps = numpy.array(timesteps)
+    timesteps = numpy.array(timesteps, numpy.float64)
     
     print "Concentrations at start (mol/m3)", concentrations
     
@@ -610,7 +610,7 @@ def simulateOctane():
         #check the residual works
         solver.residual(solver.t, solver.y, solver.dydt)
                 
-        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)))
+        concentration_history_array = numpy.zeros((len(timesteps),len(concentrations)), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : solver.advance(time)
             concentration_history_array[step] = solver.y
