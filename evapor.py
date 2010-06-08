@@ -141,7 +141,11 @@ class DepositPhase(Phase):
         
         Currently this is not temperature-dependent.
         """
-        diesel_concentrations = self.concentrations * self.properties.DepositPartitionCoefficient298
+        DETERGENCY = 2 
+        
+        K = self.properties.DepositPartitionCoefficient298
+        K = numpy.exp( numpy.log(K) / DETERGENCY )
+        diesel_concentrations = self.concentrations * K
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
 
@@ -593,7 +597,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=False, CHEMICAL_REACTION=True, PHASE_SEPARATION=False,
+                            EVAPORATION=False, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
                             resultsDir='RMG_results-amrit' )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
