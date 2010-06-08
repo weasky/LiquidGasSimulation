@@ -674,15 +674,17 @@ if __name__ == "__main__":
     deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
     for step,time in enumerate(timesteps):
         if time>0 : diesel.advance(time)
+        # notice these history_arrays now contain MASSES IN MILLIGRAMS!
         diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE * diesel.molar_masses*1e6
         deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE * diesel.molar_masses*1e6
-        print diesel.t, diesel.y
+        print "At time t=%g s"%(diesel.t)
+        print "Diesel contains (mg)\n", diesel_history_array[step]
+        print "Deposit contains (mg)\n", deposit_history_array[step]
     
     plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 1, 'plot')
     plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 2, 'plot')
     plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 3, 'semilogy')
     plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 4, 'semilogy')    
-    
     
     print 'final thickness (micrometres)', diesel.thickness * 1e6
     print 'fraction of original thickness', diesel.thickness/diesel.initial_thickness
