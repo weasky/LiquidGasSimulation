@@ -565,7 +565,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
+                            EVAPORATION=False, CHEMICAL_REACTION=True, PHASE_SEPARATION=False,
                             resultsDir='RMG_results-amrit' )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
@@ -588,7 +588,7 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,0.04,501)
+        timesteps=linspace(0,1e-9,1001)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
