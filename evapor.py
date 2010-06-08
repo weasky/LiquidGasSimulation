@@ -218,6 +218,8 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Must pass it list of speciesnames so that the arrays returned are in the right size and order
         self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
         
+        set_Ar_properties(self.properties)
+        
         # 7 surrogate model
         if all(name in self.speciesnames for name in 'O2(1)  n-C11(2)  n-C13(3) \
                   Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8)'.split() ):
@@ -589,8 +591,21 @@ class LiquidFilmCell(dassl.DASSL, Phase):
     #    self.amounts = concentrations * self.volume
     #    
 
-        
-
+def set_Ar_properties(properties_store):
+    """Update the properties for Ar"""
+    properties_store._specs_props['Ar'] = dict(
+        ChemkinName='Ar',
+        ChemicalFormula='C50',
+        MolecularWeight=50*12,
+        Radius=1e-9,
+        Diffusivity=1e-8,
+        AbrahamA = 1.14, # these are from oxalic acid estimated by ADME webboxes
+        AbrahamB = 0.68,
+        AbrahamL = 2.959,
+        AbrahamS = 1.06,
+        AbrahamE = 0.34,
+        AbrahamV = 0.5392
+    )
 if __name__ == "__main__":
     dia = 0.14E-3
     L = 0.5E-3
