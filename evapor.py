@@ -402,7 +402,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Xo2 = 21e-4 * 0.209 
        # Xn2 = 225e-4 * 0.79
         driving_force =  self.total_amount * Xo2 - self.amounts[self._oxygen_index]
-        rate_constant = 1e2 # seconds^-1
+        rate_constant = 1e3 # seconds^-1
         return driving_force * rate_constant
         
     ############
@@ -610,7 +610,7 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=False, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
+                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
                             resultsDir='RMG_results-amrit' )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
