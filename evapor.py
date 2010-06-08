@@ -468,8 +468,15 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Qi: mol/m2/s
         Qi = self.Dvi * rhovi / Lv
         
-        # Not sure what this is for:
-        # Qi = Qi * self.dia / 4. / self.len
+        """
+        Since the above flux is from the nozzle to the chamber, the A = \pi (D/2)^2
+        but what we need if the flux from the fuel film, where A_film = \pi D L
+        so we need a correction coeff D/(4L).
+
+        Here we have an assumption that the rhovi doesn't change that much along
+        the axis though
+        """
+        Qi = Qi * self.dia / 4. / self.len
         return Qi
     
     
