@@ -588,16 +588,21 @@ def plot_graph(history_array, species_names, title='A Plot', figure_number=None,
     type defaults to 'plot'. Alternatives are 'semilogy', 'semilogx', 'loglog', etc.
     """
     final_amounts = history_array[-1]
-    pylab.figure(figure_number)
+    fig = pylab.figure(figure_number)
     pylab.axes([0.1,0.1,0.71,0.85])
     plot = getattr(pylab,type) # eg. plot=pylab.plot or plot=pylab.semilog
-    plot(timesteps,history_array)
+    plt=plot(timesteps,history_array)
+    urls = list()
     for i in range(len(species_names)):
+        url='RMG_results-amrit/pics/'+species_names[i]+'.png'
+        urls.append(url)
+        plt[i].set_url(url)
         pylab.annotate(species_names[i], (timesteps[-1]*0.999,final_amounts[i]), 
             xytext=(20,-5), textcoords='offset points', 
-            arrowprops=dict(arrowstyle="-") )
+            arrowprops=dict(arrowstyle="-"), url=url)
     pylab.title(title)
     pylab.show()
+    fig.canvas.print_figure(title+'.svg')
     
 if __name__ == "__main__":
     dia = 0.14E-3
