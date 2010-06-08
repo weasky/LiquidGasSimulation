@@ -118,6 +118,7 @@ class DepositPhase(Phase):
         """
         Phase.__init__(self, properties, amounts)
         self.T = temperature
+        self.DETERGENCY = None
 
         """
         Liquid-liquid mass transfer coefficients for stirred systems 
@@ -141,13 +142,26 @@ class DepositPhase(Phase):
         
         Currently this is not temperature-dependent.
         """
-        DETERGENCY = 2 
+        DETERGENCY = self.DETERGENCY if self.DETERGENCY else 1 
         
         K = self.properties.DepositPartitionCoefficient298
         K = numpy.exp( numpy.log(K) / DETERGENCY )
         diesel_concentrations = self.concentrations * K
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
+
+    def add_detergent(self,capacity=2):
+        """
+        Simulate the one-parameter(capacity) detergent effect.
+
+        From Richard's code, it seems
+        K^C = K_0 (K_0 is partitioncoef without detergent, C is capacity)
+
+        that means detergent no effect if C=1 and Large capacity will give
+        smaller K if C>1
+        """
+        self.DETERGENCY = capacity
+        
 
     def fluxes_in(self, outside_concentrations):
         """The fluxes of species into the deposit phase from diesel at outside_concentration, in mol/m2/s."""
@@ -456,8 +470,15 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Qi: mol/m2/s
         Qi = self.Dvi * rhovi / Lv
         
-        # Not sure what this is for:
-        # Qi = Qi * self.dia / 4. / self.len
+        """
+        Since the above flux is from the nozzle to the chamber, the A = \pi (D/2)^2
+        but what we need if the flux from the fuel film, where A_film = \pi D L
+        so we need a correction coeff D/(4L).
+
+        Here we have an assumption that the rhovi doesn't change that much along
+        the axis though
+        """
+        Qi = Qi * self.dia / 4. / self.len
         return Qi
     
     
