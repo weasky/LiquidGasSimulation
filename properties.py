@@ -335,7 +335,10 @@ class PropertiesStore():
             # import pdb; pdb.set_trace()
             print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
             species_name='O2(1)'
-            
+            if species_name not in self._speciesnames:
+                # O2(1) isn't there, so try the O2(6) from Amrit's naming
+                species_name = 'O2(6)'
+        
         spec_prop = self._specs_props[species_name]
         return spec_prop
         
@@ -372,6 +375,9 @@ class PropertiesStore():
             # import pdb; pdb.set_trace()
             # print "WARNING: Using 'O2(1)' properties for %s because I don't have %s values"%(species_name,species_name)
             species_name='O2(1)'
+            if species_name not in self._speciesnames:
+                # O2(1) isn't there, so try the O2(6) from Amrit's naming
+                species_name = 'O2(6)'
         try:
             spec_prop = self._specs_props[species_name]
         except KeyError:

@@ -203,17 +203,6 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # the vector 'y' solved by dassl is the amounts, divided by SCALE
         self.SCALE = 1e-12  # so dassl is tracking some numbers larger than the actual amounts 
         
-        # 7 surrogate model
-        fuel=[
-            FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
-            FuelComponent('n-C13(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0),
-            FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3 ),
-            FuelComponent('n-C16(5)',  0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51, C=154.45 ),3415.0),
-            FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148, B=2396.8,  C=199.5736),2.6e3),
-            FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
-            FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
-        ]
-        
         # Set up and store chemistry solver
         if chem_solver is None: chem_solver = ChemistrySolver(resultsDir=resultsDir)
         self.chem_solver = chem_solver
@@ -225,6 +214,36 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Must pass it list of speciesnames so that the arrays returned are in the right size and order
         self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
         
+        # 7 surrogate model
+        if all(name in self.speciesnames for name in 'O2(1)  n-C11(2)  n-C13(3) \
+                  Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8)'.split() ):
+            # We're using Richard's new species names
+            fuel=[
+                FuelComponent('n-C11(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0),
+                FuelComponent('n-C13(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0),
+                FuelComponent('Mnphtln(4)',0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3 ),
+                FuelComponent('n-C16(5)',  0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51, C=154.45 ),3415.0),
+                FuelComponent('C10bnzn(6)',0.12,dict(C=16,H=26,O=0),dict(A=7.8148, B=2396.8,  C=199.5736),2.6e3),
+                FuelComponent('n-C19(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0),
+                FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
+            ]
+            self._oxygen_name = "O2(1)"
+        elif all(name in self.speciesnames for name in "SPC(1)  SPC(2)  SPC(3) \
+                              SPC(4)  SPC(5)  O2(6)  SPC(7)  SPC(8)".split() ):
+            # We're using the old names (and had better hope they're in the right order!)
+            fuel=[                                                                                                  
+                FuelComponent('SPC(2)',  0.05,dict(C=11,H=24,O=0),dict(A=6.9722, B=1569.57, C=187.7  ),4945.0), # n-C11(2)
+                FuelComponent('SPC(3)',  0.19,dict(C=13,H=28,O=0),dict(A=7.00756,B=1690.67, C=174.22 ),4182.0), # n-C13(3) 
+                FuelComponent('SPC(4)',  0.11,dict(C=11,H=10,O=0),dict(A=7.03592,B=1826.948,C=195.002),3.7e3 ), # Mnphtln(4)
+                FuelComponent('SPC(5)',  0.25,dict(C=16,H=34,O=0),dict(A=7.02867,B=1830.51, C=154.45 ),3415.0), # n-C16(5) 
+                FuelComponent('SPC(1)',  0.12,dict(C=16,H=26,O=0),dict(A=7.8148, B=2396.8,  C=199.5736),2.6e3), # C10bnzn(6)
+                FuelComponent('SPC(7)',  0.18,dict(C=19,H=40,O=0),dict(A=7.0153, B=1932.8,  C=137.6  ),2889.0), # n-C19(7) 
+                FuelComponent('SPC(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)  # n-C21(8)
+            ]
+            self._oxygen_name = "O2(6)"
+        else:
+            raise Exception("Don't recognize species names used for fuel components.")
+
         # Initialize the Phase parent class; sets up 'amounts' variable and caches some properties
         Phase.__init__(self, self.properties)
 
@@ -236,7 +255,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
 
 
         # save some special species indices
-        self._oxygen_index = self.speciesnames.index('O2(1)')
+        self._oxygen_index = self.speciesnames.index(self._oxygen_name)
         self._nitrogen_index = self.speciesnames.index('N2')
         
         # area and volume of liquid film cell
@@ -286,7 +305,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         
         
         # Some species we don't want "evaporating" so set their Psat values to zero.
-        for species_name in "Ar  N2  O2(1)".split():
+        for species_name in ['Ar', 'N2', self._oxygen_name]:
             species_index = self.speciesnames.index(species_name)
             self.Psats[species_index] = 0
         
@@ -546,7 +565,8 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
 
     diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True )
+                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
+                            resultsDir='RMG_results-amrit' )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
