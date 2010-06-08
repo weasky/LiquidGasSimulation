@@ -79,6 +79,11 @@ class Phase(object):
         """The total amount of stuff in the phase, in mol."""
         return sum(self.amounts)
     total_amount = property(get_total_amount)
+
+    def get_total_mass(self):
+        """The total mass of stuff in the phase, in kg."""
+        return sum(self.amounts * self.molar_masses)
+    total_mass = property(get_total_mass)
     
     def get_mole_fractions(self):
         """The amount (mole) fractions in the phase. Sum to 1."""
@@ -118,7 +123,7 @@ class DepositPhase(Phase):
         """
         Phase.__init__(self, properties, amounts)
         self.T = temperature
-        self.DETERGENCY = None
+        self.detergency = None
 
         """
         Liquid-liquid mass transfer coefficients for stirred systems 
@@ -127,25 +132,26 @@ class DepositPhase(Phase):
         so we shall just use these for now (they're probably correlated).
         """
         self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e5) # m2/s, though we're using as m/s
-        self.mass_transfer_coefficients *= 1e-3 # slow it down for testing
+        self.mass_transfer_coefficients *= 1e-0 # slow it down for testing
     
     def get_total_volume(self):
         """The total volume of the phase, in m3.
         
         This method over-rides the parent class one which is based on molar volumes.
         """
-        return self.initial_volume
+        return self.initial_volume + sum(self.amounts * self.molar_volumes)
     total_volume = property(get_total_volume)
     
     def get_diesel_equilibrium_concentrations(self):
         """Solution-phase concentrations at interface at equilibrium, in mol/m3.
         
         Currently this is not temperature-dependent.
+        Includes (fudgy) detergency model.
         """
-        DETERGENCY = self.DETERGENCY if self.DETERGENCY else 1 
+        detergency = self.detergency if self.detergency is not None else 1 
         
         K = self.properties.DepositPartitionCoefficient298
-        K = numpy.exp( numpy.log(K) / DETERGENCY )
+        K = numpy.exp( numpy.log(K) / detergency )
         diesel_concentrations = self.concentrations * K
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
@@ -160,7 +166,7 @@ class DepositPhase(Phase):
         that means detergent no effect if C=1 and Large capacity will give
         smaller K if C>1
         """
-        self.DETERGENCY = capacity
+        self.detergency = capacity
         
 
     def fluxes_in(self, outside_concentrations):
@@ -188,8 +194,6 @@ class DepositPhase(Phase):
      #   outside_amounts = self.amounts * split
      #   return outside_amounts
 
-
-
 class LiquidFilmCell(dassl.DASSL, Phase):
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
@@ -208,7 +212,6 @@ class LiquidFilmCell(dassl.DASSL, Phase):
                  resultsDir='RMG_results'):
         # Initialize the DASSL solver
         dassl.DASSL.__init__(self)  
-
         
         # store parameters
         self.T = T
@@ -225,15 +228,17 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         if chem_solver is None: chem_solver = ChemistrySolver(resultsDir=resultsDir)
         self.chem_solver = chem_solver
         self.nSpecies = chem_solver.Nspecies
-        self.speciesnames = chem_solver.speciesnames
-        assert len(self.speciesnames) == self.nSpecies        
+        self.species_names = chem_solver.speciesnames
+        assert len(self.species_names) == self.nSpecies        
 
         # Create properties store.
-        # Must pass it list of speciesnames so that the arrays returned are in the right size and order
-        self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
+        # Must pass it list of species names so that the arrays returned are in the right size and order
+        self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.species_names)
+        
+        set_Ar_properties(self.properties)
         
         # 7 surrogate model
-        if all(name in self.speciesnames for name in 'O2(1)  n-C11(2)  n-C13(3) \
+        if all(name in self.species_names for name in 'O2(1)  n-C11(2)  n-C13(3) \
                   Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8)'.split() ):
             # We're using Richard's new species names
             fuel=[
@@ -246,7 +251,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
                 FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
             ]
             self._oxygen_name = "O2(1)"
-        elif all(name in self.speciesnames for name in "SPC(1)  SPC(2)  SPC(3) \
+        elif all(name in self.species_names for name in "SPC(1)  SPC(2)  SPC(3) \
                               SPC(4)  SPC(5)  O2(6)  SPC(7)  SPC(8)".split() ):
             # We're using the old names (and had better hope they're in the right order!)
             fuel=[                                                                                                  
@@ -273,8 +278,8 @@ class LiquidFilmCell(dassl.DASSL, Phase):
 
 
         # save some special species indices
-        self._oxygen_index = self.speciesnames.index(self._oxygen_name)
-        self._nitrogen_index = self.speciesnames.index('N2')
+        self._oxygen_index = self.species_names.index(self._oxygen_name)
+        self._nitrogen_index = self.species_names.index('N2')
         
         # area and volume of liquid film cell
         self.diameter = diameter
@@ -282,13 +287,13 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         self.length = length
         self.initial_volume = pi * diameter * length * thickness
         
-        # deposit volume (held constant and used for concentrations!)
+        # deposit volume (added to component species volumes and used for concentrations!)
         self.deposit.initial_volume = self.initial_volume * 0.01
         
         # Set the fuel component initial amounts
         # this enables us to find the total concentration (at the start) necessary for Psat calculations
         for component in fuel:
-            species_index = self.speciesnames.index(component.name)
+            species_index = self.species_names.index(component.name)
             self.amounts[species_index] = ( self.initial_volume * 
                                             component.initialVolFraction * 
                                             component.liquidMolarDensity )
@@ -316,7 +321,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Update fuel component parameters with revised values.
         # (we have better information for the fuel components than for other species)
         for component in fuel:
-            species_index = self.speciesnames.index(component.name)
+            species_index = self.species_names.index(component.name)
             self.molar_volumes[species_index] = 1 / component.liquidMolarDensity
             # Psat for fuel components uses Antoine equation
             self.Psats[species_index] = component.getPsat(self.T)
@@ -324,7 +329,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         
         # Some species we don't want "evaporating" so set their Psat values to zero.
         for species_name in ['Ar', 'N2', self._oxygen_name]:
-            species_index = self.speciesnames.index(species_name)
+            species_index = self.species_names.index(species_name)
             self.Psats[species_index] = 0
         
        ## put some diesel in the deposit phase to get it started!
@@ -414,7 +419,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Xo2 = 21e-4 * 0.209 
        # Xn2 = 225e-4 * 0.79
         driving_force =  self.total_amount * Xo2 - self.amounts[self._oxygen_index]
-        rate_constant = 1e2 # seconds^-1
+        rate_constant = 1e3 # seconds^-1
         return driving_force * rate_constant
         
     ############
@@ -552,36 +557,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         dydt = self.residual(time, y, numpy.zeros_like(y))[0] 
         print "I have dydt0 = ",repr(dydt)
         dassl.DASSL.initialize(self, time, y0=y, dydt0=dydt, atol=atol, rtol=rtol)
-        
 
-    def rightSideofODE(self, Y, t):
-        """
-        drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
-        y is mass density
-        """
-        # evaporation term
-        massDens = Y[:-1]
-        molDens = massDens / self.molar_masses
-        massFrac = massDens / sum(massDens)
-        molFrac = molDens / sum(molDens)
-        self.amounts = molDens * self.volume
-        ratio = self.area / self.volume
-        Qi = self.get_evaporative_flux(Lv=self.diameter)  # I think this is broken 
-        # since I changed evaporative_flux to actually be a flux (per unit area)
-        Q = sum(Qi)
-        
-        #reaction source term, turn the mole to mass frac dens
-        if self.reaction:
-            reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molar_masses
-        else:
-            reactConcs = zeros(self.nSpecies, numpy.float64)
-   
-        dhdt = -1. / sum(massDens) * Q
-        drhodt = -ratio * Qi - ratio * massDens * dhdt + reactConcs
-        drhodt = append(drhodt, dhdt)
-        self.update_volume_area_thickness()
-        self.update_oxygen_nitrogen()
-        return drhodt
 
     #def advance(self, t, plotresult=False):
     #    y0 = self.concentrations * self.molar_masses
@@ -610,16 +586,63 @@ class LiquidFilmCell(dassl.DASSL, Phase):
     #    self.amounts = concentrations * self.volume
     #    
 
-        
+def set_Ar_properties(properties_store):
+    """Update the properties for Ar"""
+    properties_store._specs_props['Ar'] = dict(
+        ChemkinName='Ar',
+        ChemicalFormula='C50',
+        MolecularWeight=50*12,
+        Radius=1e-9,
+        Diffusivity=1e-8,
+        AbrahamA = 1.14, # these are from oxalic acid estimated by ADME webboxes
+        AbrahamB = 0.68,
+        AbrahamL = 2.959,
+        AbrahamS = 1.06,
+        AbrahamE = 0.34,
+        AbrahamV = 0.5392
+    )
 
+def plot_graph(history_array, species_names, title='A Plot', figure_number=None, type='plot'):
+    """Plot a graph.
+    
+    history_array is the array to plot
+    species_names is the list of labels
+    title is the plot title
+    figure_number is incremented if omitted
+    type defaults to 'plot'. Alternatives are 'semilogy', 'semilogx', 'loglog', etc.
+    """
+    final_amounts = history_array[-1]
+    initial_amounts = history_array[0]
+    fig = pylab.figure(figure_number)
+    pylab.axes([0.1,0.1,0.71,0.85])
+    plot = getattr(pylab,type) # eg. plot=pylab.plot or plot=pylab.semilog
+    plt=plot(timesteps,history_array)
+    urls = list()
+    for i in range(len(species_names)):
+        url='RMG_results-amrit/pics/'+species_names[i]+'.png'
+        urls.append(url)
+        plt[i].set_url(url)
+        pylab.annotate(species_names[i], (timesteps[-1]*0.999,final_amounts[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-"), url=url)
+        pylab.annotate(species_names[i], (timesteps[-1]*0.001,initial_amounts[i]), 
+            xytext=(-20,-5), textcoords='offset points', horizontalalignment='right',
+            arrowprops=dict(arrowstyle="-"), url=url)            
+    pylab.title(title)
+    pylab.show()
+    fig.canvas.print_figure(title+'.svg')
+    
 if __name__ == "__main__":
     dia = 0.14E-3
     L = 0.5E-3
     initial_film_thickness = 3E-6
+    temperature_in_C = 250
 
-    diesel = LiquidFilmCell(T=523, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False,
-                            resultsDir='RMG_results-amrit' )
+    final_time = 1 # s
+
+    diesel = LiquidFilmCell(T=temperature_in_C+273, diameter=dia, length=L, thickness=initial_film_thickness,
+                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False)
+    deposit = diesel.deposit
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
@@ -638,49 +661,36 @@ if __name__ == "__main__":
     print 'initial concentrations are',diesel.concentrations
     
     # import pdb; pdb.set_trace(); # pause for debugging
-    if True:
-        print "Trying DASSL solver"
-        diesel.initialize_solver()
-        timesteps=linspace(0,1,1001)
-        
-        #check the residual works (although the initialise_solver above has just done so)
-        #import pdb; pdb.set_trace()
-        residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
-        
-        diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
-        diesel_concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)        
-        deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
-        for step,time in enumerate(timesteps):
-            if time>0 : diesel.advance(time)
-            print diesel.thickness
-            diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE
-            deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE
-            print diesel.t, diesel.y
     
+    print "Trying DASSL solver"
+    diesel.initialize_solver()
+    timesteps=linspace(0,final_time,1001)
     
-    final_amounts = diesel_history_array[-1]
-    pylab.figure(1)
-    pylab.axes([0.1,0.1,0.71,0.85])
-    pylab.plot(timesteps,diesel_history_array)
-    for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
-            xytext=(20,-5), textcoords='offset points', 
-            arrowprops=dict(arrowstyle="-") )
-    pylab.title('diesel amounts')
-    pylab.show()
+    #check the residual works (although the initialise_solver above has just done so)
+    #import pdb; pdb.set_trace()
+    residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
     
-    final_amounts = deposit_history_array[-1]
-    pylab.figure(2)
-    pylab.axes([0.1,0.1,0.71,0.85])
-    pylab.plot(timesteps,deposit_history_array)
-    for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
-            xytext=(20,-5), textcoords='offset points', 
-            arrowprops=dict(arrowstyle="-") )
-    pylab.title('deposit amounts')
-    pylab.show()
-        
-        
+    diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    for step,time in enumerate(timesteps):
+        if time>0 : diesel.advance(time)
+        # notice these history_arrays now contain MASSES IN MILLIGRAMS!
+        diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE * diesel.molar_masses*1e6
+        deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE * diesel.molar_masses*1e6
+        print "At time t=%g s"%(diesel.t)
+        print "Diesel contains (mg)\n", diesel_history_array[step]
+        print "Deposit contains (mg)\n", deposit_history_array[step]
+    
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 1, 'plot')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 2, 'plot')
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 3, 'semilogy')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 4, 'semilogy')    
+    
+    print 'final thickness (micrometres)', diesel.thickness * 1e6
+    print 'fraction of original thickness', diesel.thickness/diesel.initial_thickness
+    print 'the total mass of deposit phase is %g mg' % (deposit.total_mass * 1e6)
+    print 'that amount *6500*60 = %g mg' % (deposit.total_mass * 1e6 * 6500 * 60)
+    
     #else:
     #    print 'start evaporating without reaction'
     #    timesteps=linspace(0,0.5,501)
