@@ -588,7 +588,7 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,1e-9,1001)
+        timesteps=linspace(0,1e-3,1001)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
