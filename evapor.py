@@ -577,6 +577,28 @@ def set_Ar_properties(properties_store):
         AbrahamE = 0.34,
         AbrahamV = 0.5392
     )
+
+def plot_graph(history_array, species_names, title='A Plot', figure_number=None, type='plot'):
+    """Plot a graph.
+    
+    history_array is the array to plot
+    species_names is the list of labels
+    title is the plot title
+    figure_number is incremented if omitted
+    type defaults to 'plot'. Alternatives are 'semilogy', 'semilogx', 'loglog', etc.
+    """
+    final_amounts = history_array[-1]
+    pylab.figure(figure_number)
+    pylab.axes([0.1,0.1,0.71,0.85])
+    plot = getattr(pylab,type) # eg. plot=pylab.plot or plot=pylab.semilog
+    plot(timesteps,history_array)
+    for i in range(len(species_names)):
+        pylab.annotate(species_names[i], (timesteps[-1]*0.999,final_amounts[i]), 
+            xytext=(20,-5), textcoords='offset points', 
+            arrowprops=dict(arrowstyle="-") )
+    pylab.title(title)
+    pylab.show()
+    
 if __name__ == "__main__":
     dia = 0.14E-3
     L = 0.5E-3
@@ -620,29 +642,13 @@ if __name__ == "__main__":
             deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE
             print diesel.t, diesel.y
     
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel amounts', 1, 'plot')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit amounts', 2, 'plot')
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel amounts', 3, 'semilogy')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit amounts', 4, 'semilogy')    
     
-    final_amounts = diesel_history_array[-1]
-    pylab.figure(1)
-    pylab.axes([0.1,0.1,0.71,0.85])
-    pylab.plot(timesteps,diesel_history_array)
-    for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
-            xytext=(20,-5), textcoords='offset points', 
-            arrowprops=dict(arrowstyle="-") )
-    pylab.title('diesel amounts')
-    pylab.show()
-    
-    final_amounts = deposit_history_array[-1]
-    pylab.figure(2)
-    pylab.axes([0.1,0.1,0.71,0.85])
-    pylab.plot(timesteps,deposit_history_array)
-    for i in range(len(diesel.speciesnames)):
-        pylab.annotate(diesel.speciesnames[i], (timesteps[-1]*0.999,final_amounts[i]), 
-            xytext=(20,-5), textcoords='offset points', 
-            arrowprops=dict(arrowstyle="-") )
-    pylab.title('deposit amounts')
-    pylab.show()
-        
+
+
         
     #else:
     #    print 'start evaporating without reaction'
