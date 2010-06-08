@@ -366,6 +366,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         that Yinchun has found somewhere. Please could you elaborate?
         """
         air_partial_pressure = self.P - sum(self.vapor_partial_pressures)
+        assert air_partial_pressure > 0
         oxygen_partial_pressure = 0.209 * air_partial_pressure
         nitrogen_partial_pressure = air_partial_pressure - oxygen_partial_pressure
         # air mole fraction, O2 and N2. 
@@ -379,6 +380,24 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         
         self.amounts[self._oxygen_index] = self.total_amount * oxygen_mole_fraction
         self.amounts[self._nitrogen_index] = self.total_amount * nitrogen_mole_fraction
+    
+    def get_oxygen_dissolution_rate(self):
+        """The rate at which oxygen is dissolving into the diesel, in mol/s.
+        
+        We asssume the equilibrium mole fraction is given by Yinchun's correlation,
+        and the rate at which this equilbrium is reached has a first order 
+        decay constant arbitrarily chosen, eg. k=1e3 s^-1.
+        """
+        
+        # from Yinchun's email dated 8 Feb 2010
+        # Mole fractions in the hydrocarbon at 1 atm partial pressure,
+        # multiplied by their partial pressures in pure air 
+        # (not allowing for the hydrocarbons in the air)
+        Xo2 = 21e-4 * 0.209 
+       # Xn2 = 225e-4 * 0.79
+        driving_force =  self.total_amount * Xo2 - self.amounts[self._oxygen_index]
+        rate_constant = 1e2 # seconds^-1
+        return driving_force * rate_constant
         
     ############
     ## legacy functions not needed
@@ -457,7 +476,11 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         self.amounts = self.SCALE * y[:self.nSpecies] 
         self.deposit.amounts = self.SCALE * y[self.nSpecies:]
         
-        self.update_oxygen_nitrogen() # changes the amounts of these
+        # currently P_air < 0 because too many volatile species
+        # and I think updating the amount in here is a bad idea anyway -
+        # better to let the DAE solver know about the change.
+        #self.update_oxygen_nitrogen() # changes the amounts of these
+        
         
         if self.PHASE_SEPARATION:
             dNdt_into_deposit = self.area * self.deposit.fluxes_in(self.concentrations)
@@ -480,8 +503,13 @@ class LiquidFilmCell(dassl.DASSL, Phase):
             #print 'dNdt_evaporation',dNdt_evaporation
         else:
             dNdt_evaporation = numpy.zeros_like(self.amounts)
-            
+        
+        
         dNdt_diesel = dNdt_reaction - dNdt_into_deposit - dNdt_evaporation
+        
+        # add on oxygen dissolution rate
+        dNdt_diesel[self._oxygen_index] += self.get_oxygen_dissolution_rate()
+        
         g = numpy.concatenate((dNdt_diesel,dNdt_into_deposit)) / self.SCALE
         #print 'g=',repr(g)
         #print "y=",repr(y)
@@ -588,7 +616,7 @@ if __name__ == "__main__":
     if True:
         print "Trying DASSL solver"
         diesel.initialize_solver()
-        timesteps=linspace(0,1e-3,1001)
+        timesteps=linspace(0,1,1001)
         
         #check the residual works (although the initialise_solver above has just done so)
         #import pdb; pdb.set_trace()
