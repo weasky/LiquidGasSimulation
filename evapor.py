@@ -79,6 +79,11 @@ class Phase(object):
         """The total amount of stuff in the phase, in mol."""
         return sum(self.amounts)
     total_amount = property(get_total_amount)
+
+    def get_total_mass(self):
+        """The total mass of stuff in the phase, in kg."""
+        return sum(self.amounts * self.molar_masses)
+    total_mass = property(get_total_mass)
     
     def get_mole_fractions(self):
         """The amount (mole) fractions in the phase. Sum to 1."""
@@ -118,7 +123,7 @@ class DepositPhase(Phase):
         """
         Phase.__init__(self, properties, amounts)
         self.T = temperature
-        self.DETERGENCY = None
+        self.detergency = None
 
         """
         Liquid-liquid mass transfer coefficients for stirred systems 
@@ -127,7 +132,7 @@ class DepositPhase(Phase):
         so we shall just use these for now (they're probably correlated).
         """
         self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e5) # m2/s, though we're using as m/s
-        self.mass_transfer_coefficients *= 1e-3 # slow it down for testing
+        self.mass_transfer_coefficients *= 1e-0 # slow it down for testing
     
     def get_total_volume(self):
         """The total volume of the phase, in m3.
@@ -141,11 +146,12 @@ class DepositPhase(Phase):
         """Solution-phase concentrations at interface at equilibrium, in mol/m3.
         
         Currently this is not temperature-dependent.
+        Includes (fudgy) detergency model.
         """
-        DETERGENCY = self.DETERGENCY if self.DETERGENCY else 1 
+        detergency = self.detergency if self.detergency is not None else 1 
         
         K = self.properties.DepositPartitionCoefficient298
-        K = numpy.exp( numpy.log(K) / DETERGENCY )
+        K = numpy.exp( numpy.log(K) / detergency )
         diesel_concentrations = self.concentrations * K
         return diesel_concentrations
     diesel_equilibrium_concentrations = property(get_diesel_equilibrium_concentrations)
@@ -160,7 +166,7 @@ class DepositPhase(Phase):
         that means detergent no effect if C=1 and Large capacity will give
         smaller K if C>1
         """
-        self.DETERGENCY = capacity
+        self.detergency = capacity
         
 
     def fluxes_in(self, outside_concentrations):
@@ -188,8 +194,6 @@ class DepositPhase(Phase):
      #   outside_amounts = self.amounts * split
      #   return outside_amounts
 
-
-
 class LiquidFilmCell(dassl.DASSL, Phase):
     """
     This is a class for the thin liquid film on the cylinder wall. The instance
@@ -208,7 +212,6 @@ class LiquidFilmCell(dassl.DASSL, Phase):
                  resultsDir='RMG_results'):
         # Initialize the DASSL solver
         dassl.DASSL.__init__(self)  
-
         
         # store parameters
         self.T = T
@@ -284,7 +287,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         self.length = length
         self.initial_volume = pi * diameter * length * thickness
         
-        # deposit volume (held constant and used for concentrations!)
+        # deposit volume (added to component species volumes and used for concentrations!)
         self.deposit.initial_volume = self.initial_volume * 0.01
         
         # Set the fuel component initial amounts
@@ -478,7 +481,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Here we have an assumption that the rhovi doesn't change that much along
         the axis though
         """
-        Qi = Qi * self.dia / 4. / self.len
+        Qi = Qi * self.diameter / 4. / self.length
         return Qi
     
     
@@ -609,6 +612,7 @@ def plot_graph(history_array, species_names, title='A Plot', figure_number=None,
     type defaults to 'plot'. Alternatives are 'semilogy', 'semilogx', 'loglog', etc.
     """
     final_amounts = history_array[-1]
+    initial_amounts = history_array[0]
     fig = pylab.figure(figure_number)
     pylab.axes([0.1,0.1,0.71,0.85])
     plot = getattr(pylab,type) # eg. plot=pylab.plot or plot=pylab.semilog
@@ -621,18 +625,24 @@ def plot_graph(history_array, species_names, title='A Plot', figure_number=None,
         pylab.annotate(species_names[i], (timesteps[-1]*0.999,final_amounts[i]), 
             xytext=(20,-5), textcoords='offset points', 
             arrowprops=dict(arrowstyle="-"), url=url)
+        pylab.annotate(species_names[i], (timesteps[-1]*0.001,initial_amounts[i]), 
+            xytext=(-20,-5), textcoords='offset points', horizontalalignment='right',
+            arrowprops=dict(arrowstyle="-"), url=url)            
     pylab.title(title)
     pylab.show()
     fig.canvas.print_figure(title+'.svg')
     
 if __name__ == "__main__":
-    dia = 0.14E-3
-    L = 0.5E-3
-    initial_film_thickness = 3E-6
+    dia = 1e-3  # engine: 0.14E-3
+    L =  50e-3  # engine: 0.5E-3
+    initial_film_thickness = 12.5e-6 # m. 
+    temperature_in_C = 250
+    final_time = 1 # s
 
-    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
+    diesel = LiquidFilmCell(T=temperature_in_C+273, diameter=dia, length=L, thickness=initial_film_thickness,
                             EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
                             resultsDir='RMG_results-amrit' )
+    deposit = diesel.deposit
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
     print 'diesel components molar density is', diesel.molar_densities # mol/m3
@@ -651,31 +661,34 @@ if __name__ == "__main__":
     print 'initial concentrations are',diesel.concentrations
     
     # import pdb; pdb.set_trace(); # pause for debugging
-    if True:
-        print "Trying DASSL solver"
-        diesel.initialize_solver()
-        timesteps=linspace(0,1,1001)
-        
-        #check the residual works (although the initialise_solver above has just done so)
-        #import pdb; pdb.set_trace()
-        residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
-        
-        diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
-        deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
-        for step,time in enumerate(timesteps):
-            if time>0 : diesel.advance(time)
-            diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE
-            deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE
-            print diesel.t, diesel.y
     
-    plot_graph(diesel_history_array, diesel.species_names, 'Diesel amounts', 1, 'plot')
-    plot_graph(deposit_history_array, diesel.species_names, 'Deposit amounts', 2, 'plot')
-    plot_graph(diesel_history_array, diesel.species_names, 'Diesel amounts', 3, 'semilogy')
-    plot_graph(deposit_history_array, diesel.species_names, 'Deposit amounts', 4, 'semilogy')    
+    print "Trying DASSL solver"
+    diesel.initialize_solver()
+    timesteps=linspace(0,final_time,1001)
     
-
-
-        
+    #check the residual works (although the initialise_solver above has just done so)
+    #import pdb; pdb.set_trace()
+    residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
+    
+    diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    for step,time in enumerate(timesteps):
+        if time>0 : diesel.advance(time)
+        diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE * diesel.molar_masses*1e6
+        deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE * diesel.molar_masses*1e6
+        print diesel.t, diesel.y
+    
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 1, 'plot')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 2, 'plot')
+    plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 3, 'semilogy')
+    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 4, 'semilogy')    
+    
+    
+    print 'final thickness (micrometres)', diesel.thickness * 1e6
+    print 'fraction of original thickness', diesel.thickness/diesel.initial_thickness
+    print 'the total mass of deposit phase is %g mg' % (deposit.total_mass * 1e6)
+    print 'that amount *6500*60 = %g mg' % (deposit.total_mass * 1e6 * 6500 * 60)
+    
     #else:
     #    print 'start evaporating without reaction'
     #    timesteps=linspace(0,0.5,501)
