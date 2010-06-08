@@ -1,7 +1,7 @@
 CKReader version 1.0
 http://www.cantera.org
 
-Mon Jun  7 19:16:04 2010
+Mon Jun  7 20:12:27 2010
 
         input file:                       chem.inp
 debugging disabled.
@@ -23,88 +23,122 @@ read 9 elements.
 
 reading species...
 
-1.  SPC(1)
-2.  SPC(2)
-3.  SPC(3)
-4.  SPC(4)
-5.  SPC(5)
-6.  O2(6)
-7.  SPC(7)
-8.  SPC(8)
-9.  HO2J(43)
-10.  SPC(17)
-11.  C11H9J(66)
-12.  SPC(117)
-13.  SPC(120)
-14.  SPC(136)
-15.  SPC(137)
-16.  SPC(119)
-17.  H2O2(101)
-18.  SPC(218)
-19.  SPC(254)
-20.  SPC(268)
-21.  SPC(261)
-22.  SPC(271)
-23.  SPC(395)
-24.  SPC(439)
-25.  SPC(455)
-26.  SPC(171)
-27.  H2O(190)
-28.  SPC(173)
-29.  SPC(446)
-30.  SPC(458)
-31.  SPC(664)
-32.  HOJ(103)
-33.  SPC(695)
-34.  SPC(70)
-35.  SPC(850)
-36.  SPC(854)
-37.  SPC(74)
-38.  SPC(948)
-39.  SPC(953)
-40.  SPC(525)
-41.  SPC(1070)
-42.  SPC(1121)
-43.  SPC(75)
-44.  SPC(1212)
-45.  SPC(1216)
-46.  SPC(804)
-47.  SPC(1294)
-48.  SPC(71)
-49.  SPC(1412)
-50.  SPC(1416)
-51.  SPC(76)
-52.  SPC(1504)
-53.  SPC(1508)
-54.  SPC(1373)
-55.  SPC(1603)
-56.  SPC(1620)
-57.  SPC(73)
-58.  SPC(1752)
-59.  SPC(1756)
-60.  SPC(533)
-61.  SPC(72)
-62.  SPC(1876)
-63.  SPC(1879)
-64.  SPC(801)
-65.  SPC(1993)
-66.  SPC(2040)
-67.  SPC(1108)
-68.  SPC(52)
-69.  SPC(2176)
-70.  SPC(2243)
-71.  SPC(665)
-72.  SPC(669)
-73.  SPC(2481)
+1.  Ar
+2.  N2
+3.  SPC(1)
+4.  SPC(2)
+5.  SPC(3)
+6.  SPC(4)
+7.  SPC(5)
+8.  O2(6)
+9.  SPC(7)
+10.  SPC(8)
+11.  HO2J(43)
+12.  SPC(17)
+13.  C11H9J(66)
+14.  SPC(117)
+15.  SPC(120)
+16.  SPC(136)
+17.  SPC(137)
+18.  SPC(119)
+19.  H2O2(101)
+20.  SPC(218)
+21.  SPC(254)
+22.  SPC(268)
+23.  SPC(261)
+24.  SPC(271)
+25.  SPC(395)
+26.  SPC(439)
+27.  SPC(455)
+28.  SPC(171)
+29.  H2O(190)
+30.  SPC(173)
+31.  SPC(446)
+32.  SPC(458)
+33.  SPC(664)
+34.  HOJ(103)
+35.  SPC(695)
+36.  SPC(70)
+37.  SPC(850)
+38.  SPC(854)
+39.  SPC(74)
+40.  SPC(948)
+41.  SPC(953)
+42.  SPC(525)
+43.  SPC(1070)
+44.  SPC(1121)
+45.  SPC(75)
+46.  SPC(1212)
+47.  SPC(1216)
+48.  SPC(804)
+49.  SPC(1294)
+50.  SPC(71)
+51.  SPC(1412)
+52.  SPC(1416)
+53.  SPC(76)
+54.  SPC(1504)
+55.  SPC(1508)
+56.  SPC(1373)
+57.  SPC(1603)
+58.  SPC(1620)
+59.  SPC(73)
+60.  SPC(1752)
+61.  SPC(1756)
+62.  SPC(533)
+63.  SPC(72)
+64.  SPC(1876)
+65.  SPC(1879)
+66.  SPC(801)
+67.  SPC(1993)
+68.  SPC(2040)
+69.  SPC(1108)
+70.  SPC(52)
+71.  SPC(2176)
+72.  SPC(2243)
+73.  SPC(665)
+74.  SPC(669)
+75.  SPC(2481)
 
-read 73 species.
+read 75 species.
 
 looking up species definitions...
 
 
  default Tlow, Tmid, Thigh: 300.00  1000.00  5000.00
 
-found species SPC(1) at line 119 of chem.inp ... 
+found species Ar at line 103 of chem.inp
+   id/date: L 6/88
+   phase: G
+   composition: (1 Ar)
+   Tlow, Tmid, Thigh: (200.00, 1000.00, 6000.00)
+
+   coefficients (low, high):
+   a1  	+2.50000000E+00  	+2.50000000E+00
+   a2  	+0.00000000E+00  	+0.00000000E+00
+   a3  	+0.00000000E+00  	+0.00000000E+00
+   a4  	+0.00000000E+00  	+0.00000000E+00
+   a5  	+0.00000000E+00  	+0.00000000E+00
+   a6  	-7.45375000E+02  	-7.45375000E+02
+   a7  	+4.37967490E+00  	+4.37967490E+00
+
+
+found species N2 at line 107 of chem.inp
+   id/date: G 8/02
+   phase: G
+   composition: (2 N)
+   Tlow, Tmid, Thigh: (200.00, 1000.00, 6000.00)
+
+   coefficients (low, high):
+   a1  	+3.53100528E+00  	+2.95257637E+00
+   a2  	-1.23660988E-04  	+1.39690040E-03
+   a3  	-5.02999433E-07  	-4.92631603E-07
+   a4  	+2.43530612E-09  	+7.86010195E-11
+   a5  	-1.40881235E-12  	-4.60755204E-15
+   a6  	-1.04697628E+03  	-9.23948688E+02
+   a7  	+2.96747038E+00  	+5.87188762E+00
+
+
+found species SPC(1) at line 121 of chem.inp ... 
    phase: G
    composition: (16 C, 26 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -119,7 +153,7 @@ found species SPC(1) at line 119 of chem.inp ...
    a7  	-1.56324963E+01  	-2.03458432E+02
 
 
-found species SPC(2) at line 125 of chem.inp ... 
+found species SPC(2) at line 127 of chem.inp ... 
    phase: G
    composition: (11 C, 24 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -134,7 +168,7 @@ found species SPC(2) at line 125 of chem.inp ...
    a7  	-1.54461970E+01  	-1.44372355E+02
 
 
-found species SPC(3) at line 131 of chem.inp ... 
+found species SPC(3) at line 133 of chem.inp ... 
    phase: G
    composition: (13 C, 28 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -149,7 +183,7 @@ found species SPC(3) at line 131 of chem.inp ...
    a7  	-1.48635330E+01  	-1.70063527E+02
 
 
-found species SPC(4) at line 137 of chem.inp ... 
+found species SPC(4) at line 139 of chem.inp ... 
    phase: G
    composition: (11 C, 10 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -164,7 +198,7 @@ found species SPC(4) at line 137 of chem.inp ...
    a7  	-2.20183862E+01  	-1.22132762E+02
 
 
-found species SPC(5) at line 143 of chem.inp ... 
+found species SPC(5) at line 145 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -179,7 +213,7 @@ found species SPC(5) at line 143 of chem.inp ...
    a7  	-1.35902780E+01  	-2.08201027E+02
 
 
-found species O2(6) at line 149 of chem.inp ... 
+found species O2(6) at line 151 of chem.inp ... 
    phase: G
    composition: (2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -194,7 +228,7 @@ found species O2(6) at line 149 of chem.inp ...
    a7  	-5.70472615E+00  	-5.04042637E+00
 
 
-found species SPC(7) at line 155 of chem.inp ... 
+found species SPC(7) at line 157 of chem.inp ... 
    phase: G
    composition: (19 C, 40 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -209,7 +243,7 @@ found species SPC(7) at line 155 of chem.inp ...
    a7  	-1.19405407E+01  	-2.45962045E+02
 
 
-found species SPC(8) at line 161 of chem.inp ... 
+found species SPC(8) at line 163 of chem.inp ... 
    phase: G
    composition: (21 C, 44 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -224,7 +258,7 @@ found species SPC(8) at line 161 of chem.inp ...
    a7  	-1.06710580E+01  	-2.70966399E+02
 
 
-found species HO2J(43) at line 167 of chem.inp ... 
+found species HO2J(43) at line 169 of chem.inp ... 
    phase: G
    composition: (1 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -239,7 +273,7 @@ found species HO2J(43) at line 167 of chem.inp ...
    a7  	-1.44335268E+01  	-1.11026205E+01
 
 
-found species SPC(17) at line 173 of chem.inp ... 
+found species SPC(17) at line 175 of chem.inp ... 
    phase: G
    composition: (16 C, 25 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -254,7 +288,7 @@ found species SPC(17) at line 173 of chem.inp ...
    a7  	-1.87015467E+01  	-2.01840008E+02
 
 
-found species C11H9J(66) at line 179 of chem.inp ... 
+found species C11H9J(66) at line 181 of chem.inp ... 
    phase: G
    composition: (11 C, 9 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -269,7 +303,7 @@ found species C11H9J(66) at line 179 of chem.inp ...
    a7  	-2.23548719E+01  	-1.28696992E+02
 
 
-found species SPC(117) at line 185 of chem.inp ... 
+found species SPC(117) at line 187 of chem.inp ... 
    phase: G
    composition: (16 C, 25 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -284,7 +318,7 @@ found species SPC(117) at line 185 of chem.inp ...
    a7  	-1.21908809E+01  	-2.17939508E+02
 
 
-found species SPC(120) at line 191 of chem.inp ... 
+found species SPC(120) at line 193 of chem.inp ... 
    phase: G
    composition: (16 C, 26 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -299,7 +333,7 @@ found species SPC(120) at line 191 of chem.inp ...
    a7  	-1.28476021E+01  	-2.30566076E+02
 
 
-found species SPC(136) at line 197 of chem.inp ... 
+found species SPC(136) at line 199 of chem.inp ... 
    phase: G
    composition: (11 C, 9 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -314,7 +348,7 @@ found species SPC(136) at line 197 of chem.inp ...
    a7  	-1.95074442E+01  	-1.29848546E+02
 
 
-found species SPC(137) at line 203 of chem.inp ... 
+found species SPC(137) at line 205 of chem.inp ... 
    phase: G
    composition: (11 C, 10 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -329,7 +363,7 @@ found species SPC(137) at line 203 of chem.inp ...
    a7  	-2.01641654E+01  	-1.42475114E+02
 
 
-found species SPC(119) at line 209 of chem.inp ... 
+found species SPC(119) at line 211 of chem.inp ... 
    phase: G
    composition: (16 C, 24 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -344,7 +378,7 @@ found species SPC(119) at line 209 of chem.inp ...
    a7  	-1.37575311E+01  	-1.99053115E+02
 
 
-found species H2O2(101) at line 215 of chem.inp ... 
+found species H2O2(101) at line 217 of chem.inp ... 
    phase: G
    composition: (2 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -359,7 +393,7 @@ found species H2O2(101) at line 215 of chem.inp ...
    a7  	-1.39077705E+01  	-2.19908544E+01
 
 
-found species SPC(218) at line 221 of chem.inp ... 
+found species SPC(218) at line 223 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -374,7 +408,7 @@ found species SPC(218) at line 221 of chem.inp ...
    a7  	-1.48806822E+01  	-1.98786120E+02
 
 
-found species SPC(254) at line 227 of chem.inp ... 
+found species SPC(254) at line 229 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -389,7 +423,7 @@ found species SPC(254) at line 227 of chem.inp ...
    a7  	-1.18365201E+01  	-2.19792836E+02
 
 
-found species SPC(268) at line 233 of chem.inp ... 
+found species SPC(268) at line 235 of chem.inp ... 
    phase: G
    composition: (16 C, 24 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -404,7 +438,7 @@ found species SPC(268) at line 233 of chem.inp ...
    a7  	-1.24932412E+01  	-2.32419404E+02
 
 
-found species SPC(261) at line 239 of chem.inp ... 
+found species SPC(261) at line 241 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -419,7 +453,7 @@ found species SPC(261) at line 239 of chem.inp ...
    a7  	-1.13897880E+01  	-2.10435111E+02
 
 
-found species SPC(271) at line 245 of chem.inp ... 
+found species SPC(271) at line 247 of chem.inp ... 
    phase: G
    composition: (16 C, 24 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -434,7 +468,7 @@ found species SPC(271) at line 245 of chem.inp ...
    a7  	-1.20465092E+01  	-2.23061679E+02
 
 
-found species SPC(395) at line 251 of chem.inp ... 
+found species SPC(395) at line 253 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -449,7 +483,7 @@ found species SPC(395) at line 251 of chem.inp ...
    a7  	-1.31696603E+01  	-2.22794684E+02
 
 
-found species SPC(439) at line 257 of chem.inp ... 
+found species SPC(439) at line 259 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -464,7 +498,7 @@ found species SPC(439) at line 257 of chem.inp ...
    a7  	-9.98525632E+00  	-2.43661157E+02
 
 
-found species SPC(455) at line 263 of chem.inp ... 
+found species SPC(455) at line 265 of chem.inp ... 
    phase: G
    composition: (16 C, 24 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -479,7 +513,7 @@ found species SPC(455) at line 263 of chem.inp ...
    a7  	-1.06419775E+01  	-2.56287725E+02
 
 
-found species SPC(171) at line 269 of chem.inp ... 
+found species SPC(171) at line 271 of chem.inp ... 
    phase: G
    composition: (16 C, 25 H, 1 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -494,7 +528,7 @@ found species SPC(171) at line 269 of chem.inp ...
    a7  	-1.18857020E+01  	-2.14090714E+02
 
 
-found species H2O(190) at line 275 of chem.inp ... 
+found species H2O(190) at line 277 of chem.inp ... 
    phase: G
    composition: (2 H, 1 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -509,7 +543,7 @@ found species H2O(190) at line 275 of chem.inp ...
    a7  	-1.28767874E+01  	-7.23206582E+00
 
 
-found species SPC(173) at line 281 of chem.inp ... 
+found species SPC(173) at line 283 of chem.inp ... 
    phase: G
    composition: (16 C, 26 H, 1 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -524,7 +558,7 @@ found species SPC(173) at line 281 of chem.inp ...
    a7  	-1.14439309E+01  	-2.14315636E+02
 
 
-found species SPC(446) at line 287 of chem.inp ... 
+found species SPC(446) at line 289 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -539,7 +573,7 @@ found species SPC(446) at line 287 of chem.inp ...
    a7  	-9.05631135E+00  	-2.47654542E+02
 
 
-found species SPC(458) at line 293 of chem.inp ... 
+found species SPC(458) at line 295 of chem.inp ... 
    phase: G
    composition: (16 C, 24 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -554,7 +588,7 @@ found species SPC(458) at line 293 of chem.inp ...
    a7  	-9.71303254E+00  	-2.60281110E+02
 
 
-found species SPC(664) at line 299 of chem.inp ... 
+found species SPC(664) at line 301 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -569,7 +603,7 @@ found species SPC(664) at line 299 of chem.inp ...
    a7  	-1.01240881E+01  	-2.54834626E+02
 
 
-found species HOJ(103) at line 305 of chem.inp ... 
+found species HOJ(103) at line 307 of chem.inp ... 
    phase: G
    composition: (1 H, 1 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -584,7 +618,7 @@ found species HOJ(103) at line 305 of chem.inp ...
    a7  	-1.09644100E+01  	-7.70895574E+00
 
 
-found species SPC(695) at line 311 of chem.inp ... 
+found species SPC(695) at line 313 of chem.inp ... 
    phase: G
    composition: (16 C, 22 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -599,7 +633,7 @@ found species SPC(695) at line 311 of chem.inp ...
    a7  	-1.02880336E+01  	-2.59385309E+02
 
 
-found species SPC(70) at line 317 of chem.inp ... 
+found species SPC(70) at line 319 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -614,7 +648,7 @@ found species SPC(70) at line 317 of chem.inp ...
    a7  	-1.13667349E+01  	-1.88238352E+02
 
 
-found species SPC(850) at line 323 of chem.inp ... 
+found species SPC(850) at line 325 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -629,7 +663,7 @@ found species SPC(850) at line 323 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(854) at line 329 of chem.inp ... 
+found species SPC(854) at line 331 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -644,7 +678,7 @@ found species SPC(854) at line 329 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(74) at line 335 of chem.inp ... 
+found species SPC(74) at line 337 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -659,7 +693,7 @@ found species SPC(74) at line 335 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(948) at line 341 of chem.inp ... 
+found species SPC(948) at line 343 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -674,7 +708,7 @@ found species SPC(948) at line 341 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(953) at line 347 of chem.inp ... 
+found species SPC(953) at line 349 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -689,7 +723,7 @@ found species SPC(953) at line 347 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(525) at line 353 of chem.inp ... 
+found species SPC(525) at line 355 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -704,7 +738,7 @@ found species SPC(525) at line 353 of chem.inp ...
    a7  	-1.38109267E+01  	-2.43524504E+02
 
 
-found species SPC(1070) at line 359 of chem.inp ... 
+found species SPC(1070) at line 361 of chem.inp ... 
    phase: G
    composition: (16 C, 22 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -719,7 +753,7 @@ found species SPC(1070) at line 359 of chem.inp ...
    a7  	-1.10331515E+01  	-2.29585891E+02
 
 
-found species SPC(1121) at line 365 of chem.inp ... 
+found species SPC(1121) at line 367 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 5 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -734,7 +768,7 @@ found species SPC(1121) at line 365 of chem.inp ...
    a7  	-1.14697113E+01  	-2.60781105E+02
 
 
-found species SPC(75) at line 371 of chem.inp ... 
+found species SPC(75) at line 373 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -749,7 +783,7 @@ found species SPC(75) at line 371 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(1212) at line 377 of chem.inp ... 
+found species SPC(1212) at line 379 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -764,7 +798,7 @@ found species SPC(1212) at line 377 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(1216) at line 383 of chem.inp ... 
+found species SPC(1216) at line 385 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -779,7 +813,7 @@ found species SPC(1216) at line 383 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(804) at line 389 of chem.inp ... 
+found species SPC(804) at line 391 of chem.inp ... 
    phase: G
    composition: (16 C, 21 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -794,7 +828,7 @@ found species SPC(804) at line 389 of chem.inp ...
    a7  	-1.07625084E+01  	-2.25964731E+02
 
 
-found species SPC(1294) at line 395 of chem.inp ... 
+found species SPC(1294) at line 397 of chem.inp ... 
    phase: G
    composition: (16 C, 20 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -809,7 +843,7 @@ found species SPC(1294) at line 395 of chem.inp ...
    a7  	-2.52526978E+01  	-2.47645999E+02
 
 
-found species SPC(71) at line 401 of chem.inp ... 
+found species SPC(71) at line 403 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -824,7 +858,7 @@ found species SPC(71) at line 401 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(1412) at line 407 of chem.inp ... 
+found species SPC(1412) at line 409 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -839,7 +873,7 @@ found species SPC(1412) at line 407 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(1416) at line 413 of chem.inp ... 
+found species SPC(1416) at line 415 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -854,7 +888,7 @@ found species SPC(1416) at line 413 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(76) at line 419 of chem.inp ... 
+found species SPC(76) at line 421 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -869,7 +903,7 @@ found species SPC(76) at line 419 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(1504) at line 425 of chem.inp ... 
+found species SPC(1504) at line 427 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -884,7 +918,7 @@ found species SPC(1504) at line 425 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(1508) at line 431 of chem.inp ... 
+found species SPC(1508) at line 433 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -899,7 +933,7 @@ found species SPC(1508) at line 431 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(1373) at line 437 of chem.inp ... 
+found species SPC(1373) at line 439 of chem.inp ... 
    phase: G
    composition: (16 C, 19 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -914,7 +948,7 @@ found species SPC(1373) at line 437 of chem.inp ...
    a7  	-2.63758489E+01  	-2.47379004E+02
 
 
-found species SPC(1603) at line 443 of chem.inp ... 
+found species SPC(1603) at line 445 of chem.inp ... 
    phase: G
    composition: (16 C, 19 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -929,7 +963,7 @@ found species SPC(1603) at line 443 of chem.inp ...
    a7  	-2.33291457E+01  	-2.68383178E+02
 
 
-found species SPC(1620) at line 449 of chem.inp ... 
+found species SPC(1620) at line 451 of chem.inp ... 
    phase: G
    composition: (16 C, 20 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -944,7 +978,7 @@ found species SPC(1620) at line 449 of chem.inp ...
    a7  	-2.39858669E+01  	-2.81009746E+02
 
 
-found species SPC(73) at line 455 of chem.inp ... 
+found species SPC(73) at line 457 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -959,7 +993,7 @@ found species SPC(73) at line 455 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(1752) at line 461 of chem.inp ... 
+found species SPC(1752) at line 463 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -974,7 +1008,7 @@ found species SPC(1752) at line 461 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(1756) at line 467 of chem.inp ... 
+found species SPC(1756) at line 469 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -989,7 +1023,7 @@ found species SPC(1756) at line 467 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(533) at line 473 of chem.inp ... 
+found species SPC(533) at line 475 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1004,7 +1038,7 @@ found species SPC(533) at line 473 of chem.inp ...
    a7  	-9.98525632E+00  	-2.43661157E+02
 
 
-found species SPC(72) at line 479 of chem.inp ... 
+found species SPC(72) at line 481 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1019,7 +1053,7 @@ found species SPC(72) at line 479 of chem.inp ...
    a7  	-1.20930628E+01  	-1.84990713E+02
 
 
-found species SPC(1876) at line 485 of chem.inp ... 
+found species SPC(1876) at line 487 of chem.inp ... 
    phase: G
    composition: (16 C, 33 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1034,7 +1068,7 @@ found species SPC(1876) at line 485 of chem.inp ...
    a7  	-1.01220878E+01  	-2.22926175E+02
 
 
-found species SPC(1879) at line 491 of chem.inp ... 
+found species SPC(1879) at line 493 of chem.inp ... 
    phase: G
    composition: (16 C, 34 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1049,7 +1083,7 @@ found species SPC(1879) at line 491 of chem.inp ...
    a7  	-1.07788090E+01  	-2.35552743E+02
 
 
-found species SPC(801) at line 497 of chem.inp ... 
+found species SPC(801) at line 499 of chem.inp ... 
    phase: G
    composition: (16 C, 21 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1064,7 +1098,7 @@ found species SPC(801) at line 497 of chem.inp ...
    a7  	-1.23073394E+01  	-2.37746872E+02
 
 
-found species SPC(1993) at line 503 of chem.inp ... 
+found species SPC(1993) at line 505 of chem.inp ... 
    phase: G
    composition: (16 C, 20 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1079,7 +1113,7 @@ found species SPC(1993) at line 503 of chem.inp ...
    a7  	-1.37145253E+01  	-2.37728348E+02
 
 
-found species SPC(2040) at line 509 of chem.inp ... 
+found species SPC(2040) at line 511 of chem.inp ... 
    phase: G
    composition: (16 C, 21 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1094,7 +1128,7 @@ found species SPC(2040) at line 509 of chem.inp ...
    a7  	-1.21079287E+01  	-2.64128547E+02
 
 
-found species SPC(1108) at line 515 of chem.inp ... 
+found species SPC(1108) at line 517 of chem.inp ... 
    phase: G
    composition: (16 C, 21 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1109,7 +1143,7 @@ found species SPC(1108) at line 515 of chem.inp ...
    a7  	-1.03764303E+01  	-2.16959323E+02
 
 
-found species SPC(52) at line 521 of chem.inp ... 
+found species SPC(52) at line 523 of chem.inp ... 
    phase: G
    composition: (13 C, 27 H)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1124,7 +1158,7 @@ found species SPC(52) at line 521 of chem.inp ...
    a7  	-1.26399899E+01  	-1.50100852E+02
 
 
-found species SPC(2176) at line 527 of chem.inp ... 
+found species SPC(2176) at line 529 of chem.inp ... 
    phase: G
    composition: (13 C, 27 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1139,7 +1173,7 @@ found species SPC(2176) at line 527 of chem.inp ...
    a7  	-1.15962712E+01  	-1.84989604E+02
 
 
-found species SPC(2243) at line 533 of chem.inp ... 
+found species SPC(2243) at line 535 of chem.inp ... 
    phase: G
    composition: (13 C, 28 H, 2 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1154,7 +1188,7 @@ found species SPC(2243) at line 533 of chem.inp ...
    a7  	-1.22529923E+01  	-1.97616172E+02
 
 
-found species SPC(665) at line 539 of chem.inp ... 
+found species SPC(665) at line 541 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 4 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1169,7 +1203,7 @@ found species SPC(665) at line 539 of chem.inp ...
    a7  	-1.24305911E+01  	-2.43808319E+02
 
 
-found species SPC(669) at line 545 of chem.inp ... 
+found species SPC(669) at line 547 of chem.inp ... 
    phase: G
    composition: (16 C, 22 H, 3 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1184,7 +1218,7 @@ found species SPC(669) at line 545 of chem.inp ...
    a7  	-1.02759862E+01  	-2.30573360E+02
 
 
-found species SPC(2481) at line 551 of chem.inp ... 
+found species SPC(2481) at line 553 of chem.inp ... 
    phase: G
    composition: (16 C, 23 H, 5 O)
    Tlow, Tmid, Thigh: (300.00, 995.00, 5000.00)
@@ -1198,7 +1232,7 @@ found species SPC(2481) at line 551 of chem.inp ...
    a6  	-4.77057720E+04  	-6.24271076E+04
    a7  	-1.14577696E+01  	-2.64949190E+02
 
-found definitions for 73 of 73 species in the input file. 
+found definitions for 75 of 75 species in the input file. 
 
 validating species...
    checking that all species have been defined... OK
@@ -1215,6 +1249,8 @@ validating species...
    contribution to cp, and so may be violated in some cases.
 
 
+Warning... species N2: cp(Tmax) greater than equipartition value 
+by 2.34830734E+00 percent.
 Warning... species SPC(4): cp(Tmax) greater than equipartition value 
 by 1.60940367E+00 percent.
 Warning... species O2(6): cp(Tmax) greater than equipartition value 

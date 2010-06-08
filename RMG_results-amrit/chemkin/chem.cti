@@ -1,20 +1,20 @@
 #
 # Generated from file chem.inp
-# by ck2cti on Mon Jun  7 19:16:06 2010
+# by ck2cti on Mon Jun  7 20:12:28 2010
 #
 units(length = "cm", time = "s", quantity = "mol", act_energy = "cal/mol")
 
 
 ideal_gas(name = "chem",
       elements = " H  C  O  N  Ne  Ar  He  Si  S ",
-      species = """ SPC(1)  SPC(2)  SPC(3)  SPC(4)  SPC(5)  O2(6)  SPC(7)  SPC(8)  HO2J(43)  SPC(17) 
-                   C11H9J(66)  SPC(117)  SPC(120)  SPC(136)  SPC(137)  SPC(119)  H2O2(101)  SPC(218)  SPC(254)  SPC(268) 
-                   SPC(261)  SPC(271)  SPC(395)  SPC(439)  SPC(455)  SPC(171)  H2O(190)  SPC(173)  SPC(446)  SPC(458) 
-                   SPC(664)  HOJ(103)  SPC(695)  SPC(70)  SPC(850)  SPC(854)  SPC(74)  SPC(948)  SPC(953)  SPC(525) 
-                   SPC(1070)  SPC(1121)  SPC(75)  SPC(1212)  SPC(1216)  SPC(804)  SPC(1294)  SPC(71)  SPC(1412)  SPC(1416) 
-                   SPC(76)  SPC(1504)  SPC(1508)  SPC(1373)  SPC(1603)  SPC(1620)  SPC(73)  SPC(1752)  SPC(1756)  SPC(533) 
-                   SPC(72)  SPC(1876)  SPC(1879)  SPC(801)  SPC(1993)  SPC(2040)  SPC(1108)  SPC(52)  SPC(2176)  SPC(2243) 
-                   SPC(665)  SPC(669)  SPC(2481) """,
+      species = """ Ar  N2  SPC(1)  SPC(2)  SPC(3)  SPC(4)  SPC(5)  O2(6)  SPC(7)  SPC(8) 
+                   HO2J(43)  SPC(17)  C11H9J(66)  SPC(117)  SPC(120)  SPC(136)  SPC(137)  SPC(119)  H2O2(101)  SPC(218) 
+                   SPC(254)  SPC(268)  SPC(261)  SPC(271)  SPC(395)  SPC(439)  SPC(455)  SPC(171)  H2O(190)  SPC(173) 
+                   SPC(446)  SPC(458)  SPC(664)  HOJ(103)  SPC(695)  SPC(70)  SPC(850)  SPC(854)  SPC(74)  SPC(948) 
+                   SPC(953)  SPC(525)  SPC(1070)  SPC(1121)  SPC(75)  SPC(1212)  SPC(1216)  SPC(804)  SPC(1294)  SPC(71) 
+                   SPC(1412)  SPC(1416)  SPC(76)  SPC(1504)  SPC(1508)  SPC(1373)  SPC(1603)  SPC(1620)  SPC(73)  SPC(1752) 
+                   SPC(1756)  SPC(533)  SPC(72)  SPC(1876)  SPC(1879)  SPC(801)  SPC(1993)  SPC(2040)  SPC(1108)  SPC(52) 
+                   SPC(2176)  SPC(2243)  SPC(665)  SPC(669)  SPC(2481) """,
       reactions = "all",
       initial_state = state(temperature = 300.0,
                         pressure = OneAtm)    )
@@ -24,6 +24,32 @@ ideal_gas(name = "chem",
 #-------------------------------------------------------------------------------
 #  Species data 
 #-------------------------------------------------------------------------------
+
+species(name = "Ar",
+    atoms = " Ar:1 ",
+    thermo = (
+       NASA( [  200.00,  1000.00], [  2.500000000E+00,   0.000000000E+00, 
+                0.000000000E+00,   0.000000000E+00,   0.000000000E+00,
+               -7.453750000E+02,   4.379674900E+00] ),
+       NASA( [ 1000.00,  6000.00], [  2.500000000E+00,   0.000000000E+00, 
+                0.000000000E+00,   0.000000000E+00,   0.000000000E+00,
+               -7.453750000E+02,   4.379674900E+00] )
+             ),
+    note = "L 6/88"
+       )
+
+species(name = "N2",
+    atoms = " N:2 ",
+    thermo = (
+       NASA( [  200.00,  1000.00], [  3.531005280E+00,  -1.236609880E-04, 
+               -5.029994330E-07,   2.435306120E-09,  -1.408812350E-12,
+               -1.046976280E+03,   2.967470380E+00] ),
+       NASA( [ 1000.00,  6000.00], [  2.952576370E+00,   1.396900400E-03, 
+               -4.926316030E-07,   7.860101950E-11,  -4.607552040E-15,
+               -9.239486880E+02,   5.871887620E+00] )
+             ),
+    note = "G 8/02"
+       )
 
 species(name = "SPC(1)",
     atoms = " C:16  H:26 ",

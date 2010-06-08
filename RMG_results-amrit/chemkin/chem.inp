@@ -13,6 +13,8 @@
 
 ELEMENTS H C O N Ne Ar He Si S END
 SPECIES
+	Ar
+	N2
 	SPC(1)	!n-decylbenzene
 	SPC(2)	!n-undecane
 	SPC(3)	!n-tridecane
