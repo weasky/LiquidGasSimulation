@@ -133,7 +133,7 @@ class DepositPhase(Phase):
         
         This method over-rides the parent class one which is based on molar volumes.
         """
-        return self.initial_volume
+        return self.initial_volume + sum(self.amounts * self.molar_volumes)
     total_volume = property(get_total_volume)
     
     def get_diesel_equilibrium_concentrations(self):
