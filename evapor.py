@@ -211,17 +211,17 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         if chem_solver is None: chem_solver = ChemistrySolver(resultsDir=resultsDir)
         self.chem_solver = chem_solver
         self.nSpecies = chem_solver.Nspecies
-        self.speciesnames = chem_solver.speciesnames
-        assert len(self.speciesnames) == self.nSpecies        
+        self.species_names = chem_solver.speciesnames
+        assert len(self.species_names) == self.nSpecies        
 
         # Create properties store.
-        # Must pass it list of speciesnames so that the arrays returned are in the right size and order
-        self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.speciesnames)
+        # Must pass it list of species names so that the arrays returned are in the right size and order
+        self.properties = PropertiesStore(resultsDir=resultsDir, speciesnames=self.species_names)
         
         set_Ar_properties(self.properties)
         
         # 7 surrogate model
-        if all(name in self.speciesnames for name in 'O2(1)  n-C11(2)  n-C13(3) \
+        if all(name in self.species_names for name in 'O2(1)  n-C11(2)  n-C13(3) \
                   Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8)'.split() ):
             # We're using Richard's new species names
             fuel=[
@@ -234,7 +234,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
                 FuelComponent('n-C21(8)',  0.10,dict(C=21,H=44,O=0),dict(A=7.0842, B=2054,    C=120.1  ),2729.0)
             ]
             self._oxygen_name = "O2(1)"
-        elif all(name in self.speciesnames for name in "SPC(1)  SPC(2)  SPC(3) \
+        elif all(name in self.species_names for name in "SPC(1)  SPC(2)  SPC(3) \
                               SPC(4)  SPC(5)  O2(6)  SPC(7)  SPC(8)".split() ):
             # We're using the old names (and had better hope they're in the right order!)
             fuel=[                                                                                                  
@@ -261,8 +261,8 @@ class LiquidFilmCell(dassl.DASSL, Phase):
 
 
         # save some special species indices
-        self._oxygen_index = self.speciesnames.index(self._oxygen_name)
-        self._nitrogen_index = self.speciesnames.index('N2')
+        self._oxygen_index = self.species_names.index(self._oxygen_name)
+        self._nitrogen_index = self.species_names.index('N2')
         
         # area and volume of liquid film cell
         self.diameter = diameter
@@ -276,7 +276,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Set the fuel component initial amounts
         # this enables us to find the total concentration (at the start) necessary for Psat calculations
         for component in fuel:
-            species_index = self.speciesnames.index(component.name)
+            species_index = self.species_names.index(component.name)
             self.amounts[species_index] = ( self.initial_volume * 
                                             component.initialVolFraction * 
                                             component.liquidMolarDensity )
@@ -304,7 +304,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         # Update fuel component parameters with revised values.
         # (we have better information for the fuel components than for other species)
         for component in fuel:
-            species_index = self.speciesnames.index(component.name)
+            species_index = self.species_names.index(component.name)
             self.molar_volumes[species_index] = 1 / component.liquidMolarDensity
             # Psat for fuel components uses Antoine equation
             self.Psats[species_index] = component.getPsat(self.T)
@@ -312,7 +312,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         
         # Some species we don't want "evaporating" so set their Psat values to zero.
         for species_name in ['Ar', 'N2', self._oxygen_name]:
-            species_index = self.speciesnames.index(species_name)
+            species_index = self.species_names.index(species_name)
             self.Psats[species_index] = 0
         
        ## put some diesel in the deposit phase to get it started!
