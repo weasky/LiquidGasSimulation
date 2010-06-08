@@ -476,7 +476,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Here we have an assumption that the rhovi doesn't change that much along
         the axis though
         """
-        Qi = Qi * self.dia / 4. / self.len
+        Qi = Qi * self.diameter / 4. / self.length
         return Qi
     
     
@@ -617,8 +617,8 @@ if __name__ == "__main__":
     L = 0.5E-3
     initial_film_thickness = 3E-6
 
-    diesel = LiquidFilmCell(T=473, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=False, CHEMICAL_REACTION=True, PHASE_SEPARATION=True,
+    diesel = LiquidFilmCell(T=523, diameter=dia, length=L, thickness=initial_film_thickness,
+                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False,
                             resultsDir='RMG_results-amrit' )
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
@@ -648,9 +648,11 @@ if __name__ == "__main__":
         residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
         
         diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+        diesel_concentration_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)        
         deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
         for step,time in enumerate(timesteps):
             if time>0 : diesel.advance(time)
+            print diesel.thickness
             diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE
             deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE
             print diesel.t, diesel.y
