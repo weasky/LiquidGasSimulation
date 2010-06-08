@@ -533,36 +533,7 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         dydt = self.residual(time, y, numpy.zeros_like(y))[0] 
         print "I have dydt0 = ",repr(dydt)
         dassl.DASSL.initialize(self, time, y0=y, dydt0=dydt, atol=atol, rtol=rtol)
-        
 
-    def rightSideofODE(self, Y, t):
-        """
-        drho/dt=A_l/V_l Qi - A_l/V_l (rhoi - sum(Qi)/sum(rhoi)) + source term
-        y is mass density
-        """
-        # evaporation term
-        massDens = Y[:-1]
-        molDens = massDens / self.molar_masses
-        massFrac = massDens / sum(massDens)
-        molFrac = molDens / sum(molDens)
-        self.amounts = molDens * self.volume
-        ratio = self.area / self.volume
-        Qi = self.get_evaporative_flux(Lv=self.diameter)  # I think this is broken 
-        # since I changed evaporative_flux to actually be a flux (per unit area)
-        Q = sum(Qi)
-        
-        #reaction source term, turn the mole to mass frac dens
-        if self.reaction:
-            reactConcs = self.chem_solver.getRightSideOfODE(molDens,t)*self.molar_masses
-        else:
-            reactConcs = zeros(self.nSpecies, numpy.float64)
-   
-        dhdt = -1. / sum(massDens) * Q
-        drhodt = -ratio * Qi - ratio * massDens * dhdt + reactConcs
-        drhodt = append(drhodt, dhdt)
-        self.update_volume_area_thickness()
-        self.update_oxygen_nitrogen()
-        return drhodt
 
     #def advance(self, t, plotresult=False):
     #    y0 = self.concentrations * self.molar_masses
