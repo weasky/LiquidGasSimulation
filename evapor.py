@@ -132,7 +132,11 @@ class DepositPhase(Phase):
         so we shall just use these for now (they're probably correlated).
         """
         self.mass_transfer_coefficients = self.properties.DiffusivityInAir(self.T, 1e5) # m2/s, though we're using as m/s
-        self.mass_transfer_coefficients *= 1e-0 # slow it down for testing
+        """
+        After change the multiple from 1e-3 to 1e1, the final deposit mass after
+        40ms only changes from 2e-11 to 4e-11, so this coef seems not crucial
+        """
+        self.mass_transfer_coefficients *= 1e0 # slow it down for testing
     
     def get_total_volume(self):
         """The total volume of the phase, in m3.
@@ -389,6 +393,10 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         that Yinchun has found somewhere. Please could you elaborate?
         """
         air_partial_pressure = self.P - sum(self.vapor_partial_pressures)
+        """If the sum of vapor pressures larger than self.P, that means the
+        whole film is boiling and we can not use the current model (which is
+        diffusion dominant.)
+        """
         assert air_partial_pressure > 0
         oxygen_partial_pressure = 0.209 * air_partial_pressure
         nitrogen_partial_pressure = air_partial_pressure - oxygen_partial_pressure
@@ -431,8 +439,10 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Find the drying time for this film 
         
         Works by repeatedly calling getThickness with different end times.
+
+        TODO: drytime still gives error
         """
-        drytime = fsolve(self.getThickness,0.001)
+        drytime = fsolve(self.getThickness,0.5)
         return drytime
 
     def getThickness(self,time):
@@ -440,7 +450,14 @@ class LiquidFilmCell(dassl.DASSL, Phase):
         Get the thickness after a given time, by advancing (a copy of) the simulation.
         """
         film = copy.deepcopy(self)
-        film.advance(array([0,time], numpy.float64))
+        film.initialize_solver()
+        residual = film.residual(film.t,film.y,film.dydt)
+        timesteps = linspace(0,time,101)
+        for step,time in enumerate(timesteps):
+            if time>0 :film.advance(time)
+        
+#        film.advance(array([0,time], numpy.float64))
+#        film.advance(time)        
         return film.thickness 
         
     def get_vapor_mass_densities(self):
@@ -638,10 +655,10 @@ if __name__ == "__main__":
     initial_film_thickness = 3E-6
     temperature_in_C = 250
 
-    final_time = 1 # s
+    final_time = 0.04 # s
 
     diesel = LiquidFilmCell(T=temperature_in_C+273, diameter=dia, length=L, thickness=initial_film_thickness,
-                            EVAPORATION=True, CHEMICAL_REACTION=False, PHASE_SEPARATION=False)
+                            EVAPORATION=True, CHEMICAL_REACTION=True, PHASE_SEPARATION=True)
     deposit = diesel.deposit
 
     print 'diesel components molar mass is', diesel.molar_masses # kg/mol
@@ -661,31 +678,47 @@ if __name__ == "__main__":
     print 'initial concentrations are',diesel.concentrations
     
     # import pdb; pdb.set_trace(); # pause for debugging
-    
     print "Trying DASSL solver"
     diesel.initialize_solver()
     timesteps=linspace(0,final_time,1001)
+
     
     #check the residual works (although the initialise_solver above has just done so)
     #import pdb; pdb.set_trace()
     residual = diesel.residual(diesel.t, diesel.y, diesel.dydt)
+
     
     diesel_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
-    deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    diesel_history_concs = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)
+    deposit_history_array = numpy.zeros((len(timesteps),diesel.nSpecies), numpy.float64)    
     for step,time in enumerate(timesteps):
         if time>0 : diesel.advance(time)
         # notice these history_arrays now contain MASSES IN MILLIGRAMS!
         diesel_history_array[step] = diesel.y[:diesel.nSpecies] * diesel.SCALE * diesel.molar_masses*1e6
+        diesel_history_concs[step] = diesel.concentrations
         deposit_history_array[step] = diesel.y[diesel.nSpecies:] * diesel.SCALE * diesel.molar_masses*1e6
         print "At time t=%g s"%(diesel.t)
         print "Diesel contains (mg)\n", diesel_history_array[step]
         print "Deposit contains (mg)\n", deposit_history_array[step]
-    
+
+    # get deposit using the previous 'all products' method
+    depositmass = 0
+    for name in 'n-C11(2)  n-C13(3) \
+              Mnphtln(4)  n-C16(5)  C10bnzn(6)  n-C19(7)  n-C21(8)'.split():
+        species_index = diesel.species_names.index(name)
+        depositmass += diesel_history_array[-1][species_index]
+    depositmass = sum(diesel_history_array[-1]) - depositmass
+
+    print 'the deposit mass using old method is ',depositmass #mg
+    print 'the deposit per area using old method is ', depositmass/diesel.area*1e-6 #mg/mm^2
+    """TODO: the concentrations plot are not continous, maybe it is because
+    we are not updating the film often enough?
+    """
+    plot_graph(diesel_history_concs, diesel.species_names, 'Diesel masses (mg)', 1, 'plot')
     plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 1, 'plot')
-    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 2, 'plot')
-    plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 3, 'semilogy')
-    plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 4, 'semilogy')    
-    
+    # plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 2, 'plot')
+    # plot_graph(diesel_history_array, diesel.species_names, 'Diesel masses (mg)', 3, 'semilogy')
+    # plot_graph(deposit_history_array, diesel.species_names, 'Deposit masses (mg)', 4, 'semilogy')    
     print 'final thickness (micrometres)', diesel.thickness * 1e6
     print 'fraction of original thickness', diesel.thickness/diesel.initial_thickness
     print 'the total mass of deposit phase is %g mg' % (deposit.total_mass * 1e6)
